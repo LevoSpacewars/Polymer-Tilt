@@ -49,7 +49,7 @@ class Analyze():
             p.append([])
             p[-1].append([])
             p[-1].append([])
-            for i in range(len(self.gsd_data)):
+            for i in range(int(len(self.gsd_data)*Interval),len(self.gsd_data)):
                 p_t[0].append(self.gsd_data[i].particles.position[particle,0])
                 p_t[1].append(self.gsd_data[i].particles.position[particle,1])
                 if indvidual!= None:
@@ -70,7 +70,7 @@ class Analyze():
                     pdf.savefig(ax)
                     plt.close(ax)
             ax = plt.figure(len(px[0]))
-            heatmap, xedges, yedges = numpy.histogram2d(p_t[1][int(len(p_t[0])*Interval):], p_t[0][int(len(p_t[1])*Interval):], bins=(rez[0],rez[1]))
+            heatmap, xedges, yedges = numpy.histogram2d(p_t[1], p_t[0], bins=(rez[0],rez[1]))
             extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
 
             #Plot heatmap

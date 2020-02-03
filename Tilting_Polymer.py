@@ -44,7 +44,7 @@ rez=0.3
 
 K=10**3
 l_0 = 0.3
-l_max = 0.5
+l_max = 0.3
 rmax = l_0 + l_max - 0.001
 pull = 10
 lpull =1
