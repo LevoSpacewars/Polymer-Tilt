@@ -1,0 +1,658 @@
+SIMULATION:2020-01-19_00-04-54
+position period: 2000
+log period:100
+dt: 0.0001
+run length:100000
+
+
+SIMULATION:2020-01-19_00-05-18
+position period: 2000
+log period:100
+dt: 0.0001
+run length:100000
+
+
+SIMULATION:2020-01-19_00-06-51
+position period: 2000
+log period:100
+dt: 0.0001
+run length:100000
+
+
+SIMULATION:2020-01-19_00-07-18
+position period: 2000
+log period:100
+dt: 0.0001
+run length:100000
+
+
+SIMULATION:2020-01-19_00-07-46
+position period: 2000
+log period:100
+dt: 0.0001
+run length:100000
+
+
+SIMULATION:2020-01-19_00-14-58
+position period: 2000
+log period:100
+dt: 0.0001
+run length:100000
+
+
+SIMULATION:2020-01-21_14-11-49
+position period: 2000
+log period:100
+dt: 0.0001
+run length:100000
+
+
+SIMULATION:2020-01-21_14-17-56
+position period: 2000
+log period:100
+dt: 0.0001
+run length:100000
+
+
+SIMULATION:2020-01-21_14-19-17
+position period: 2000
+log period:100
+dt: 0.0001
+run length:100000
+
+
+SIMULATION:2020-01-21_14-22-57
+position period: 20000
+log period:100
+dt: 0.0001
+run length:1000000
+
+
+SIMULATION:2020-01-21_14-57-38
+position period: 2000
+log period:100
+dt: 0.0001
+run length:1000000
+
+
+SIMULATION:2020-01-21_15-23-51
+position period: 2000
+log period:100
+dt: 0.0001
+run length:1000000
+
+
+SIMULATION:2020-01-21_15-25-14
+position period: 2000
+log period:100
+dt: 0.0001
+run length:1000000
+
+
+SIMULATION:2020-01-21_15-34-25
+position period: 2000
+log period:100
+dt: 0.0001
+run length:1000000
+
+
+SIMULATION:2020-01-21_15-37-11
+position period: 2000
+log period:100
+dt: 0.0001
+run length:10000000
+
+
+SIMULATION:2020-01-21_15-46-03
+position period: 2000
+log period:100
+dt: 0.0001
+run length:10000000
+
+
+SIMULATION:2020-01-21_16-55-47
+position period: 200
+log period:100
+dt: 0.0001
+run length:10000000
+
+
+SIMULATION:2020-01-21_21-21-34
+position period: 2000
+log period:100
+dt: 0.0001
+run length:1000000
+
+
+SIMULATION:2020-01-21_21-34-23
+position period: 20000
+log period:100
+dt: 0.0001
+run length:1000000
+
+
+SIMULATION:2020-01-21_21-57-29
+position period: 20000
+log period:100
+dt: 0.0001
+run length:1000000
+
+
+SIMULATION:2020-01-24_13-37-56
+position period: 20000
+log period:100
+dt: 0.0001
+run length:1000000
+
+
+SIMULATION:2020-01-24_13-39-29
+position period: 20000
+log period:100
+dt: 0.0001
+run length:1000000
+
+
+SIMULATION:2020-01-24_13-44-03
+position period: 20000
+log period:100
+dt: 0.0001
+run length:1000000
+box_dim=10,300
+
+
+SIMULATION:2020-01-24_13-58-10
+position period:20000
+log period:100
+dt:0.0001
+run length:1000000
+box_dim:10,300
+
+
+SIMULATION:2020-01-24_14-31-26
+position period:200
+log period:100
+dt:0.0001
+run length:1000000
+box_dim:10,300
+
+
+SIMULATION:2020-01-24_14-35-32
+position period:2000
+log period:100
+dt:0.0001
+run length:1000000
+box_dim:10,300
+
+
+SIMULATION:2020-01-24_14-55-44
+position period:2000
+log period:100
+dt:0.0001
+run length:1000000
+box_dim:10,300
+
+
+SIMULATION:2020-01-24_15-23-41
+position period:2000
+log period:100
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-24_15-41-15
+position period:20000
+log period:100
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-24_15-45-52
+position period:20000
+log period:100
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-24_15-49-34
+position period:20000
+log period:100
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-24_15-53-08
+position period:20000
+log period:100
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-24_16-04-09
+position period:20000
+log period:100
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-24_17-18-38
+position period:2000000
+log period:2000000
+dt:0.0001
+run length:100000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-29_00-35-35
+position period:2000
+log period:2000
+dt:0.0001
+run length:100000
+box_dim:10,180
+
+
+SIMULATION:2020-01-29_12-30-38
+position period:2000
+log period:2000
+dt:0.0001
+run length:100000
+box_dim:10,180
+
+
+SIMULATION:2020-01-29_12-33-09
+position period:20000
+log period:20000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-29_12-36-36
+position period:2000
+log period:20000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-29_12-48-47
+position period:2000
+log period:20000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-29_17-30-54
+position period:2000
+log period:20000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-29_17-35-58
+position period:2000
+log period:20000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-29_17-51-29
+position period:2000
+log period:20000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-29_17-52-17
+position period:2000
+log period:20000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-29_17-55-47
+position period:2000
+log period:20000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-29_17-57-54
+position period:2000
+log period:20000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-29_18-07-13
+position period:2000
+log period:20000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-29_18-11-35
+position period:2000
+log period:20000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-29_18-15-02
+position period:2000
+log period:20000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-29_18-26-37
+position period:2000
+log period:20000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_10-06-25
+position period:2000
+log period:20000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_10-12-50
+position period:2000
+log period:20000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_10-27-33
+position period:2000
+log period:20000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_10-35-35
+position period:2000
+log period:20000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_10-39-50
+position period:2000
+log period:20000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_10-45-04
+position period:2000
+log period:20000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_11-21-45
+position period:2000
+log period:2000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_11-24-00
+position period:2000
+log period:2000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_11-26-06
+position period:2000
+log period:2000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_11-28-53
+position period:2000
+log period:2000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_11-31-05
+position period:2000
+log period:2000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_11-36-02
+position period:2000
+log period:2000
+dt:0.0001
+run length:10000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_11-42-52
+position period:2000
+log period:2000
+dt:0.0001
+run length:10000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_11-49-13
+position period:2000
+log period:2000
+dt:0.0001
+run length:10000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_11-54-58
+position period:2000
+log period:2000
+dt:0.0001
+run length:10000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_12-00-18
+position period:2000
+log period:2000
+dt:0.0001
+run length:10000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_12-14-05
+position period:2000
+log period:2000
+dt:0.0001
+run length:50000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_12-22-46
+position period:2000
+log period:2000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_12-39-19
+position period:2000
+log period:2000
+dt:0.0001
+run length:1000000
+box_dim:10,180
+
+
+SIMULATION:2020-01-30_12-45-29
+position period:2000
+log period:2000
+dt:0.0001
+run length:1000000
+box_dim:10,480
+
+
+SIMULATION:2020-01-30_12-48-58
+position period:2000
+log period:2000
+dt:0.0001
+run length:1000000
+box_dim:10,480
+
+
+SIMULATION:2020-01-30_12-52-19
+position period:2000
+log period:2000
+dt:0.0001
+run length:1000000
+box_dim:10,480
+
+
+SIMULATION:2020-01-30_13-43-22
+position period:2000
+log period:2000
+dt:0.0001
+run length:10000000
+box_dim:10,480
+
+
+SIMULATION:2020-01-30_17-56-49
+position period:2000
+log period:2000
+dt:0.0001
+run length:10000000
+box_dim:5,480
+
+
+SIMULATION:2020-01-30_18-04-28
+position period:2000
+log period:2000
+dt:0.0001
+run length:10000000
+box_dim:5,480
+
+
+SIMULATION:2020-01-30_18-12-53
+position period:2000
+log period:2000
+dt:0.0001
+run length:100000
+box_dim:5,480
+
+
+SIMULATION:2020-01-30_18-19-04
+position period:1
+log period:1
+dt:0.0001
+run length:50
+box_dim:5,480
+
+
+SIMULATION:2020-01-30_18-20-31
+position period:4
+log period:4
+dt:0.0001
+run length:200
+box_dim:5,480
+
+
+SIMULATION:2020-01-30_18-23-59
+position period:10
+log period:10
+dt:0.0001
+run length:1000
+box_dim:5,480
+
+
+SIMULATION:2020-01-30_18-26-03
+position period:100
+log period:100
+dt:0.0001
+run length:10000
+box_dim:5,480
+
+
+SIMULATION:2020-01-30_18-28-31
+position period:100
+log period:100
+dt:0.0001
+run length:10000
+box_dim:5,480
+
+
+SIMULATION:2020-01-30_18-30-30
+position period:10000
+log period:10000
+dt:0.0001
+run length:1000000
+box_dim:5,480
+
+
+SIMULATION:2020-01-30_18-36-01
+position period:10000
+log period:10000
+dt:0.0001
+run length:10000000
+box_dim:5,480
+
+
+SIMULATION:2020-01-30_19-59-00
+position period:10000
+log period:10000
+dt:0.0001
+run length:10000000
+box_dim:5,480
+
+
+SIMULATION:2020-01-30_20-57-05
+position period:10000
+log period:10000
+dt:0.0001
+run length:10000000
+box_dim:5,480
+
+
+SIMULATION:2020-01-31_04-19-56
+position period:10000
+log period:10000
+dt:0.0001
+run length:10000000
+box_dim:5,1600
+
+
