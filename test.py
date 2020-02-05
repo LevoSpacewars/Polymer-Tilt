@@ -1,7 +1,7 @@
 from Analyzer import Analyze
 
 
-analyzer = Analyze(names=["polymer_force_0"])
+analyzer = Analyze(names=["polymer"])
 
 print("plotting probability")
 analyzer.getPositionProbabilityData(rez=[100,100],Interval = 0.9,name = "p0")

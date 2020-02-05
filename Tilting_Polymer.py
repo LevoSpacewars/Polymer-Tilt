@@ -62,7 +62,7 @@ mass = []
 position_period = 10000;
 log_period = position_period;
 dt = 0.0001;
-run_length = 10000000
+run_length = 1000000
 backup = True
 
 xbox = lines
@@ -182,10 +182,7 @@ hoomd.analyze.log(filename="energy.log",
                   quantities=['potential_energy', 'temperature'],
                   period=log_period,
                   overwrite=True);
-if (len(sys.argv) < 3):
-    gsdname = "polymer.gsd"
-else:
-    gsdname = sys.argv[2]
+gsdname="polymer.gsd"
 hoomd.dump.gsd(gsdname, period=position_period, group=all, overwrite=True);
 hoomd.run(run_length)
 
