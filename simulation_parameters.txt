@@ -1,8 +1,0 @@
-SIMULATION:2020-01-31_04-19-56
-position period:10000
-log period:10000
-dt:0.0001
-run length:10000000
-box_dim:5,1600
-
-

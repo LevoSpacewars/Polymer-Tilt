@@ -13,20 +13,20 @@ import seaborn
 class Analyze():
     """docstring for Analyse."""
 
-    def __init__(self, gsd_directory="",names=None):
+    def __init__(self,names=None):
         if(names == None):
-            self.gsd_directory = gsd_directory
-            self.gsd_data = gsd.hoomd.open(self.gsd_directory + "polymer.gsd", 'rb');
+            
+            self.gsd_data = gsd.hoomd.open("polymer.gsd", 'rb');
             self.energy_data = numpy.genfromtxt(fname="energy.log", skip_header=True);
             self.simulation_data = self.getSimulationParameters("simulation_parameters.txt")
         else:
-            self.gsd_directory = gsd_directory
-            self.gsd_data = gsd.hoomd.open(self.gsd_directory  + names[0] + ".gsd", 'rb');
+
+            self.gsd_data = gsd.hoomd.open(names[0] + ".gsd", 'rb');
             #self.energy_data = numpy.genfromtxt(fname=names[1]+".log", skip_header=True);
             self.simulation_data = self.getSimulationParameters("simulation_parameters.txt")
 
 
-    def getPositionProbabilityData(self,rez=None,indvidual=None,Interval=0,name = "foo.pdf"):
+    def getPositionProbabilityData(self,rez=None,indvidual=None,Interval=0,name = "foo"):
         if rez == None:
             rez = [int(self.boxdim[0]),self.boxdim[1]]
         from matplotlib.backends.backend_pdf import PdfPages
@@ -63,9 +63,10 @@ class Analyze():
                     extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
                     # Plot heatmap
                     plt.clf()
-                    plt.title(' heatmap test')
-                    plt.ylabel('y')
-                    plt.xlabel('x')
+                    plt.title('Position density :color map')
+                    plt.ylabel('Y position [unit]')
+                    plt.xlabel('X position [unit]')
+                    plt.legend(["test"])
                     plt.imshow(heatmap,aspect='auto',extent=extent)
                     pdf.savefig(ax)
                     plt.close(ax)

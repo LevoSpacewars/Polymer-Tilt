@@ -4,6 +4,7 @@ import hoomd.md.update
 import numpy
 import math
 import random
+import sys
 hoomd.context.initialize("")
 random.seed()
 
@@ -37,17 +38,17 @@ def harmonicf(r, rmin, rmax, kappa, r0):
                                                     #creating and populating a snapshot
 types = ['A','B','C']                                   # A: the defualt particle, B: the anchor particle
 a = 1
-length = 100
-lines = 5
+length = 10
+lines = 2
 lbda = length
 rez=0.3
 
 K=10**3
 l_0 = 0.3
-l_max = 0.3
+l_max = 0.1
 rmax = l_0 + l_max - 0.001
 pull = 10
-lpull =1
+lpull =10
 amplitude = 10
 
 gamma = 0.5
@@ -75,7 +76,7 @@ for i in range(lines):
     for j in range(length):
         y = y + random.uniform(l_0, l_max)
         pos.append([x,y,0])
-        print(pos[-1][0])
+        print(pos[-1])
 #defing bonds
 for i in range(lines):
     for j in range(1,length):
@@ -164,7 +165,7 @@ N = len(all)
 #                       orientation_link=False);
 ###############################################
 
-hoomd.md.integrate.mode_standard(dt=0.0001);
+hoomd.md.integrate.mode_standard(dt=0.000001);
 bs = hoomd.md.integrate.brownian(group=all, kT=1, seed=random.randint(0,999999));
 bs.set_gamma('A', gamma=gamma)
 bs.set_gamma('B', gamma=gamma)
@@ -181,13 +182,13 @@ hoomd.analyze.log(filename="energy.log",
                   quantities=['potential_energy', 'temperature'],
                   period=log_period,
                   overwrite=True);
-
-hoomd.dump.gsd("polymer.gsd", period=position_period, group=all, overwrite=True);
+if (len(sys.argv) < 3):
+    gsdname = "polymer.gsd"
+else:
+    gsdname = sys.argv[2]
+hoomd.dump.gsd(gsdname, period=position_period, group=all, overwrite=True);
 hoomd.run(run_length)
-for i in range(10):
-    const = hoomd.md.force.constant(group = pulley, fvec=(lpull + i,pull,0.0))
-    hoomd.dump.gsd("polymer_force_" + str(lpull + i) + ".gsd", period=position_period, group=all, overwrite=True);
-    hoomd.run(run_length)
+
 simulation_data_log = open("simulation_parameters_log.txt", 'a+')
 simulation_data = open("simulation_parameters.txt", 'w')
 
