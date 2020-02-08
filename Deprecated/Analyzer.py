@@ -15,7 +15,7 @@ class Analyze():
 
     def __init__(self,names=None):
         if(names == None):
-            
+
             self.gsd_data = gsd.hoomd.open("polymer.gsd", 'rb');
             self.energy_data = numpy.genfromtxt(fname="energy.log", skip_header=True);
             self.simulation_data = self.getSimulationParameters("simulation_parameters.txt")
@@ -124,8 +124,7 @@ class Analyze():
         anim.save('Polymer.gif', dpi=80, writer='imagemagick')
         print("finished")
 
-
-
+    #def create_general_polymer_profile()
 
 
 

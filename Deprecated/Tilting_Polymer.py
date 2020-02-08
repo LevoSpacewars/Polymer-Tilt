@@ -35,9 +35,9 @@ def harmonicf(r, rmin, rmax, kappa, r0):
    V = 0.5 * kappa * (r-r0)**2;
    F = -kappa*(r-r0);
    return (V, F)
+   data = [length,lines,rez,K,l_0,l_max,pull,amplitude,gamma,kbT]
                                                     #creating and populating a snapshot
 types = ['A','B','C']                                   # A: the defualt particle, B: the anchor particle
-a = 1
 length = 10
 lines = 2
 lbda = length
