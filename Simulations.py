@@ -125,7 +125,7 @@ class PolymerSimulationParameters():
         return self.runLength
 
 class PolymerSimulation():
-    def __init__(self,name=None,parameter=None,initializer='--mode=cpu'):
+    def __init__(self,name=None,parameter=None,initializer='--mode=gpu'):
         hoomd.context.initialize(initializer)
         self.parameter = parameter
         if name is None:
@@ -335,7 +335,8 @@ class PolymerSimulation():
         text.close()
 
 class DataVisualizer():
-        def __init__(self,directory):
+        def __init__(self,directory,interval=0):
+            self.interval = interval
             self.directory = directory
 
             self.getSimulationParameters(directory)
@@ -368,7 +369,7 @@ class DataVisualizer():
 
                     x.append([])
                     y.append([])
-                    for k in range(len(self.gsd_data)):
+                    for k in range(int(len(self.gsd_data)*self.interval)):
 
                         x[-1].append(self.gsd_data[k].particles.position[i*self.parameters.getNumberChains() + j,0])
                         y[-1].append(self.gsd_data[k].particles.position[i*self.parameters.getNumberChains() + j,1])
@@ -420,15 +421,6 @@ class PolymerObject():
         self.particleWidth = []
         for i in range(len(self.particle[0])):
             self.particleWidth.append([   self.stdDev(self.particle[0][i])  , self.stdDev(self.particle[1][i])])
-        from matplotlib import pyplot as plt
-        x= []
-        y=[]
-        for i in range(len(self.particle[0])):
-            x.append(self.particle[0][i][-1])
-            y.append(self.particle[1][i][-1])
-        plt.plot(x,y,'.')
-        plt.savefig("pos.png")
-
 
     def stdDev(self,data):
         std = 0
