@@ -144,21 +144,23 @@ class PolymerSimulation():
             pass
             ## TODO: Add ability to load snapshot
 
-    def run(self):
+    def run(self,forceRange=None):
         self.setupFileSystem()
-        self.simulationReadMeDump()
-        hoomd.analyze.log(filename="energy.log",
+        for i in range(int(forceRange[0]),int(forceRange[1])*int(forceRange[2])):
+            self.simulationReadMeDump(name = "polymer_" + str(i/forceRange[2]), force = i/forceRange[2])
+            hoomd.analyze.log(filename="energy.log",
                           quantities=['potential_energy', 'temperature'],
                           period=self.parameter.getProbePeriod(),
                           overwrite=True);
-        gsdname="polymer.gsd"
-        hoomd.dump.gsd(gsdname, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True);
+            self.tensionForce = hoomd.md.force.constant(group=self.pulley , fvec=(i/forceRange[2],self.parameter.getPullForce(),0.0))
+            gsdname="polymer_" + str(i) + ".gsd"
+            hoomd.dump.gsd(gsdname, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True);
 
 
 
-        hoomd.run(self.parameter.getRunLength())
-        os.system("mv polymer.gsd " + self.DirectoryName + "/" + self.currentSimulation)
-        os.system("mv energy.log " +self.DirectoryName + "/" + self.currentSimulation)
+            hoomd.run(self.parameter.getRunLength())
+            os.system(gsdname + "/" + self.DirectoryName + "/" + self.currentSimulation)
+            #os.system("mv energy.log " +self.DirectoryName + "/" + self.currentSimulation)
         return self.DirectoryName + "/" + self.currentSimulation
 
     def initializeIntegrator(self):
@@ -316,8 +318,12 @@ class PolymerSimulation():
         hoomd.init.read_snapshot(snapshot)
 
 
-    def simulationReadMeDump(self):
-        text = open(self.DirectoryName + "/" + self.currentSimulation + "/simulation_parameters.txt","w+")
+    def simulationReadMeDump(self,name=None,force=None):
+        text = None
+        if name != None:
+            text = open(self.DirectoryName + "/" + self.currentSimulation + "/" + name + "_simulation_parameters.txt","w+")
+            text.write("sheerForce=" + str(force) + "\n")
+        else: text = open(self.DirectoryName + "/" + self.currentSimulation + "/simulation_parameters.txt","w+");
         text.write("length="    +      str(self.parameter.getLength())                 + "\n")
         text.write("lines="     +      str(self.parameter.getNumberChains())           + "\n")
         text.write("rez="       +      str(self.parameter.getPairRadius())             + "\n")
@@ -335,7 +341,8 @@ class PolymerSimulation():
         text.close()
 
 class DataVisualizer():
-        def __init__(self,directory,interval=0):
+        def __init__(self,directory,gsdname,parametername,interval=0):
+            self.parametername = parametername
             self.interval = interval
             self.directory = directory
 
@@ -343,8 +350,8 @@ class DataVisualizer():
             self.constructPolymerObjects()
             self.constructGeneralPolymerProfile()
 
-        def getSimulationParameters(self,directory):
-            file = open(directory + "/simulation_parameters.txt",'r');
+        def getSimulationParameters(self):
+            file = open(self.directory + parametername,'r');
             data = []
             lines = file.readlines()
             for i in range(len(lines)-1):
@@ -357,7 +364,7 @@ class DataVisualizer():
 
         def constructPolymerObjects(self):
 
-            self.gsd_data =gsd.hoomd.open(self.directory  + "/polymer.gsd",'rb')
+            self.gsd_data =gsd.hoomd.open(self.directory  + "/" + gsdname,'rb')
             self.polymers = []
 
             print(self.parameters.getNumberChains(),self.parameters.getLength(),len(self.gsd_data))
@@ -393,7 +400,8 @@ class DataVisualizer():
             for j in range(self.parameters.getLength()):
                 self.generalProfileWidths[0][j] = math.sqrt(self.generalProfileWidths[0][j])
                 self.generalProfileWidths[1][j] = math.sqrt(self.generalProfileWidths[1][j])
-            print(self.generalProfileWidths)
+
+
             if savePlot == True:
                 from matplotlib import pyplot as plt
 
@@ -407,10 +415,48 @@ class DataVisualizer():
                 print(len(x),len(y),len(xerr),len(yerr))
                 plt.errorbar(x,y,xerr=xerr,yerr=yerr)
                 plt.savefig("test.png")
+
+        def getPositionProbabilityData(self,rez=None,Interval=0,name = "foo"):
+            if rez == None:
+                rez = [100,100]
+            from matplotlib.backends.backend_pdf import PdfPages
+            #e_ave = sum(self.energy_data[:,1])/len(self.energy_data[:,1])
+            #dt = 2*e_ave
+
+            p = []
+
+            p_t = []
+            p_t.append([])
+            p_t.append([])
+
+            for particle in range(len(px[0])):
+                p.append([])
+                p[-1].append([])
+                p[-1].append([])
+                for i in range(int(len(self.gsd_data)*Interval),len(self.gsd_data)):
+                    p_t[0].append(self.gsd_data[i].particles.position[particle,0])
+                    p_t[1].append(self.gsd_data[i].particles.position[particle,1])
+
+            with PdfPages(name + ".pdf") as pdf:
+                ax = plt.figure(len(px[0]))
+
+                #Plot heatmap
+                plt.clf()
+                plt.title('heatmap test')
+                plt.ylabel('y')
+                plt.xlabel('x')
+                plt.hist2d(p_t[0],p_t[1],bins=(200,200))
+                pdf.savefig(ax)
+
+
+
+
+
 class PolymerObject():
     def __init__(self,data):
         self.particle = data
         self.generateWidths()
+        self.generateTilt()
     def getParticleData(self,id):
         return [self.particle[0][id],self.particle[1][id]]
 
@@ -421,6 +467,22 @@ class PolymerObject():
         self.particleWidth = []
         for i in range(len(self.particle[0])):
             self.particleWidth.append([   self.stdDev(self.particle[0][i])  , self.stdDev(self.particle[1][i])])
+
+    def calculateTilt(self):
+        self.tilt = []
+        for i in range(len(self.particle[0][0])):
+            x0 = self.particle[0][0][i]
+            y0 = self.particle[1][0][i]
+            tilt.append(0)
+            for j in range(1,len(self.particle[0])):
+                x = self.particle[0][j][i]
+                y = self.particle[1][j][i]
+                tilt[-1] += math.arcsin((y-y0)/((x-x0)**2 + (y-y0)**2))
+            tilt[-1] = tilt[-1]/(len(self.particle[0])-1)
+
+        self.tilt_avg = sum(tilt)/len(tilt)
+
+
 
     def stdDev(self,data):
         std = 0

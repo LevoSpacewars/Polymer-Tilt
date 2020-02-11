@@ -2,8 +2,8 @@ import Simulations
 
 parameters = Simulations.PolymerSimulationParameters()
 
-parameters.setLength(10)
-parameters.setNumberChains(1)
+parameters.setLength(100)
+parameters.setNumberChains(100)
 parameters.setPairRadius(0.3)
 parameters.setPairPotentialStrength(10**3)
 parameters.setPairRadiusEqualibrium(0.3)
@@ -18,6 +18,6 @@ parameters.setRunLength(1000000)
 
 sim = Simulations.PolymerSimulation(parameter=parameters)
 
-filelocation = sim.run()
+filelocation = sim.run(forceRange=[0,10,100])
 print(filelocation)
-renderer = Simulations.DataVisualizer("Simulation_2020-02-07_22-22-28/Simulation_2020-02-07_22-22-28",interval=0)
+#renderer = Simulations.DataVisualizer("Simulation_2020-02-07_22-22-28/Simulation_2020-02-07_22-22-28",interval=0)
