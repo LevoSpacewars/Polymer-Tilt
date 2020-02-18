@@ -146,14 +146,15 @@ class PolymerSimulation():
 
     def run(self,forceRange=None):
         self.setupFileSystem()
-        for i in range(int(forceRange[0]),int(forceRange[1])*int(forceRange[2])):
-            self.simulationReadMeDump(name = "polymer_" + str(i/forceRange[2]), force = i/forceRange[2])
+        for i in range(int(forceRange[2])):
+            conv = (forceRange[1]-forceRange[0])/forceRange[2]*i + forceRange[0]
+            self.simulationReadMeDump(name = "polymer_" + str(conv), force = conv)
             hoomd.analyze.log(filename="energy.log",
                           quantities=['potential_energy', 'temperature'],
                           period=self.parameter.getProbePeriod(),
                           overwrite=True);
-            self.tensionForce = hoomd.md.force.constant(group=self.pulley , fvec=(i/forceRange[2],self.parameter.getPullForce(),0.0))
-            gsdname="polymer_" + str(i) + ".gsd"
+            self.tensionForce = hoomd.md.force.constant(group=self.pulley , fvec=(conv,self.parameter.getPullForce(),0.0))
+            gsdname="polymer_" + str(conv) + ".gsd"
             hoomd.dump.gsd(gsdname, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True);
 
 
@@ -341,7 +342,7 @@ class PolymerSimulation():
         text.close()
 
 class DataVisualizer():
-        def __init__(self,directory,gsdname,parametername,interval=0):
+        def __init__(self,directory=None,gsdname=None,parametername=None,interval=0):
             self.parametername = parametername
             self.interval = interval
             self.directory = directory
@@ -384,37 +385,26 @@ class DataVisualizer():
                 self.polymers.append(PolymerObject([x,y]))
 
         def constructGeneralPolymerProfile(self,savePlot = True):
-            self.generalProfileWidths = [[],[]]
-            for i in range(self.parameters.getLength()):
-                self.generalProfileWidths[0].append(0)
-                self.generalProfileWidths[1].append(0)
-
-            x=[]
-            for i in range(len(self.polymers)):
-                for j in range(self.parameters.getLength()):
-                    self.generalProfileWidths[0][j] += (self.polymers[i].getParticleWidth(j)[0])**2
-                    self.generalProfileWidths[1][j] += (self.polymers[i].getParticleWidth(j)[1])**2
-
-
-
-            for j in range(self.parameters.getLength()):
-                self.generalProfileWidths[0][j] = math.sqrt(self.generalProfileWidths[0][j])
-                self.generalProfileWidths[1][j] = math.sqrt(self.generalProfileWidths[1][j])
-
 
             if savePlot == True:
                 from matplotlib import pyplot as plt
-
-                y = range(0,len(self.generalProfileWidths[0])*2,2)
-                x = [0]*(len(y))
-                xerr = []
-                yerr = []
-                for i in range(len(self.generalProfileWidths[0])):
-                    xerr.append(self.generalProfileWidths[0][i])
-                    yerr.append(self.generalProfileWidths[1][i])
-                print(len(x),len(y),len(xerr),len(yerr))
-                plt.errorbar(x,y,xerr=xerr,yerr=yerr)
+                for i in range(len(self.polymers)):
+                    generalProfileWidths = self.polymers.getWidths()
+                    y = range(0,len(generalProfileWidths)*2,2)
+                    x = range(0,len(generalProfileWidths)*2,2*self.polymers.getTilt())
+                    xerr = []
+                    yerr = []
+                    for i in range(len(generalProfileWidths)):
+                        xerr.append(generalProfileWidths[i][0])
+                        yerr.append(generalProfileWidths[i][1])
+                    print(len(x),len(y),len(xerr),len(yerr))
+                    plt.errorbar(x,y,xerr=xerr,yerr=yerr)
                 plt.savefig("test.png")
+
+
+
+
+
 
         def getPositionProbabilityData(self,rez=None,Interval=0,name = "foo"):
             if rez == None:
@@ -451,7 +441,6 @@ class DataVisualizer():
 
 
 
-
 class PolymerObject():
     def __init__(self,data):
         self.particle = data
@@ -481,8 +470,11 @@ class PolymerObject():
             tilt[-1] = tilt[-1]/(len(self.particle[0])-1)
 
         self.tilt_avg = sum(tilt)/len(tilt)
+    def getTilt(self):
+        return self.tilt_avg
 
-
+    def getWidths(self):
+        return self.particleWidth
 
     def stdDev(self,data):
         std = 0
