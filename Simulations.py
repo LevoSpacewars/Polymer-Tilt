@@ -171,7 +171,7 @@ class PolymerSimulation():
             hoomd.run(self.parameter.getRunLength())
             dirname = "simulationForce_" + str(conv).replace(".","_")
             os.system("mkdir " + self.DirectoryName + "/" + self.currentSimulation + "/" +dirname)
-            print(self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
+            #print(self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
             self.simulationReadMeDump(force = conv, name = gsdname[0:-4], dir = self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
 
             os.system("mv " + gsdname + " " + self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
@@ -368,11 +368,11 @@ class DataVisualizer():
             location = basedirectory
             gsdFileLocations = [file for file in glob.glob(location + "**/*.gsd", recursive=True)]
             simulationParameterLocations = [file for file in glob.glob(location + "**/*.txt", recursive=True)]
-            print(simulationParameterLocations)
-            print(len(simulationParameterLocations))
+            #print(simulationParameterLocations)
+            #print(len(simulationParameterLocations))
             for i in range(len(simulationParameterLocations)):
-                print(simulationParameterLocations[i])
-                print(gsdFileLocations[i-2])
+                #print(simulationParameterLocations[i])
+                #(gsdFileLocations[i-2])
 
                 self.name = str(gsdFileLocations[i]).split('/')[-1].split('.')[0]
                 location = str(gsdFileLocations).split('/')[0] + "/" + str(gsdFileLocations).split('/')[1] + "/" + str(gsdFileLocations).split('/')[2] + "/"
@@ -401,7 +401,7 @@ class DataVisualizer():
             self.gsd_data =gsd.hoomd.open(fileLocation,'rb')
             self.polymers = []
 
-            print(self.parameters.getNumberChains(),self.parameters.getLength(),len(self.gsd_data))
+            #print(self.parameters.getNumberChains(),self.parameters.getLength(),len(self.gsd_data))
             for i in range(int(self.parameters.getNumberChains())):
 
                 x = []
@@ -417,21 +417,24 @@ class DataVisualizer():
 
                 self.polymers.append(PolymerObject([x,y]))
 
+
+        def gaussian(self,x, mu, sig):
+            return numpy.exp(-numpy.power(x - mu, 2.) / (2 * numpy.power(sig, 2.)))
+
         def constructGeneralPolymerProfiles(self,savePlot = True,saveLocation=""):
 
             if savePlot == True:
-
+                plt.clf()
                 for i in range(len(self.polymers)):
+
                     generalProfileWidths = self.polymers[i].getWidths()
-                    y = range(0,len(generalProfileWidths))
-                    x = [0] * len(generalProfileWidths)
-                    xerr = []
-                    yerr = []
-                    for i in range(len(generalProfileWidths)):
-                        xerr.append(generalProfileWidths[i][0])
-                        yerr.append(generalProfileWidths[i][1])
-                    plt.clf()
-                    plt.errorbar(x,y,xerr=xerr,yerr=yerr)
+                    y = range(len(generalProfileWidths),0,-1)
+                    mu = self.polymers[i].getMean()
+                    print(mu)
+                    x =  numpy.linspace(-3 + mu, 3 + mu, 120)
+
+                    for j in range(len(y)):
+                        plt.plot(x, self.gaussian(x, mu , generalProfileWidths[j][0]) + j*self.parameters.getPairRadiusEqualibrium(),color='k')
                 plt.savefig(self.name + "_widths.png")
                 #os.system("mv " + self.name + ".png " + saveLocation)
 
@@ -490,21 +493,23 @@ class PolymerObject():
             self.particleWidth.append([   self.stdDev(self.particle[0][i])  , self.stdDev(self.particle[1][i])])
 
     def calculateTilt(self):
-        tilt = []
+        self.tilt = 0
+        self.mean = sum(self.particle[0][0])/len(self.particle[0][0])
+        print(self.particle[0][0])
+        rise = 0
+        run =0
         for i in range(len(self.particle[0][0])):
-            x0 = self.particle[0][0][i]
-            y0 = self.particle[1][0][i]
-            tilt.append(0)
-            for j in range(1,len(self.particle[0])):
-                x = self.particle[0][j][i]
-                y = self.particle[1][j][i]
-                tilt[-1] += float(0)
-            tilt[-1] = tilt[-1]/(len(self.particle[0])-1)
+            run += self.particle[0][-1][i]
+            run -= self.particle[0][0][i]
+            rise += self.particle[1][-1][i]
+            rise -= self.particle[1][0][i]
 
-        self.tilt_avg = sum(tilt)/len(tilt)
+        self.tilt = run/rise * 1/len(self.particle[0][0])
+
     def getTilt(self):
-        return self.tilt_avg
-
+        return self.tilt
+    def getMean(self):
+        return self.mean
     def getWidths(self):
         return self.particleWidth
 
