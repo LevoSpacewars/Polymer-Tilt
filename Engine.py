@@ -2,9 +2,9 @@ import Simulations
 
 
 parameters = Simulations.PolymerSimulationParameters()
-dt = 0.000001
+dt = 0.0000001
 runl = 10000000
-vAverage = 0.05
+vAverage = 0.005
 vs = vAverage/dt
 print(runl/vs)
 print("\n\n\n\n\n")
