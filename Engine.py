@@ -2,8 +2,8 @@ import Simulations
 
 
 parameters = Simulations.PolymerSimulationParameters()
-dt = 0.0000001
-runl = 10000000
+dt = 0.000001
+runl = 1000000
 vAverage = 0.005
 vs = vAverage/dt
 print(runl/vs)
@@ -13,8 +13,8 @@ parameters.setNumberChains(10)
 parameters.setPairRadius(0.3)
 parameters.setPairPotentialStrength(10**3)
 parameters.setPairRadiusEqualibrium(0.3)
-parameters.setPairMaximumRadius(0.03)
-parameters.setForcePull(100)
+parameters.setPairMaximumRadius(0.1)
+parameters.setForcePull(50)
 parameters.setPeriodicAmplitude(1)
 parameters.setGamma(0.5)
 parameters.setKBT(1)
