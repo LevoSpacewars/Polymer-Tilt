@@ -8,6 +8,8 @@ import numpy
 import gsd
 import gsd.hoomd
 from matplotlib import pyplot as plt
+
+from matplotlib.animation import FuncAnimation
 def hardContact(r, rmin, ramx, l_0,K):
     V = K*(r-l_0)**2
     F = -2*K*(r-l_0)
@@ -133,7 +135,7 @@ class PolymerSimulationParameters():
         return self.runLength
 
 class PolymerSimulation():
-    def __init__(self,name=None,parameter=None,initializer='--mode=cpu'):
+    def __init__(self,name=None,parameter=None,initializer='--mode=gpu'):
         hoomd.context.initialize(initializer)
         self.parameter = parameter
         if name is None:
@@ -154,7 +156,7 @@ class PolymerSimulation():
 
     def run(self,forceRange=None):
         self.setupFileSystem()
-        for i in range(int(forceRange[2])+1):
+        for i in range(int(forceRange[2])):
             conv = round((forceRange[1]-forceRange[0])/forceRange[2]*i + forceRange[0],int(math.log(forceRange[2])))
             gsdname="polymer_" + str(conv).replace(".","_") + ".gsd"
             energyname = "energy_" + str(conv).replace(".","_") + ".log"
@@ -164,11 +166,13 @@ class PolymerSimulation():
                           overwrite=True);
 
             self.tensionForce = hoomd.md.force.constant(group=self.pulley , fvec=(conv,self.parameter.getPullForce(),0.0))
-            hoomd.dump.gsd(gsdname, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True);
 
             self.parameter.setSheerForce(conv)
 
             hoomd.run(self.parameter.getRunLength())
+
+            hoomd.dump.gsd(gsdname, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True);
+            hoomd.run(self.parameter.getRunLength()/3)
             dirname = "simulationForce_" + str(conv).replace(".","_")
             os.system("mkdir " + self.DirectoryName + "/" + self.currentSimulation + "/" +dirname)
             #print(self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
@@ -313,7 +317,7 @@ class PolymerSimulation():
 
         self.boxdim=[0,0]
         self.boxdim[0] = self.parameter.getNumberChains()
-        self.boxdim[1] = self.parameter.getLength()*16
+        self.boxdim[1] = self.parameter.getLength()*2
 
         boundary = hoomd.data.boxdim(Lx = self.boxdim[0]+1, Ly = self.boxdim[1], dimensions=2)
         snapshot = hoomd.data.make_snapshot(N=  int(self.parameter.getNumberChains()  *  self.parameter.getLength()), box=boundary, particle_types=types, bond_types=['polymer'])
@@ -375,14 +379,32 @@ class DataVisualizer():
                 #(gsdFileLocations[i-2])
 
                 self.name = str(gsdFileLocations[i]).split('/')[-1].split('.')[0]
-                location = str(gsdFileLocations).split('/')[0] + "/" + str(gsdFileLocations).split('/')[1] + "/" + str(gsdFileLocations).split('/')[2] + "/"
+                location = str(gsdFileLocations).split('/')[0] + "/" + str(gsdFileLocations).split('/')[1] + "/" + str(gsdFileLocations).split('/')[2] + "/ "
 
                 self.getSimulationParameters(simulationParameterLocations[i])
                 self.constructPolymerObjects(gsdFileLocations[i])
                 self.constructGeneralPolymerProfiles(saveLocation = location)
                 self.getPositionProbabilityData(name = self.name + "_pos_density",location=location)
+                self.animatePositionData(fps=100)
+        def animatePositionData(self,fps=500,Interval = 0):
+            fig, ax = plt.subplots()
+            fig.set_tight_layout(True)
 
+            def update(i):
 
+                # Update the line and the axes (with a new xlabel). Return a tuple of
+                # "artists" that have to be redrawn for this frame.
+
+                x = self.gsd_data[int(i)].particles.position[:,0]
+                y = self.gsd_data[int(i)].particles.position[:,1]
+                ax.clear()
+                ax.plot(x,y)
+                ax.plot(x,y,'o')
+                ax.set_xlabel(str(i) + "/" + str(len(self.gsd_data)))
+                return ax
+            anim = FuncAnimation(fig, update, frames=numpy.arange(int(len(self.gsd_data)*Interval), len(self.gsd_data)), interval=int(fps))
+            anim.save(self.name +'.gif', dpi=80, writer='imagemagick')
+            print("finished")
         def getSimulationParameters(self,fileLocation):
             file = open(fileLocation,'r');
             data = []
@@ -424,19 +446,25 @@ class DataVisualizer():
         def constructGeneralPolymerProfiles(self,savePlot = True,saveLocation=""):
 
             if savePlot == True:
-                plt.clf()
                 for i in range(len(self.polymers)):
+                    plt.clf()
 
                     generalProfileWidths = self.polymers[i].getWidths()
-                    y = range(len(generalProfileWidths),0,-1)
+                    #y = range(len(generalProfileWidths),0,-1)
+                    y = range(len(generalProfileWidths))
                     mu = self.polymers[i].getMean()
                     print(mu)
-                    x =  numpy.linspace(-3 + mu, 3 + mu, 120)
-
+                    #x =  numpy.linspace(-1 + mu, 1 + mu, 120)
+                    x = [mu]*len(y)
+                    xerr = []
                     for j in range(len(y)):
-                        plt.plot(x, self.gaussian(x, mu , generalProfileWidths[j][0]) + j*self.parameters.getPairRadiusEqualibrium(),color='k')
-                plt.savefig(self.name + "_widths.png")
-                #os.system("mv " + self.name + ".png " + saveLocation)
+                        xerr.append(generalProfileWidths[j][0])
+                    plt.errorbar(x,y,xerr=xerr)
+                    #for j in range(len(y)):
+                    #
+                        #plt.plot(x, self.gaussian(x, mu , generalProfileWidths[j][0]) + 3*j,color='k',linewidth = 1)
+                    plt.savefig(self.name + "_p" + str(i)+"_widths.png")
+                    os.system("mv " + self.name + "_p" + str(i)+ ".png " + saveLocation)
 
 
 
@@ -445,7 +473,7 @@ class DataVisualizer():
 
         def getPositionProbabilityData(self,rez=None,Interval=0,name = "foo",location=""):
             if rez == None:
-                rez = [100,100]
+                rez = [200,200]
 
 
             p = []
@@ -495,7 +523,6 @@ class PolymerObject():
     def calculateTilt(self):
         self.tilt = 0
         self.mean = sum(self.particle[0][0])/len(self.particle[0][0])
-        print(self.particle[0][0])
         rise = 0
         run =0
         for i in range(len(self.particle[0][0])):

@@ -101,9 +101,6 @@ class Analyze():
     def plotPositionData(self,fps=500,Interval = 0):
         fig, ax = plt.subplots()
         fig.set_tight_layout(True)
-        a,b = self.find_max(self.gsd_data)
-        ax.set_xlim([-a,a])
-        ax.set_ylim([0,b])
 
         def update(i):
 
@@ -113,8 +110,6 @@ class Analyze():
             x = self.gsd_data[int(i)].particles.position[:,0]
             y = self.gsd_data[int(i)].particles.position[:,1]
             ax.clear()
-            ax.set_xlim(-a,a)
-            ax.set_ylim(-b,b)
             ax.plot(x,y)
             ax.plot(x,y,'o')
             ax.set_xlabel(str(i) + "/" + str(len(self.gsd_data)))
