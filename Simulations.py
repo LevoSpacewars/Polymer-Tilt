@@ -8,7 +8,6 @@ import numpy
 import gsd
 import gsd.hoomd
 from matplotlib import pyplot as plt
-
 from matplotlib.animation import FuncAnimation
 def hardContact(r, rmin, ramx, l_0,K):
     V = K*(r-l_0)**2
@@ -16,7 +15,7 @@ def hardContact(r, rmin, ramx, l_0,K):
     return (V,F)
 
 def harmonicF(r, rmin, rmax,l_0,l_max,K):
-    if r < l_0:
+    if r < (l_0-l_max + 0.00001):
         V = K*(r-l_0)**2
         F = -2*K*(r-l_0)
         return (V,F)
@@ -135,9 +134,10 @@ class PolymerSimulationParameters():
         return self.runLength
 
 class PolymerSimulation():
-    def __init__(self,name=None,parameter=None,initializer='--mode=gpu'):
+    def __init__(self,name=None,parameter=None,initializer='--mode=cpu'):
         hoomd.context.initialize(initializer)
         self.parameter = parameter
+        random.seed(1)
         if name is None:
 
             self.setupFileSystem(True)
@@ -169,10 +169,10 @@ class PolymerSimulation():
 
             self.parameter.setSheerForce(conv)
 
+            hoomd.dump.gsd(gsdname, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True);
             hoomd.run(self.parameter.getRunLength())
 
-            hoomd.dump.gsd(gsdname, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True);
-            hoomd.run(self.parameter.getRunLength()/3)
+
             dirname = "simulationForce_" + str(conv).replace(".","_")
             os.system("mkdir " + self.DirectoryName + "/" + self.currentSimulation + "/" +dirname)
             #print(self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
@@ -244,7 +244,8 @@ class PolymerSimulation():
         harmonic = hoomd.md.bond.table(width = 10000000);
         harmonic.bond_coeff.set('polymer', func = harmonicF,rmin=0, rmax=rmax,coeff = dict(l_0=l_0,l_max=l_max,K=K));
 
-
+        # fene = hoomd.md.bond.fene()
+        # fene.bond_coeff.set('polymer', k=10**3, r0=6.0, sigma=0.0, epsilon= 0.0)
 
         self.tensionForce = hoomd.md.force.constant(group = self.pulley, fvec=(0.0,pull,0.0))  # ?
         periodic = hoomd.md.external.periodic()
@@ -389,6 +390,21 @@ class DataVisualizer():
         def animatePositionData(self,fps=500,Interval = 0):
             fig, ax = plt.subplots()
             fig.set_tight_layout(True)
+            xmax = self.gsd_data[0].particles.position[:,0][0]
+            xmin = xmax
+            ymax = self.gsd_data[0].particles.position[:,1][0]
+            ymin = ymax
+            for i in range(len(self.gsd_data)):
+                for j in range(len(self.gsd_data[int(i)].particles.position[:,0])):
+                    if self.gsd_data[int(i)].particles.position[:,0][j] < xmin:
+                        xmin = self.gsd_data[int(i)].particles.position[:,0][j]
+                    if self.gsd_data[int(i)].particles.position[:,0][j] > xmax:
+                        xmax = self.gsd_data[int(i)].particles.position[:,0][j]
+
+                    if self.gsd_data[int(i)].particles.position[:,1][j] < ymin:
+                        ymin = self.gsd_data[int(i)].particles.position[:,1][j]
+                    if self.gsd_data[int(i)].particles.position[:,1][j] > ymin:
+                        ymax = self.gsd_data[int(i)].particles.position[:,1][j]
 
             def update(i):
 
@@ -400,6 +416,8 @@ class DataVisualizer():
                 ax.clear()
                 ax.plot(x,y)
                 ax.plot(x,y,'o')
+                ax.set_xlim(xmin,xmax)
+                ax.set_ylim(ymin,ymax)
                 ax.set_xlabel(str(i) + "/" + str(len(self.gsd_data)))
                 return ax
             anim = FuncAnimation(fig, update, frames=numpy.arange(int(len(self.gsd_data)*Interval), len(self.gsd_data)), interval=int(fps))
