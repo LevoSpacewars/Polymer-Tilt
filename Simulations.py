@@ -9,6 +9,7 @@ import gsd
 import gsd.hoomd
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
+circles = False
 def hardContact(r, rmin, ramx, l_0,K):
     V = K*(r-l_0)**2
     F = -2*K*(r-l_0)
@@ -19,9 +20,15 @@ def harmonicF(r, rmin, rmax,l_0,l_max,K):
         V = K*(r-l_0)**2
         F = -2*K*(r-l_0)
         return (V,F)
+    if r >= (l_0 + l_max):
+        V = - 0.5*K*l_max**2*math.log(1-(l_max-0.001)**2/l_max**2)
+        F =  - (K*(l_max-0.001))/(1-(l_max-0.001)**2/l_max**2)
+        # V = K*(r-l_0)**6
+        # F = -5*K*(r-l_0)**5
+        return (V,F)
 
-    V = - K*l_max**2/2*math.log(1-(r-l_0)**2/l_max**2)
-    F = - (K*(r-l_0))/(1-(r-l_0)**2/l_max**2)
+    V = - 0.5*K*l_max**2*math.log(1-(r-l_0)**2/l_max**2)
+    F =  - (K*(r-l_0))/(1-(r-l_0)**2/l_max**2)
     return (V,F)
 
 
@@ -134,10 +141,10 @@ class PolymerSimulationParameters():
         return self.runLength
 
 class PolymerSimulation():
-    def __init__(self,name=None,parameter=None,initializer='--mode=cpu'):
+    def __init__(self,name=None,parameter=None,initializer='--mode=gpu'):
         hoomd.context.initialize(initializer)
         self.parameter = parameter
-        random.seed(1)
+        random.seed()
         if name is None:
 
             self.setupFileSystem(True)
@@ -212,6 +219,7 @@ class PolymerSimulation():
 
 
     def initializeForces(self):
+        added = 1
         lines       = self.parameter.getNumberChains()
         length      = self.parameter.getLength()
         l_0         = self.parameter.getPairRadiusEqualibrium()
@@ -219,7 +227,7 @@ class PolymerSimulation():
         K           = self.parameter.getPairPotentialStrength()
         amplitude   = self.parameter.getPeriodicAmplitude()
         pull        = self.parameter.getPullForce()
-        rmax        = l_0 + l_max - 0.000001
+        rmax        = l_0 + l_max - 0.000000000001
 
         self.all    = hoomd.group.all()
         self.anchor = hoomd.group.type(name='anchor', type='A')
@@ -230,7 +238,7 @@ class PolymerSimulation():
 
 
 
-        table = hoomd.md.pair.table(width=100000, nlist=nl) #I think the radius cut is the ran
+        table = hoomd.md.pair.table(width=1000000, nlist=nl) #I think the radius cut is the ran
         table.pair_coeff.set('A', 'A', func=hardContact,rmin=0,rmax=l_0, coeff=dict(l_0=l_0, K=K))
         table.pair_coeff.set('A', 'B', func=hardContact,rmin=0,rmax=l_0, coeff=dict(l_0=l_0, K=K))
         table.pair_coeff.set('B', 'B', func=hardContact,rmin=0,rmax=l_0, coeff=dict(l_0=l_0, K=K))
@@ -242,16 +250,16 @@ class PolymerSimulation():
         nl.reset_exclusions(exclusions = [])
 
         harmonic = hoomd.md.bond.table(width = 10000000);
-        harmonic.bond_coeff.set('polymer', func = harmonicF,rmin=0, rmax=rmax,coeff = dict(l_0=l_0,l_max=l_max,K=K));
+        harmonic.bond_coeff.set('polymer', func = harmonicF,rmin=0, rmax=10,coeff = dict(l_0=l_0,l_max=l_max,K=K));
 
         # fene = hoomd.md.bond.fene()
         # fene.bond_coeff.set('polymer', k=10**3, r0=6.0, sigma=0.0, epsilon= 0.0)
 
         self.tensionForce = hoomd.md.force.constant(group = self.pulley, fvec=(0.0,pull,0.0))  # ?
         periodic = hoomd.md.external.periodic()
-        periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=lines)
-        periodic.force_coeff.set('B', A=amplitude, i=0, w=1, p=lines)
-        periodic.force_coeff.set('C', A=amplitude, i=0, w=1, p=lines)
+        periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=lines+added)
+        periodic.force_coeff.set('B', A=amplitude, i=0, w=1, p=lines+added)
+        periodic.force_coeff.set('C', A=amplitude, i=0, w=1, p=lines+added)
 
         periodic.force_coeff.set('A', A=-10000000.0, i=1, w=1, p=5)
 
@@ -318,7 +326,7 @@ class PolymerSimulation():
 
         self.boxdim=[0,0]
         self.boxdim[0] = self.parameter.getNumberChains()
-        self.boxdim[1] = self.parameter.getLength()*2
+        self.boxdim[1] = self.parameter.getLength()*16
 
         boundary = hoomd.data.boxdim(Lx = self.boxdim[0]+1, Ly = self.boxdim[1], dimensions=2)
         snapshot = hoomd.data.make_snapshot(N=  int(self.parameter.getNumberChains()  *  self.parameter.getLength()), box=boundary, particle_types=types, bond_types=['polymer'])
@@ -403,8 +411,12 @@ class DataVisualizer():
 
                     if self.gsd_data[int(i)].particles.position[:,1][j] < ymin:
                         ymin = self.gsd_data[int(i)].particles.position[:,1][j]
-                    if self.gsd_data[int(i)].particles.position[:,1][j] > ymin:
+                    if self.gsd_data[int(i)].particles.position[:,1][j] > ymax:
                         ymax = self.gsd_data[int(i)].particles.position[:,1][j]
+            artists = []
+            for i in range(len(self.gsd_data[0].particles.position)):
+                drawer = plt.Circle([0,0],radius=0.3,color='b',linewidth=0.5,fill=False, clip_on = False)
+                artists.append(drawer)
 
             def update(i):
 
@@ -414,8 +426,15 @@ class DataVisualizer():
                 x = self.gsd_data[int(i)].particles.position[:,0]
                 y = self.gsd_data[int(i)].particles.position[:,1]
                 ax.clear()
-                ax.plot(x,y)
-                ax.plot(x,y,'o')
+                if circles == True:
+                    for j in range(len(x)):
+                        artists[j].center = (x[j],y[j])
+                        ax.add_patch(artists[j])
+                for i in range(self.parameters.getNumberChains()):
+                    length = self.parameters.getLength()
+                    ax.plot(x[i*length:i*length + length],y[i*length:i*length + length])
+                    ax.plot(x[i*length:i*length + length],y[i*length:i*length + length],'o')
+
                 ax.set_xlim(xmin,xmax)
                 ax.set_ylim(ymin,ymax)
                 ax.set_xlabel(str(i) + "/" + str(len(self.gsd_data)))
@@ -470,7 +489,7 @@ class DataVisualizer():
                     generalProfileWidths = self.polymers[i].getWidths()
                     #y = range(len(generalProfileWidths),0,-1)
                     y = range(len(generalProfileWidths))
-                    mu = self.polymers[i].getMean()
+                    mu = 0
                     print(mu)
                     #x =  numpy.linspace(-1 + mu, 1 + mu, 120)
                     x = [mu]*len(y)
@@ -491,7 +510,7 @@ class DataVisualizer():
 
         def getPositionProbabilityData(self,rez=None,Interval=0,name = "foo",location=""):
             if rez == None:
-                rez = [200,200]
+                rez = [100,100]
 
 
             p = []
