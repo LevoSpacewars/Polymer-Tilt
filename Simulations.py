@@ -219,7 +219,7 @@ class PolymerSimulation():
 
 
     def initializeForces(self):
-        added = 1
+        added = 0
         lines       = self.parameter.getNumberChains()
         length      = self.parameter.getLength()
         l_0         = self.parameter.getPairRadiusEqualibrium()
@@ -261,7 +261,7 @@ class PolymerSimulation():
         periodic.force_coeff.set('B', A=amplitude, i=0, w=1, p=lines+added)
         periodic.force_coeff.set('C', A=amplitude, i=0, w=1, p=lines+added)
 
-        periodic.force_coeff.set('A', A=-10000000.0, i=1, w=1, p=5)
+        periodic.force_coeff.set('A', A=-10000000.0, i=1, w=1, p=100)
 
 
     def definePositions(self):

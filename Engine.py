@@ -3,9 +3,9 @@ import Simulations
 
 parameters = Simulations.PolymerSimulationParameters()
 dt = 0.0000001
-runl = 100000000
+runl = 1000000000
 vAverage = 0.05
-vs = 1000000
+vs = 10000000
 print("\n\n\n\n\n")
 parameters.setLength(100)
 parameters.setNumberChains(8)
