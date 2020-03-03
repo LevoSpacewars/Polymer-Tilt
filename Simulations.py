@@ -276,7 +276,7 @@ class PolymerSimulation():
             y = 0
 
             for j in range(length):
-                y = y + random.uniform(l_0, l_max)
+                y = y + random.uniform(l_0, l_max-0.001)
                 pos.append([x,y,0])
 
         return pos
@@ -443,7 +443,7 @@ class DataVisualizer():
                 y = self.gsd_data[int(i)].particles.position[:,1]
 
                 ax.clear()
-                ax.imshow(potential,extent=[-self.parameters.getNumberChains()/2,self.parameters.getNumberChains()/2,0,10])
+                ax.imshow(potential,extent=[-self.parameters.getNumberChains()/2,self.parameters.getNumberChains()/2,0,20])
                 if circles == True:
                     for j in range(len(x)):
                         artists[j].center = (x[j],y[j])
@@ -586,8 +586,8 @@ class PolymerObject():
             run += self.particle[0][-1][i] - self.particle[0][0][i]
             rise += self.particle[1][-1][i] - self.particle[1][0][i]
             x0 += self.particle[0][0][i]
-        self.x0 = x0/(int(len(self.particle[0][0])*0.5))
-        self.tilt = run/rise * 1/(int(len(self.particle[0][0])*0.5))
+        self.x0 = x0/((len(self.particle[0][0])*0.5))
+        self.tilt = run/rise * 1/((len(self.particle[0][0])*0.5))
     def getBaseLocation(self):
         return self.x0
     def getTilt(self):
