@@ -6,7 +6,7 @@ runl = 10000000
 vAverage = 0.05
 vs = 100000
 print("\n\n\n\n\n")
-parameters.setLength(10)
+parameters.setLength(100)
 parameters.setNumberChains(8)
 parameters.setPairRadius(.3)
 parameters.setPairPotentialStrength(10e4)
