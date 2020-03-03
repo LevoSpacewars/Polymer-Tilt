@@ -1,13 +1,12 @@
 import Simulations
 
-
 parameters = Simulations.PolymerSimulationParameters()
 dt = 0.0000001
-runl = 1000000000
+runl = 10000000
 vAverage = 0.05
-vs = 10000000
+vs = 100000
 print("\n\n\n\n\n")
-parameters.setLength(100)
+parameters.setLength(10)
 parameters.setNumberChains(8)
 parameters.setPairRadius(.3)
 parameters.setPairPotentialStrength(10e4)

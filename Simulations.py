@@ -141,7 +141,7 @@ class PolymerSimulationParameters():
         return self.runLength
 
 class PolymerSimulation():
-    def __init__(self,name=None,parameter=None,initializer='--mode=gpu'):
+    def __init__(self,name=None,parameter=None,initializer='--mode=cpu'):
         hoomd.context.initialize(initializer)
         self.parameter = parameter
         random.seed()
@@ -395,13 +395,28 @@ class DataVisualizer():
                 self.constructGeneralPolymerProfiles(saveLocation = location)
                 self.getPositionProbabilityData(name = self.name + "_pos_density",location=location)
                 self.animatePositionData(fps=100)
+
+        def generatePotential(self,dimx,rez):
+            boxdimx = dimx
+            rez=rez
+            p=[]
+            for i in range(rez):
+                p.append([])
+                for j in range(rez):
+                    p[-1].append(math.cos(j*2*math.pi/rez*boxdimx - boxdimx/2))
+
+            return p
+
+
         def animatePositionData(self,fps=500,Interval = 0):
+
             fig, ax = plt.subplots()
             fig.set_tight_layout(True)
             xmax = self.gsd_data[0].particles.position[:,0][0]
             xmin = xmax
             ymax = self.gsd_data[0].particles.position[:,1][0]
             ymin = ymax
+
             for i in range(len(self.gsd_data)):
                 for j in range(len(self.gsd_data[int(i)].particles.position[:,0])):
                     if self.gsd_data[int(i)].particles.position[:,0][j] < xmin:
@@ -413,6 +428,7 @@ class DataVisualizer():
                         ymin = self.gsd_data[int(i)].particles.position[:,1][j]
                     if self.gsd_data[int(i)].particles.position[:,1][j] > ymax:
                         ymax = self.gsd_data[int(i)].particles.position[:,1][j]
+            potential = self.generatePotential(self.parameters.getNumberChains(),1000)
             artists = []
             for i in range(len(self.gsd_data[0].particles.position)):
                 drawer = plt.Circle([0,0],radius=0.3,color='b',linewidth=0.5,fill=False, clip_on = False)
@@ -425,7 +441,9 @@ class DataVisualizer():
 
                 x = self.gsd_data[int(i)].particles.position[:,0]
                 y = self.gsd_data[int(i)].particles.position[:,1]
+
                 ax.clear()
+                ax.imshow(potential,extent=[-self.parameters.getNumberChains()/2,self.parameters.getNumberChains()/2,0,10])
                 if circles == True:
                     for j in range(len(x)):
                         artists[j].center = (x[j],y[j])
@@ -489,10 +507,11 @@ class DataVisualizer():
                     generalProfileWidths = self.polymers[i].getWidths()
                     #y = range(len(generalProfileWidths),0,-1)
                     y = range(len(generalProfileWidths))
-                    mu = 0
+                    mu = self.polymers[i].getTilt()
                     print(mu)
+                    x0 = self.polymers[i].getBaseLocation()
                     #x =  numpy.linspace(-1 + mu, 1 + mu, 120)
-                    x = [mu]*len(y)
+                    x = y*mu + x0
                     xerr = []
                     for j in range(len(y)):
                         xerr.append(generalProfileWidths[j][0])
@@ -562,14 +581,15 @@ class PolymerObject():
         self.mean = sum(self.particle[0][0])/len(self.particle[0][0])
         rise = 0
         run =0
-        for i in range(len(self.particle[0][0])):
-            run += self.particle[0][-1][i]
-            run -= self.particle[0][0][i]
-            rise += self.particle[1][-1][i]
-            rise -= self.particle[1][0][i]
-
-        self.tilt = run/rise * 1/len(self.particle[0][0])
-
+        x0=0
+        for i in range(int(0.5*len(self.particle[0][0])),len(self.particle[0][0])):
+            run += self.particle[0][-1][i] - self.particle[0][0][i]
+            rise += self.particle[1][-1][i] - self.particle[1][0][i]
+            x0 += self.particle[0][0][i]
+        self.x0 = x0/(int(len(self.particle[0][0])*0.5))
+        self.tilt = run/rise * 1/(int(len(self.particle[0][0])*0.5))
+    def getBaseLocation(self):
+        return self.x0
     def getTilt(self):
         return self.tilt
     def getMean(self):
