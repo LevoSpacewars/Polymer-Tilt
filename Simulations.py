@@ -443,7 +443,7 @@ class DataVisualizer():
                 y = self.gsd_data[int(i)].particles.position[:,1]
 
                 ax.clear()
-                ax.imshow(potential,extent=[-self.parameters.getNumberChains()/2,self.parameters.getNumberChains()/2,0,20])
+                ax.imshow(potential,extent=[xmin,xmax,ymin,ymax])
                 if circles == True:
                     for j in range(len(x)):
                         artists[j].center = (x[j],y[j])
