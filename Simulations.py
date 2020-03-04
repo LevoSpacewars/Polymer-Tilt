@@ -328,7 +328,7 @@ class PolymerSimulation():
         self.boxdim[0] = self.parameter.getNumberChains()
         self.boxdim[1] = self.parameter.getLength()*16
 
-        boundary = hoomd.data.boxdim(Lx = self.boxdim[0]+1, Ly = self.boxdim[1], dimensions=2)
+        boundary = hoomd.data.boxdim(Lx = self.boxdim[0], Ly = self.boxdim[1], dimensions=2)
         snapshot = hoomd.data.make_snapshot(N=  int(self.parameter.getNumberChains()  *  self.parameter.getLength()), box=boundary, particle_types=types, bond_types=['polymer'])
 
         pos     = self.definePositions()
@@ -344,7 +344,6 @@ class PolymerSimulation():
         snapshot.particles.mass[:] = mass
 
         hoomd.init.read_snapshot(snapshot)
-
 
     def simulationReadMeDump(self,force = None,name=None, dir=None):
         text = None
@@ -403,7 +402,7 @@ class DataVisualizer():
             for i in range(rez):
                 p.append([])
                 for j in range(rez):
-                    p[-1].append(math.cos(j*2*math.pi/rez*boxdimx - boxdimx/2))
+                    p[-1].append(-math.cos(j*2*math.pi/rez*boxdimx - boxdimx/2))
 
             return p
 
@@ -443,7 +442,7 @@ class DataVisualizer():
                 y = self.gsd_data[int(i)].particles.position[:,1]
 
                 ax.clear()
-                ax.imshow(potential,extent=[xmin,xmax,ymin,ymax])
+                ax.imshow(potential,extent=[-self.parameters.getNumberChains()/2,self.parameters.getNumberChains()/2,ymin,ymax])
                 if circles == True:
                     for j in range(len(x)):
                         artists[j].center = (x[j],y[j])
