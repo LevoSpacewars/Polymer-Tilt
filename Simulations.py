@@ -141,7 +141,7 @@ class PolymerSimulationParameters():
         return self.runLength
 
 class PolymerSimulation():
-    def __init__(self,name=None,parameter=None,initializer='--mode=cpu'):
+    def __init__(self,name=None,parameter=None,initializer='--mode=gpu'):
         hoomd.context.initialize(initializer)
         self.parameter = parameter
         random.seed()
@@ -173,7 +173,7 @@ class PolymerSimulation():
                           overwrite=True);
 
             self.tensionForce = hoomd.md.force.constant(group=self.pulley , fvec=(conv,self.parameter.getPullForce(),0.0))
-
+            self.tensionForce = hoomd.md.force.constant(group=self.anchor , fvec=(-conv,0,0))
             self.parameter.setSheerForce(conv)
 
             hoomd.dump.gsd(gsdname, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True);
