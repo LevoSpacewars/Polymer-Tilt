@@ -238,7 +238,7 @@ class PolymerSimulation():
 
 
 
-        table = hoomd.md.pair.table(width=1000000, nlist=nl) #I think the radius cut is the ran
+        table = hoomd.md.pair.table(width=10000, nlist=nl) #I think the radius cut is the ran
         table.pair_coeff.set('A', 'A', func=hardContact,rmin=0,rmax=l_0, coeff=dict(l_0=l_0, K=K))
         table.pair_coeff.set('A', 'B', func=hardContact,rmin=0,rmax=l_0, coeff=dict(l_0=l_0, K=K))
         table.pair_coeff.set('B', 'B', func=hardContact,rmin=0,rmax=l_0, coeff=dict(l_0=l_0, K=K))
@@ -249,7 +249,7 @@ class PolymerSimulation():
 
         nl.reset_exclusions(exclusions = [])
 
-        harmonic = hoomd.md.bond.table(width = 10000000);
+        harmonic = hoomd.md.bond.table(width = 100000);
         harmonic.bond_coeff.set('polymer', func = harmonicF,rmin=0, rmax=10,coeff = dict(l_0=l_0,l_max=l_max,K=K));
 
         # fene = hoomd.md.bond.fene()
@@ -380,11 +380,9 @@ class DataVisualizer():
             location = basedirectory
             gsdFileLocations = [file for file in glob.glob(location + "**/*.gsd", recursive=True)]
             simulationParameterLocations = [file for file in glob.glob(location + "**/*.txt", recursive=True)]
-            #print(simulationParameterLocations)
-            #print(len(simulationParameterLocations))
+
+
             for i in range(len(simulationParameterLocations)):
-                #print(simulationParameterLocations[i])
-                #(gsdFileLocations[i-2])
 
                 self.name = str(gsdFileLocations[i]).split('/')[-1].split('.')[0]
                 location = str(gsdFileLocations).split('/')[0] + "/" + str(gsdFileLocations).split('/')[1] + "/" + str(gsdFileLocations).split('/')[2] + "/ "
@@ -394,6 +392,7 @@ class DataVisualizer():
                 self.constructGeneralPolymerProfiles(saveLocation = location)
                 self.getPositionProbabilityData(name = self.name + "_pos_density",location=location)
                 self.animatePositionData(fps=100)
+
 
         def generatePotential(self,dimx,rez):
             boxdimx = dimx
@@ -409,7 +408,7 @@ class DataVisualizer():
 
         def animatePositionData(self,fps=500,Interval = 0):
 
-            fig, ax = plt.subplots()
+            fig, ax = plt.subplots(figsize=(7,7))
             fig.set_tight_layout(True)
             xmax = self.gsd_data[0].particles.position[:,0][0]
             xmin = xmax
@@ -459,6 +458,8 @@ class DataVisualizer():
             anim = FuncAnimation(fig, update, frames=numpy.arange(int(len(self.gsd_data)*Interval), len(self.gsd_data)), interval=int(fps))
             anim.save(self.name +'.gif', dpi=80, writer='imagemagick')
             print("finished")
+
+
         def getSimulationParameters(self,fileLocation):
             file = open(fileLocation,'r');
             data = []
@@ -470,7 +471,6 @@ class DataVisualizer():
             self.parameters = PolymerSimulationParameters(data=data)
 
             file.close()
-
 
         def constructPolymerObjects(self,fileLocation):
 
@@ -488,9 +488,10 @@ class DataVisualizer():
                     y.append([])
                     for k in range(int(len(self.gsd_data)*self.interval),len(self.gsd_data)):
 
-                        x[-1].append(self.gsd_data[k].particles.position[i*self.parameters.getNumberChains() + j,0])
-                        y[-1].append(self.gsd_data[k].particles.position[i*self.parameters.getNumberChains() + j,1])
+                        x[-1].append(self.gsd_data[k].particles.position[i*self.parameters.getLength() + j,0])
 
+                        y[-1].append(self.gsd_data[k].particles.position[i*self.parameters.getLength() + j,1])
+                    print(i*self.parameters.getNumberChains()+j)
                 self.polymers.append(PolymerObject([x,y]))
 
 
@@ -502,24 +503,30 @@ class DataVisualizer():
             if savePlot == True:
                 for i in range(len(self.polymers)):
                     plt.clf()
-
+                    print(i)
                     generalProfileWidths = self.polymers[i].getWidths()
                     #y = range(len(generalProfileWidths),0,-1)
-                    y = range(len(generalProfileWidths))
-                    mu = self.polymers[i].getTilt()
-                    print(mu)
-                    x0 = self.polymers[i].getBaseLocation()
-                    #x =  numpy.linspace(-1 + mu, 1 + mu, 120)
-                    x = y*mu + x0
+                    y=[]
+                    x=[]
+                    mu = self.polymers[i].getMean()
+                    for j in range(len(generalProfileWidths)):
+                        y.append(mu[j][1])
+                        x.append(mu[j][0])
+
                     xerr = []
                     for j in range(len(y)):
                         xerr.append(generalProfileWidths[j][0])
-                    plt.errorbar(x,y,xerr=xerr)
-                    #for j in range(len(y)):
-                    #
-                        #plt.plot(x, self.gaussian(x, mu , generalProfileWidths[j][0]) + 3*j,color='k',linewidth = 1)
-                    plt.savefig(self.name + "_p" + str(i)+"_widths.png")
-                    os.system("mv " + self.name + "_p" + str(i)+ ".png " + saveLocation)
+
+                    plt.plot(x,y)
+                    plt.errorbar(x,y,xerr=xerr,fmt='o')
+                    t = numpy.linspace(start=-len(self.polymers)/2, stop=len(self.polymers)/2, num=50)
+                    for j in range(len(y)):
+                        plt.plot(t, self.gaussian(t, x[j] , generalProfileWidths[j][0]) + y[j],color='k',linewidth = 1)
+                    print(self.name + "_" + str(i)+"_widths.png")
+                    plt.savefig(self.name + "_" + str(i)+"_widths.png")
+
+
+                    #os.system("mv " + self.name + "_p" + str(i)+ ".png " + saveLocation)
 
 
 
@@ -549,11 +556,11 @@ class DataVisualizer():
 
             #Plot heatmap
             plt.clf()
+
             plt.title('heatmap test')
             plt.ylabel('y')
             plt.xlabel('x')
             plt.hist2d(p_t[0],p_t[1],bins=(rez[0],rez[1]))
-            plt.savefig(name + ".png")
             os.system("mv " +name+".png " + location )
 
 
@@ -562,8 +569,16 @@ class DataVisualizer():
 class PolymerObject():
     def __init__(self,data):
         self.particle = data
+        x = []
+        y = []
+
+        for i in range(len(data[0])):
+                x.append(data[0][i][10])
+                y.append(data[1][i][10])
+        plt.plot(x,y,'o')
+        plt.plot(x,y)
+        plt.savefig("TEST.png")
         self.generateWidths()
-        self.calculateTilt()
     def getParticleData(self,id):
         return [self.particle[0][id],self.particle[1][id]]
 
@@ -572,27 +587,18 @@ class PolymerObject():
 
     def generateWidths(self):
         self.particleWidth = []
+        self.particleMean = []
         for i in range(len(self.particle[0])):
             self.particleWidth.append([   self.stdDev(self.particle[0][i])  , self.stdDev(self.particle[1][i])])
+            self.particleMean.append([self.calculateMean(self.particle[0][i]),self.calculateMean(self.particle[1][i])])
 
-    def calculateTilt(self):
-        self.tilt = 0
-        self.mean = sum(self.particle[0][0])/len(self.particle[0][0])
-        rise = 0
-        run =0
-        x0=0
-        for i in range(int(0.5*len(self.particle[0][0])),len(self.particle[0][0])):
-            run += self.particle[0][-1][i] - self.particle[0][0][i]
-            rise += self.particle[1][-1][i] - self.particle[1][0][i]
-            x0 += self.particle[0][0][i]
-        self.x0 = x0/((len(self.particle[0][0])*0.5))
-        self.tilt = run/rise * 1/((len(self.particle[0][0])*0.5))
-    def getBaseLocation(self):
-        return self.x0
-    def getTilt(self):
-        return self.tilt
+
+
+    def calculateMean(self,arr):
+        return sum(arr)/len(arr)
+
     def getMean(self):
-        return self.mean
+        return self.particleMean
     def getWidths(self):
         return self.particleWidth
 
