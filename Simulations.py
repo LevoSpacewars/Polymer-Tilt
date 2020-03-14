@@ -141,7 +141,7 @@ class PolymerSimulationParameters():
         return self.runLength
 
 class PolymerSimulation():
-    def __init__(self,name=None,parameter=None,initializer='--mode=gpu'):
+    def __init__(self,name=None,parameter=None,initializer='--mode=cpu'):
         hoomd.context.initialize(initializer)
         self.parameter = parameter
         random.seed()
@@ -272,11 +272,11 @@ class PolymerSimulation():
         pos     = []
 
         for i in range(lines):
-            x = random.uniform(0, lines) - lines/2
+            x = i - lines/2
             y = 0
 
             for j in range(length):
-                y = y + random.uniform(l_0, l_max-0.001)
+                y = y + l_0
                 pos.append([x,y,0])
 
         return pos
@@ -391,8 +391,11 @@ class DataVisualizer():
                 self.constructPolymerObjects(gsdFileLocations[i])
                 self.constructGeneralPolymerProfiles(saveLocation = location)
                 self.getPositionProbabilityData(name = self.name + "_pos_density",location=location)
+                self.plotEnergy()
                 self.animatePositionData(fps=100)
 
+        def plotEnergy():
+            pass
 
         def generatePotential(self,dimx,rez):
             boxdimx = dimx
@@ -492,7 +495,7 @@ class DataVisualizer():
 
                         y[-1].append(self.gsd_data[k].particles.position[i*self.parameters.getLength() + j,1])
                     print(i*self.parameters.getNumberChains()+j)
-                self.polymers.append(PolymerObject([x,y]))
+                self.polymers.append(PolymerObject([x,y],L=self.parameters.getNumberChains()))
 
 
         def gaussian(self,x, mu, sig):
@@ -516,16 +519,13 @@ class DataVisualizer():
                     xerr = []
                     for j in range(len(y)):
                         xerr.append(generalProfileWidths[j][0])
-
                     plt.plot(x,y)
                     plt.errorbar(x,y,xerr=xerr,fmt='o')
-                    t = numpy.linspace(start=-len(self.polymers)/2, stop=len(self.polymers)/2, num=50)
+                    t = numpy.linspace(start=x[0]-1, stop=x[-1]+1, num=50)
                     for j in range(len(y)):
                         plt.plot(t, self.gaussian(t, x[j] , generalProfileWidths[j][0]) + y[j],color='k',linewidth = 1)
                     print(self.name + "_" + str(i)+"_widths.png")
                     plt.savefig(self.name + "_" + str(i)+"_widths.png")
-
-
                     #os.system("mv " + self.name + "_p" + str(i)+ ".png " + saveLocation)
 
 
@@ -561,13 +561,14 @@ class DataVisualizer():
             plt.ylabel('y')
             plt.xlabel('x')
             plt.hist2d(p_t[0],p_t[1],bins=(rez[0],rez[1]))
-            os.system("mv " +name+".png " + location )
+            #os.system("mv " +name+".png " + location )
 
 
 
 
 class PolymerObject():
-    def __init__(self,data):
+    def __init__(self,data,L = 0):
+        self.L = L
         self.particle = data
         x = []
         y = []
@@ -588,13 +589,23 @@ class PolymerObject():
     def generateWidths(self):
         self.particleWidth = []
         self.particleMean = []
+        self.base = self.particle[0][0][0]
         for i in range(len(self.particle[0])):
-            self.particleWidth.append([   self.stdDev(self.particle[0][i])  , self.stdDev(self.particle[1][i])])
-            self.particleMean.append([self.calculateMean(self.particle[0][i]),self.calculateMean(self.particle[1][i])])
+            self.particleWidth.append([   self.stdDevX(self.particle[0][i])  , self.stdDevY(self.particle[1][i])])
+            self.particleMean.append([self.calculateMeanX(self.particle[0][i]),self.calculateMeanY(self.particle[1][i])])
 
 
 
-    def calculateMean(self,arr):
+    def calculateMeanX(self,arr):
+        for i in range(len(arr)):
+            if arr[i] - self.base < -self.L/2:
+                arr[i] = arr[i] + self.L
+            elif arr[i] - self.base > self.L/2:
+                arr[i] = arr[i] - self.L
+
+        return sum(arr)/len(arr)
+
+    def calculateMeanY(self,arr):
         return sum(arr)/len(arr)
 
     def getMean(self):
@@ -602,11 +613,21 @@ class PolymerObject():
     def getWidths(self):
         return self.particleWidth
 
-    def stdDev(self,data):
+    def stdDevX(self,data):
+        std = 0
+        mean = self.calculateMeanX(data)
+        difference = 0
+        for i in range(len(data)):
+
+            difference += (data[i]-mean)**2
+        std = math.sqrt(1/(len(data)-1)*difference)
+        return std
+    def stdDevY(self,data):
         std = 0
         mean = sum(data)/len(data)
         difference = 0
         for i in range(len(data)):
+
             difference += (data[i]-mean)**2
         std = math.sqrt(1/(len(data)-1)*difference)
 

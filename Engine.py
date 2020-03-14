@@ -2,12 +2,12 @@ import Simulations
 import math
 parameters = Simulations.PolymerSimulationParameters()
 dt = 0.0000001
-runl = 10000000
+runl = 1000000
 vAverage = 0.05
-vs = 1000000
+vs = 90000
 A=1
 print("\n\n\n\n\n")
-parameters.setLength(50)
+parameters.setLength(10)
 parameters.setNumberChains(2)
 parameters.setPairRadius(.3)
 parameters.setPairPotentialStrength(10e4)
@@ -23,6 +23,6 @@ parameters.setRunLength(runl)
 
 sim = Simulations.PolymerSimulation(parameter=parameters)
 
-filelocation = sim.run(forceRange=[0,1/(2*math.pi),3])
+filelocation = sim.run(forceRange=[10,11,1])
 print(filelocation)
 renderer = Simulations.DataVisualizer(basedirectory=filelocation,interval=0)
