@@ -163,7 +163,6 @@ class PolymerSimulation():
 
     def run(self,forceRange=None):
         self.setupFileSystem()
-        for i in range(int(forceRange[2])):
         conv = 0
         gsdname="polymer_" + str(conv).replace(".","_") + ".gsd"
         energyname = "energy_" + str(conv).replace(".","_") + ".log"
