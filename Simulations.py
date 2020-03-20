@@ -10,6 +10,8 @@ import gsd.hoomd
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
 circles = False
+
+
 def hardContact(r, rmin, ramx, l_0,K):
     V = K*(r-l_0)**2
     F = -2*K*(r-l_0)
@@ -280,12 +282,12 @@ class PolymerSimulation():
 
         self.tensionForce = hoomd.md.force.constant(group = self.pulley, fvec=(0.0,pull,0.0))  # ?
         periodic = hoomd.md.external.periodic()
-        periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=lines+added)
+        #periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=lines+added)
         periodic.force_coeff.set('B', A=amplitude, i=0, w=1, p=lines+added)
         periodic.force_coeff.set('C', A=amplitude, i=0, w=1, p=lines+added)
 
         periodic.force_coeff.set('A', A=-10000000.0, i=1, w=1, p=100)
-
+        periodic.force_coeff.set('A', A=-10000000.0, i=0, w=1, p=100)
 
     def definePositions(self):
         lines   = self.parameter.getNumberChains()
@@ -351,7 +353,7 @@ class PolymerSimulation():
         self.boxdim[0] = self.parameter.getNumberChains()
         self.boxdim[1] = self.parameter.getLength()*16
 
-        boundary = hoomd.data.boxdim(Lx = self.boxdim[0], Ly = self.boxdim[1], dimensions=2)
+        boundary = hoomd.data.boxdim(Lx = self.boxdim[0]+50, Ly = self.boxdim[1], dimensions=2)
         snapshot = hoomd.data.make_snapshot(N=  int(self.parameter.getNumberChains()  *  self.parameter.getLength()), box=boundary, particle_types=types, bond_types=['polymer'])
 
         pos     = self.definePositions()
@@ -433,7 +435,7 @@ class DataVisualizer():
 
 
         def animatePositionData(self,fps=500,Interval = 0):
-
+            circles = False
             fig, ax = plt.subplots(figsize=(7,7))
             fig.set_tight_layout(True)
             xmax = self.gsd_data[0].particles.position[:,0][0]
@@ -586,6 +588,84 @@ class DataVisualizer():
             plt.hist2d(p_t[0],p_t[1],bins=(rez[0],rez[1]))
             #os.system("mv " +name+".png " + location )
 
+class GlobalDataAnalyzer():
+    def __init__(self):
+
+        import glob
+
+        gsdFileLocations = [file for file in glob.glob("**/*.gsd", recursive=True)]
+        simulationParameterLocations = [file for file in glob.glob("**/*.txt", recursive=True)]
+
+
+        self.parameters = []
+        self.polymers = []
+        self.interval = 0
+        for i in range(len(simulationParameterLocations)):
+
+            self.name = str(gsdFileLocations[i]).split('/')[-1].split('.')[0]
+            location = str(gsdFileLocations).split('/')[0] + "/" + str(gsdFileLocations).split('/')[1] + "/" + str(gsdFileLocations).split('/')[2] + "/" + str(gsdFileLocations).split('/')[3] + "/"
+            print(location)
+            self.getSimulationParameters(simulationParameterLocations[i])
+            self.constructPolymerObjects(gsdFileLocations[i])
+
+
+    def getSimulationParameters(self,fileLocation):
+        file = open(fileLocation,'r');
+        data = []
+        lines = file.readlines()
+        print(lines)
+        for i in range(len(lines)-1):
+            data.append(float(lines[i].split('=')[1]))
+        data.append([float(lines[len(lines)-1].split('=')[1].split(',')[0]),float(lines[len(lines)-1].split('=')[1].split(',')[1])])
+
+        self.parameters.append(PolymerSimulationParameters(data=data))
+
+        file.close()
+
+    def plotTiltbyForce(self):
+        tilt = []
+        sheerForce = []
+        length = []
+        for i in range(len(self.polymers)):
+            sheerForce.append(self.parameters[i].getSheerForce())
+            length.append(self.parameters[i].getLength())
+            tilt.append(0)
+            for j in range(len(self.polymers[i])):
+                tilt[-1] += self.polymers[i][j].getTilt()
+            tilt[-1] = tilt[-1]/len(self.polymers[i])
+
+            plt.clf()
+
+            plt.title('Force vs Tilt')
+
+            plt.plot(sheerForce,Tilt)
+            plt.savefig("forceVstilt.png")
+
+
+
+
+    def constructPolymerObjects(self,fileLocation):
+
+        self.gsd_data =gsd.hoomd.open(fileLocation,'rb')
+        self.polymers.append([])
+
+        #print(self.parameters.getNumberChains(),self.parameters.getLength(),len(self.gsd_data))
+        for i in range(int(self.parameters[-1].getNumberChains())):
+
+            x = []
+            y = []
+            for j in range(int(self.parameters[-1].getLength())):
+
+                x.append([])
+                y.append([])
+                for k in range(int(len(self.gsd_data)*self.interval),len(self.gsd_data)):
+
+                    x[-1].append(self.gsd_data[k].particles.position[i*self.parameters[-1].getLength() + j,0])
+
+                    y[-1].append(self.gsd_data[k].particles.position[i*self.parameters[-1].getLength() + j,1])
+                print(i*self.parameters[-1].getNumberChains()+j)
+            self.polymers[-1].append(PolymerObject([x,y],L=self.parameters[-1].getNumberChains()))
+
 
 
 
@@ -617,7 +697,7 @@ class PolymerObject():
             self.particleWidth.append([   self.stdDevX(self.particle[0][i])  , self.stdDevY(self.particle[1][i])])
             self.particleMean.append([self.calculateMeanX(self.particle[0][i]),self.calculateMeanY(self.particle[1][i])])
 
-
+        self.tilt = (self.particleMean[-1][1] - self.particleMean[0][1])/(self.particleMean[-1][0] - self.particleMean[0][0])
 
     def calculateMeanX(self,arr):
         for i in range(len(arr)):
@@ -627,7 +707,8 @@ class PolymerObject():
                 arr[i] = arr[i] - self.L
 
         return sum(arr)/len(arr)
-
+    def getTilt(self):
+        return self.tilt
     def calculateMeanY(self,arr):
         return sum(arr)/len(arr)
 
