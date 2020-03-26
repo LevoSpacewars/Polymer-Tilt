@@ -178,12 +178,12 @@ class PolymerSimulation():
         self.parameter.setSheerForce(conv)
 
         hoomd.dump.gsd(gsdname, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True);
-        hoomd.run(self.parameter.getRunLength())
+        hoomd.run(self.parameter.getRunLength()/10)
 
 
         dirname = "simulationForce_" + str(conv).replace(".","_")
         os.system("mkdir " + self.DirectoryName + "/" + self.currentSimulation + "/" +dirname)
-        #print(self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
+        print(self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
         self.simulationReadMeDump(force = conv, name = gsdname[0:-4], dir = self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
 
         os.system("mv " + gsdname + " " + self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
@@ -282,12 +282,11 @@ class PolymerSimulation():
 
         self.tensionForce = hoomd.md.force.constant(group = self.pulley, fvec=(0.0,pull,0.0))  # ?
         periodic = hoomd.md.external.periodic()
-        #periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=lines+added)
+        periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=lines+added)
         periodic.force_coeff.set('B', A=amplitude, i=0, w=1, p=lines+added)
         periodic.force_coeff.set('C', A=amplitude, i=0, w=1, p=lines+added)
 
         periodic.force_coeff.set('A', A=-10000000.0, i=1, w=1, p=100)
-        periodic.force_coeff.set('A', A=-10000000.0, i=0, w=1, p=100)
 
     def definePositions(self):
         lines   = self.parameter.getNumberChains()
@@ -419,7 +418,7 @@ class DataVisualizer():
                 self.plotEnergy()
                 self.animatePositionData(fps=100)
 
-        def plotEnergy():
+        def plotEnergy(self,saveLocation):
             pass
 
         def generatePotential(self,dimx,rez):
@@ -589,17 +588,17 @@ class DataVisualizer():
             #os.system("mv " +name+".png " + location )
 
 class GlobalDataAnalyzer():
-    def __init__(self):
+    def __init__(self,location):
 
         import glob
 
-        gsdFileLocations = [file for file in glob.glob("**/*.gsd", recursive=True)]
-        simulationParameterLocations = [file for file in glob.glob("**/*.txt", recursive=True)]
+        gsdFileLocations = [file for file in glob.glob(location + "**/*.gsd", recursive=True)]
+        simulationParameterLocations = [file for file in glob.glob(location + "**/*.txt", recursive=True)]
 
 
         self.parameters = []
         self.polymers = []
-        self.interval = 0
+        self.interval = 0.5
         for i in range(len(simulationParameterLocations)):
 
             self.name = str(gsdFileLocations[i]).split('/')[-1].split('.')[0]
@@ -622,24 +621,25 @@ class GlobalDataAnalyzer():
 
         file.close()
 
-    def plotTiltbyForce(self):
+    def plotTiltbyForce(self,tension, temp):
         tilt = []
         sheerForce = []
         length = []
         for i in range(len(self.polymers)):
-            sheerForce.append(self.parameters[i].getSheerForce())
-            length.append(self.parameters[i].getLength())
-            tilt.append(0)
-            for j in range(len(self.polymers[i])):
-                tilt[-1] += self.polymers[i][j].getTilt()
-            tilt[-1] = tilt[-1]/len(self.polymers[i])
+            if (self.parameters[i].getPullForce() == tension and self.parameters[i].getKBT() == temp):
+                sheerForce.append(self.parameters[i].getSheerForce())
+                length.append(self.parameters[i].getLength())
+                tilt.append(0)
+                for j in range(len(self.polymers[i])):
+                    tilt[-1] += self.polymers[i][j].getTilt()
+                tilt[-1] = tilt[-1]/len(self.polymers[i])
 
-            plt.clf()
+        plt.clf()
 
-            plt.title('Force vs Tilt')
-
-            plt.plot(sheerForce,Tilt)
-            plt.savefig("forceVstilt.png")
+        plt.title('Tilt vs SheerForce: Ft:' + str(tension) + ' kbT=' + str(temp))
+        plt.plot(sheerForce,tilt,'o')
+        plt.plot(sheerForce,tilt)
+        plt.savefig("forceVstilt.png")
 
 
 
@@ -673,15 +673,15 @@ class PolymerObject():
     def __init__(self,data,L = 0):
         self.L = L
         self.particle = data
-        x = []
-        y = []
-
-        for i in range(len(data[0])):
-                x.append(data[0][i][10])
-                y.append(data[1][i][10])
-        plt.plot(x,y,'o')
-        plt.plot(x,y)
-        plt.savefig("TEST.png")
+        # x = []
+        # y = []
+        #
+        # for i in range(len(data[0])):
+        #         x.append(data[0][i][10])
+        #         y.append(data[1][i][10])
+        # plt.plot(x,y,'o')
+        # plt.plot(x,y)
+        # plt.savefig("TEST.png")
         self.generateWidths()
     def getParticleData(self,id):
         return [self.particle[0][id],self.particle[1][id]]
@@ -697,7 +697,7 @@ class PolymerObject():
             self.particleWidth.append([   self.stdDevX(self.particle[0][i])  , self.stdDevY(self.particle[1][i])])
             self.particleMean.append([self.calculateMeanX(self.particle[0][i]),self.calculateMeanY(self.particle[1][i])])
 
-        self.tilt = (self.particleMean[-1][1] - self.particleMean[0][1])/(self.particleMean[-1][0] - self.particleMean[0][0])
+        self.tilt = numpy.arctan((self.particleMean[-1][1] - self.particleMean[0][1])/(self.particleMean[-1][0] - self.particleMean[0][0]))/math.pi*180
 
     def calculateMeanX(self,arr):
         for i in range(len(arr)):
