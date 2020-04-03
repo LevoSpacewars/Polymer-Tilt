@@ -645,6 +645,7 @@ class GlobalDataAnalyzer():
                     length += self.polymers[i][j].getLength()
                     tilt[-1] += self.polymers[i][j].getTilt()
                 tilt[-1] = tilt[-1]/len(self.polymers[i])
+                print(tilt[-1])
                 x[-1] = (math.cos(tilt[-1]/180*math.pi))*length/len(self.polymers[i])
 
         plt.clf()
@@ -676,7 +677,7 @@ class GlobalDataAnalyzer():
                     x[-1].append(self.gsd_data[k].particles.position[i*self.parameters[-1].getLength() + j,0])
 
                     y[-1].append(self.gsd_data[k].particles.position[i*self.parameters[-1].getLength() + j,1])
-                print(i*self.parameters[-1].getNumberChains()+j)
+                #print(i*self.parameters[-1].getNumberChains()+j)
             self.polymers[-1].append(PolymerObject([x,y],L=self.parameters[-1].getNumberChains()))
 
 
