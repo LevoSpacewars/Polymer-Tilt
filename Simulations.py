@@ -143,7 +143,11 @@ class PolymerSimulationParameters():
         return self.runLength
 
 class PolymerSimulation():
-    def __init__(self,name=None,parameter=None,initializer='--mode=cpu'):
+    def __init__(self):
+        self.parameter = None
+        random.seed()
+
+    def init(self, name=None, parameter=None,initializer='--mode=cpu'):
         hoomd.context.initialize(initializer)
         self.parameter = parameter
         random.seed()
@@ -352,7 +356,7 @@ class PolymerSimulation():
         self.boxdim[0] = self.parameter.getNumberChains()
         self.boxdim[1] = self.parameter.getLength()*16
 
-        boundary = hoomd.data.boxdim(Lx = self.boxdim[0]+50, Ly = self.boxdim[1], dimensions=2)
+        boundary = hoomd.data.boxdim(Lx = self.boxdim[0], Ly = self.boxdim[1], dimensions=2)
         snapshot = hoomd.data.make_snapshot(N=  int(self.parameter.getNumberChains()  *  self.parameter.getLength()), box=boundary, particle_types=types, bond_types=['polymer'])
 
         pos     = self.definePositions()
@@ -399,27 +403,36 @@ class DataVisualizer():
 
             self.interval = interval
             self.directory = basedirectory
+
+
+        def init(self):
             import glob
 
-            location = basedirectory
+            location = self.directory
             gsdFileLocations = [file for file in glob.glob(location + "**/*.gsd", recursive=True)]
             simulationParameterLocations = [file for file in glob.glob(location + "**/*.txt", recursive=True)]
-
+            energyFileLocations = [file for file in glob.glob(location + "**/*.log", recursive=True)]
 
             for i in range(len(simulationParameterLocations)):
 
                 self.name = str(gsdFileLocations[i]).split('/')[-1].split('.')[0]
                 location = str(gsdFileLocations).split('/')[0] + "/" + str(gsdFileLocations).split('/')[1] + "/" + str(gsdFileLocations).split('/')[2] + "/ "
-
                 self.getSimulationParameters(simulationParameterLocations[i])
                 self.constructPolymerObjects(gsdFileLocations[i])
-                self.constructGeneralPolymerProfiles(saveLocation = location)
-                self.getPositionProbabilityData(name = self.name + "_pos_density",location=location)
-                self.plotEnergy()
-                self.animatePositionData(fps=100)
+                self.plotGeneralPolymerProfiles(saveLocation = location)
+                self.getPositionProbabilityData(name = self.name,location=location)
+                self.plotEnergy(location=energyFileLocations[i],name=self.name+"energy.png")
+                #self.animatePositionData(fps=200)
 
-        def plotEnergy(self,saveLocation):
-            pass
+        def plotEnergy(self,location="",name='energy.png'):
+            print(location)
+            data = numpy.genfromtxt(fname=location, skip_header=True);
+            plt.figure();
+            plt.clf()
+            plt.plot(data[:,0], data[:,1]);
+            plt.xlabel('time step');
+            plt.ylabel('potential_energy');
+            plt.savefig(name)
 
         def generatePotential(self,dimx,rez):
             boxdimx = dimx
@@ -435,8 +448,7 @@ class DataVisualizer():
 
         def animatePositionData(self,fps=500,Interval = 0):
             circles = False
-            fig, ax = plt.subplots(figsize=(7,7))
-            fig.set_tight_layout(True)
+            fig, ax = plt.subplots(figsize=(10, 10))
             xmax = self.gsd_data[0].particles.position[:,0][0]
             xmin = xmax
             ymax = self.gsd_data[0].particles.position[:,1][0]
@@ -454,11 +466,6 @@ class DataVisualizer():
                     if self.gsd_data[int(i)].particles.position[:,1][j] > ymax:
                         ymax = self.gsd_data[int(i)].particles.position[:,1][j]
             potential = self.generatePotential(self.parameters.getNumberChains(),1000)
-            artists = []
-            for i in range(len(self.gsd_data[0].particles.position)):
-                drawer = plt.Circle([0,0],radius=0.3,color='b',linewidth=0.5,fill=False, clip_on = False)
-                artists.append(drawer)
-
             def update(i):
 
                 # Update the line and the axes (with a new xlabel). Return a tuple of
@@ -468,11 +475,8 @@ class DataVisualizer():
                 y = self.gsd_data[int(i)].particles.position[:,1]
 
                 ax.clear()
+                #ax.set_size_inches(10,10)
                 ax.imshow(potential,extent=[-self.parameters.getNumberChains()/2,self.parameters.getNumberChains()/2,ymin,ymax])
-                if circles == True:
-                    for j in range(len(x)):
-                        artists[j].center = (x[j],y[j])
-                        ax.add_patch(artists[j])
                 for i in range(self.parameters.getNumberChains()):
                     length = self.parameters.getLength()
                     ax.plot(x[i*length:i*length + length],y[i*length:i*length + length])
@@ -480,7 +484,9 @@ class DataVisualizer():
 
                 ax.set_xlim(xmin,xmax)
                 ax.set_ylim(ymin,ymax)
+                ax.set_aspect('auto')
                 ax.set_xlabel(str(i) + "/" + str(len(self.gsd_data)))
+
                 return ax
             anim = FuncAnimation(fig, update, frames=numpy.arange(int(len(self.gsd_data)*Interval), len(self.gsd_data)), interval=int(fps))
             anim.save(self.name +'.gif', dpi=80, writer='imagemagick')
@@ -525,7 +531,7 @@ class DataVisualizer():
         def gaussian(self,x, mu, sig):
             return numpy.exp(-numpy.power(x - mu, 2.) / (2 * numpy.power(sig, 2.)))
 
-        def constructGeneralPolymerProfiles(self,savePlot = True,saveLocation=""):
+        def plotGeneralPolymerProfiles(self,savePlot = True,saveLocation=""):
 
             if savePlot == True:
                 for i in range(len(self.polymers)):
@@ -545,9 +551,10 @@ class DataVisualizer():
                         xerr.append(generalProfileWidths[j][0])
                     plt.plot(x,y)
                     plt.errorbar(x,y,xerr=xerr,fmt='o')
-                    t = numpy.linspace(start=x[0]-1, stop=x[-1]+1, num=50)
+                    #t = numpy.linspace(start=x[0]-1, stop=x[-1]+1, num=50)
                     for j in range(len(y)):
-                        plt.plot(t, self.gaussian(t, x[j] , generalProfileWidths[j][0]) + y[j],color='k',linewidth = 1)
+                        pass
+                        #plt.plot(t, self.gaussian(t, x[j] , generalProfileWidths[j][0]) + y[j],color='k',linewidth = 1)
                     print(self.name + "_" + str(i)+"_widths.png")
                     plt.savefig(self.name + "_" + str(i)+"_widths.png")
                     #os.system("mv " + self.name + "_p" + str(i)+ ".png " + saveLocation)
@@ -585,7 +592,9 @@ class DataVisualizer():
             plt.ylabel('y')
             plt.xlabel('x')
             plt.hist2d(p_t[0],p_t[1],bins=(rez[0],rez[1]))
-            #os.system("mv " +name+".png " + location )
+            writename = "heatmap_" +name
+            plt.savefig(writename + ".png")
+            os.system("mv " +name+".png " + location)
 
 class GlobalDataAnalyzer():
     def __init__(self,location):
@@ -623,22 +632,26 @@ class GlobalDataAnalyzer():
 
     def plotTiltbyForce(self,tension, temp):
         tilt = []
+        x = []
         sheerForce = []
-        length = []
         for i in range(len(self.polymers)):
             if (self.parameters[i].getPullForce() == tension and self.parameters[i].getKBT() == temp):
                 sheerForce.append(self.parameters[i].getSheerForce())
-                length.append(self.parameters[i].getLength())
+
                 tilt.append(0)
+                x.append(0)
+                length = 0
                 for j in range(len(self.polymers[i])):
+                    length += self.polymers[i][j].getLength()
                     tilt[-1] += self.polymers[i][j].getTilt()
                 tilt[-1] = tilt[-1]/len(self.polymers[i])
+                x[-1] = (math.cos(tilt[-1]/180*math.pi))*length/len(self.polymers[i])
 
         plt.clf()
 
         plt.title('Tilt vs SheerForce: Ft:' + str(tension) + ' kbT=' + str(temp))
-        plt.plot(sheerForce,tilt,'o')
-        plt.plot(sheerForce,tilt)
+        #plt.plot(sheerForce,tilt,'.')
+        plt.plot(sheerForce,x,'.')
         plt.savefig("forceVstilt.png")
 
 
@@ -698,12 +711,15 @@ class PolymerObject():
             self.particleMean.append([self.calculateMeanX(self.particle[0][i]),self.calculateMeanY(self.particle[1][i])])
 
         self.tilt = numpy.arctan((self.particleMean[-1][1] - self.particleMean[0][1])/(self.particleMean[-1][0] - self.particleMean[0][0]))/math.pi*180
+        self.Length = math.sqrt((self.particleMean[-1][1] - self.particleMean[0][1])**2 + (self.particleMean[-1][0] - self.particleMean[0][0])**2)
 
+    def getLength(self):
+        return self.Length
     def calculateMeanX(self,arr):
-        for i in range(len(arr)):
-            if arr[i] - self.base < -self.L/2:
+        for i in range(1,len(arr)):
+            if arr[i] - arr[i-1] < -self.L/2:
                 arr[i] = arr[i] + self.L
-            elif arr[i] - self.base > self.L/2:
+            elif arr[i] - arr[i-1] > self.L/2:
                 arr[i] = arr[i] - self.L
 
         return sum(arr)/len(arr)
@@ -721,8 +737,12 @@ class PolymerObject():
         std = 0
         mean = self.calculateMeanX(data)
         difference = 0
+        for i in range(1,len(data)):
+            if data[i] - data[i-1] < -self.L/2:
+                data[i] = data[i] + self.L
+            elif data[i] - data[i-1] > self.L/2:
+                data[i] = data[i] - self.L
         for i in range(len(data)):
-
             difference += (data[i]-mean)**2
         std = math.sqrt(1/(len(data)-1)*difference)
         return std
