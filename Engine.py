@@ -21,12 +21,14 @@ parameters.setTimeStep(dt)
 parameters.setProbePeriod(vs)
 parameters.setRunLength(runl)
 
-sim = Simulations.PolymerSimulation(parameter=parameters)
+sim = Simulations.PolymerSimulation()
+sim.init(parameter=parameters,initializer='--mode=cpu')
 
 filelocation = sim.run(forceRange=[0,1,1])
 print(filelocation)
 
 renderer = Simulations.DataVisualizer(basedirectory=filelocation,interval=0)
+renderer.init()
 # a = Simulations.GlobalDataAnalyzer(filelocation)
 #
 # a.plotTiltbyForce(20,1)
