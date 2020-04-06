@@ -176,6 +176,13 @@ class PolymerSimulation():
             hoomd.run(100)
             gsd_data =gsd.hoomd.open(gsdname,'rb')
             length.append(len(gsd_data))
+            dirname = "simulationForce_" + str(i).replace(".","_")
+            os.system("mkdir " + self.DirectoryName + "/" + self.currentSimulation + "/" +dirname)
+            #print(self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
+            self.simulationReadMeDump(force = conv, name = gsdname[0:-4], dir = self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
+
+            os.system("mv " + gsdname + " " + self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
+            os.system("mv " + energyname+ " " +self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
         print(length)
         exit()
         return ""
