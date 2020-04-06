@@ -1,10 +1,9 @@
 import Simulations
 import math
 parameters = Simulations.PolymerSimulationParameters()
-dt = 0.0000001
-runl = 10000000
-vAverage = 0.05
-vs = 100000
+dt = 0.000001
+runl = 100
+vs = 50
 A=1
 print("\n\n\n\n\n")
 parameters.setLength(100)
@@ -22,13 +21,13 @@ parameters.setProbePeriod(vs)
 parameters.setRunLength(runl)
 
 sim = Simulations.PolymerSimulation()
-sim.init(parameter=parameters,initializer='--mode=cpu')
+sim.init(parameter=parameters,initializer='--mode=gpu')
 
-filelocation = sim.run(forceRange=[0,1,1])
+filelocation = sim.run(forceRange=[0,3,20])
 print(filelocation)
 
 renderer = Simulations.DataVisualizer(basedirectory=filelocation,interval=0)
 renderer.init()
-# a = Simulations.GlobalDataAnalyzer(filelocation)
-#
-# a.plotTiltbyForce(20,1)
+a = Simulations.GlobalDataAnalyzer(filelocation)
+
+a.plotTiltbyForce(20,1)
