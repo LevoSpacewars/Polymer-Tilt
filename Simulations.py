@@ -170,7 +170,6 @@ class PolymerSimulation():
     def run(self,forceRange=None,equalibriate = False):
         self.setupFileSystem()
         for i in range(forceRange[1]):
-            
 
     def initializeIntegrator(self):
 
