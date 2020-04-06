@@ -170,6 +170,9 @@ class PolymerSimulation():
     def run(self,forceRange=None,equalibriate = False):
         self.setupFileSystem()
         for i in range(forceRange[1]):
+            gsdname='file_' + str(i)
+            hoomd.dump.gsd(gsdname, period=10, group=self.all, overwrite=True);
+            hoomd.run(100)
 
     def initializeIntegrator(self):
 
