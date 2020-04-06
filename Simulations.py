@@ -169,69 +169,8 @@ class PolymerSimulation():
 
     def run(self,forceRange=None,equalibriate = False):
         self.setupFileSystem()
-        try:
-            if equalibriate is True:
-                self.tensionForce = hoomd.md.force.constant(group=self.pulley , fvec=(0,self.parameter.getPullForce(),0.0))
-                self.tensionForce = hoomd.md.force.constant(group=self.anchor , fvec=(0,0,0))
-                self.parameter.setSheerForce(0)
-                hoomd.run(self.parameter.getRunLength())
-
-                for i in range(0,int(forceRange[2])):
-                    conv = round((forceRange[1]-forceRange[0])/forceRange[2]*i + forceRange[0],int(math.log(forceRange[2])))
-                    gsdname="polymer_" + str(conv).replace(".","_") + ".gsd"
-                    energyname = "energy_" + str(conv).replace(".","_") + ".log"
-                    hoomd.analyze.log(filename=energyname,
-                                  quantities=['potential_energy', 'temperature'],
-                                  period=self.parameter.getProbePeriod(),
-                                  overwrite=True);
-
-                    self.tensionForce = hoomd.md.force.constant(group=self.pulley , fvec=(conv,self.parameter.getPullForce(),0.0))
-                    self.tensionForce = hoomd.md.force.constant(group=self.anchor , fvec=(-conv,0,0))
-                    self.parameter.setSheerForce(conv)
-
-                    hoomd.dump.gsd(gsdname, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True);
-                    hoomd.run(self.parameter.getRunLength())
-
-
-                    dirname = "simulationForce_" + str(conv).replace(".","_")
-                    os.system("mkdir " + self.DirectoryName + "/" + self.currentSimulation + "/" +dirname)
-                    #print(self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
-                    self.simulationReadMeDump(force = conv, name = gsdname[0:-4], dir = self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
-
-                    os.system("mv " + gsdname + " " + self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
-                    os.system("mv " + energyname+ " " +self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
-                return self.DirectoryName + "/"
-
-
-
-            else:
-                for i in range(0,int(forceRange[2])):
-                    conv = round((forceRange[1]-forceRange[0])/forceRange[2]*i + forceRange[0],int(math.log(forceRange[2])))
-                    gsdname="polymer_" + str(conv).replace(".","_") + ".gsd"
-                    energyname = "energy_" + str(conv).replace(".","_") + ".log"
-                    hoomd.analyze.log(filename=energyname,
-                                  quantities=['potential_energy', 'temperature'],
-                                  period=self.parameter.getProbePeriod(),
-                                  overwrite=True);
-
-                    THSETSEOTIH
-                    self.tensionForce = hoomd.md.force.constant(group=self.pulley , fvec=(conv,self.parameter.getPullForce(),0.0))
-                    self.tensionForce = hoomd.md.force.constant(group=self.anchor , fvec=(-conv,0,0))
-                    self.parameter.setSheerForce(conv)
-
-                    hoomd.dump.gsd(gsdname, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True);
-                    hoomd.run(self.parameter.getRunLength())
-
-
-                    dirname = "simulationForce_" + str(conv).replace(".","_")
-                    os.system("mkdir " + self.DirectoryName + "/" + self.currentSimulation + "/" +dirname)
-                    #print(self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
-                    self.simulationReadMeDump(force = conv, name = gsdname[0:-4], dir = self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
-
-                    os.system("mv " + gsdname + " " + self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
-                    os.system("mv " + energyname+ " " +self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
-                return self.DirectoryName + "/"
-
+        for i in range(forceRange[1]):
+            
 
     def initializeIntegrator(self):
 
