@@ -169,23 +169,21 @@ class PolymerSimulation():
 
     def run(self,forceRange=None,equalibriate = False):
         self.setupFileSystem()
+        names = []
         length = []
         for i in range(forceRange[1]):
             gsdname='file_' + str(i) + ".gsd"
+            names.append(gsdname)
             hoomd.dump.gsd(gsdname, period=10, group=self.all, overwrite=True);
             hoomd.run(100)
-            gsd_data =gsd.hoomd.open(gsdname,'rb')
-            length.append(len(gsd_data))
-            dirname = "simulationForce_" + str(i).replace(".","_")
-            os.system("mkdir " + self.DirectoryName + "/" + self.currentSimulation + "/" +dirname)
-            #print(self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
-            self.simulationReadMeDump(force = conv, name = gsdname[0:-4], dir = self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
 
-            os.system("mv " + gsdname + " " + self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
-            os.system("mv " + energyname+ " " +self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
+            self.simulationReadMeDump(force = i, name = gsdname[0:-4])
+
+        for i in range(len(names)):
+            gsd_data =gsd.hoomd.open(names[i],'rb')
+            length.append(len(gsd_data))
         print(length)
-        exit()
-        return ""
+        return self.DirectoryName + "/"
 
     def initializeIntegrator(self):
 
@@ -343,9 +341,9 @@ class PolymerSimulation():
 
         hoomd.init.read_snapshot(snapshot)
 
-    def simulationReadMeDump(self,force = None,name=None, dir=None):
+    def simulationReadMeDump(self,force = None,name=None, dir=""):
         text = None
-        if name != None and dir !=None:
+        if name != None:
             text = open(dir + name + "_simulation_parameters.txt","w+")
             text.write("sheerForce=" + str(force) + "\n")
         else:
@@ -369,24 +367,22 @@ class PolymerSimulation():
 
 
 class DataVisualizer():
-        def __init__(self,basedirectory="",interval=0):
+        def __init__(self,interval=0):
 
             self.interval = interval
-            self.directory = basedirectory
 
 
         def init(self):
             import glob
 
-            location = self.directory
-            gsdFileLocations = [file for file in glob.glob(location + "**/*.gsd", recursive=True)]
-            simulationParameterLocations = [file for file in glob.glob(location + "**/*.txt", recursive=True)]
-            energyFileLocations = [file for file in glob.glob(location + "**/*.log", recursive=True)]
-
-            for i in range(len(simulationParameterLocations)):
-                print(i)
+            gsdFileLocations = [file for file in glob.glob("*.gsd", recursive=True)]
+            simulationParameterLocations = [file for file in glob.glob("*.txt", recursive=True)]
+            energyFileLocations = [file for file in glob.glob("*.log", recursive=True)]
+            print(gsdFileLocations)
+            for i in range(len(gsdFileLocations)):
+                #print(i)
                 self.name = str(gsdFileLocations[i]).split('/')[-1].split('.')[0]
-                location = str(gsdFileLocations).split('/')[0] + "/" + str(gsdFileLocations).split('/')[1] + "/" + str(gsdFileLocations).split('/')[2] + "/ "
+                location = str(gsdFileLocations[i])
                 self.getSimulationParameters(simulationParameterLocations[i])
                 self.constructPolymerObjects(gsdFileLocations[i])
                 #self.plotGeneralPolymerProfiles(saveLocation = location)

@@ -26,8 +26,8 @@ sim.init(parameter=parameters,initializer='--mode=gpu')
 filelocation = sim.run(forceRange=[0,3,20])
 print(filelocation)
 
-renderer = Simulations.DataVisualizer(basedirectory=filelocation,interval=0)
+renderer = Simulations.DataVisualizer(interval=0)
 renderer.init()
-a = Simulations.GlobalDataAnalyzer(filelocation)
+#a = Simulations.GlobalDataAnalyzer(filelocation)
 
-a.plotTiltbyForce(20,1)
+#a.plotTiltbyForce(20,1)
