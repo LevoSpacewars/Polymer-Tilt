@@ -167,22 +167,47 @@ class PolymerSimulation():
             pass
             ## TODO: Add ability to load snapshot
 
-    def run(self,forceRange=None,equalibriate = False):
+    def run(self,forceRange=None):
         self.setupFileSystem()
-        names = []
-        length = []
-        for i in range(forceRange[1]):
-            gsdname='file_' + str(i) + ".gsd"
-            names.append(gsdname)
-            hoomd.dump.gsd(gsdname, period=10, group=self.all, overwrite=True);
-            hoomd.run(100)
+        conv = 0
+        gsdname="polymer_" + str(conv).replace(".","_") + ".gsd"
+        energyname = "energy_" + str(conv).replace(".","_") + ".log"
+        hoomd.analyze.log(filename=energyname,
+                      quantities=['potential_energy', 'temperature'],
+                      period=self.parameter.getProbePeriod(),
+                      overwrite=True);
 
-            self.simulationReadMeDump(force = i, name = gsdname[0:-4])
+        self.tensionForce = hoomd.md.force.constant(group=self.pulley , fvec=(conv,self.parameter.getPullForce(),0.0))
+        self.tensionForce = hoomd.md.force.constant(group=self.anchor , fvec=(-conv,0,0))
+        self.parameter.setSheerForce(conv)
 
-        for i in range(len(names)):
-            gsd_data =gsd.hoomd.open(names[i],'rb')
-            length.append(len(gsd_data))
-        print(length)
+        hoomd.dump.gsd(gsdname, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True);
+        hoomd.run(self.parameter.getRunLength())
+
+        self.simulationReadMeDump(force = conv, name = gsdname[0:-4], dir = self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
+        for i in range(int(forceRange[2])):
+            conv = round((forceRange[1]-forceRange[0])/forceRange[2]*i + forceRange[0],int(math.log(forceRange[2])))
+            gsdname="polymer_" + str(conv).replace(".","_") + ".gsd"
+            energyname = "energy_" + str(conv).replace(".","_") + ".log"
+            hoomd.analyze.log(filename=energyname,
+                          quantities=['potential_energy', 'temperature'],
+                          period=self.parameter.getProbePeriod(),
+                          overwrite=True);
+
+            self.tensionForce = hoomd.md.force.constant(group=self.pulley , fvec=(conv,self.parameter.getPullForce(),0.0))
+            self.tensionForce = hoomd.md.force.constant(group=self.anchor , fvec=(-conv,0,0))
+            self.parameter.setSheerForce(conv)
+
+            hoomd.dump.gsd(gsdname, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True);
+            hoomd.run(self.parameter.getRunLength())
+
+
+            dirname = "simulationForce_" + str(conv).replace(".","_")
+            os.system("mkdir " + self.DirectoryName + "/" + self.currentSimulation + "/" +dirname)
+            #print(self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
+
+            os.system("mv " + gsdname + " " + self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
+            os.system("mv " + energyname+ " " +self.DirectoryName + "/" + self.currentSimulation + "/" + dirname + "/")
         return self.DirectoryName + "/"
 
     def initializeIntegrator(self):
@@ -252,7 +277,6 @@ class PolymerSimulation():
         # fene.bond_coeff.set('polymer', k=10**3, r0=6.0, sigma=0.0, epsilon= 0.0)
 
         self.tensionForce = hoomd.md.force.constant(group = self.pulley, fvec=(0.0,pull,0.0))  # ?
-        self.sheer = hoomd.md.force.constant(group = self.anchor, fvec=(0.0,0.0,0.0))
         periodic = hoomd.md.external.periodic()
         periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=lines+added)
         periodic.force_coeff.set('B', A=amplitude, i=0, w=1, p=lines+added)
@@ -341,9 +365,9 @@ class PolymerSimulation():
 
         hoomd.init.read_snapshot(snapshot)
 
-    def simulationReadMeDump(self,force = None,name=None, dir=""):
+    def simulationReadMeDump(self,force = None,name=None, dir=None):
         text = None
-        if name != None:
+        if name != None and dir !=None:
             text = open(dir + name + "_simulation_parameters.txt","w+")
             text.write("sheerForce=" + str(force) + "\n")
         else:
@@ -367,28 +391,30 @@ class PolymerSimulation():
 
 
 class DataVisualizer():
-        def __init__(self,interval=0):
+        def __init__(self,basedirectory="",interval=0):
 
             self.interval = interval
+            self.directory = basedirectory
 
 
         def init(self):
             import glob
 
-            gsdFileLocations = [file for file in glob.glob("*.gsd", recursive=True)]
-            simulationParameterLocations = [file for file in glob.glob("*.txt", recursive=True)]
-            energyFileLocations = [file for file in glob.glob("*.log", recursive=True)]
-            print(gsdFileLocations)
-            for i in range(len(gsdFileLocations)):
-                #print(i)
+            location = self.directory
+            gsdFileLocations = [file for file in glob.glob(location + "**/*.gsd", recursive=True)]
+            simulationParameterLocations = [file for file in glob.glob(location + "**/*.txt", recursive=True)]
+            energyFileLocations = [file for file in glob.glob(location + "**/*.log", recursive=True)]
+
+            for i in range(len(simulationParameterLocations)):
+
                 self.name = str(gsdFileLocations[i]).split('/')[-1].split('.')[0]
-                location = str(gsdFileLocations[i])
+                location = str(gsdFileLocations).split('/')[0] + "/" + str(gsdFileLocations).split('/')[1] + "/" + str(gsdFileLocations).split('/')[2] + "/ "
                 self.getSimulationParameters(simulationParameterLocations[i])
                 self.constructPolymerObjects(gsdFileLocations[i])
-                #self.plotGeneralPolymerProfiles(saveLocation = location)
-                #self.getPositionProbabilityData(name = self.name,location=location,Interval = self.interval)
-                #self.plotEnergy(location=energyFileLocations[i],name=self.name+"energy.png")
-                #self.animatePositionData(fps=300)
+                self.plotGeneralPolymerProfiles(saveLocation = location)
+                self.getPositionProbabilityData(name = self.name,location=location)
+                self.plotEnergy(location=energyFileLocations[i],name=self.name+"energy.png")
+                #self.animatePositionData(fps=200)
 
         def plotEnergy(self,location="",name='energy.png'):
             print(location)
@@ -432,12 +458,11 @@ class DataVisualizer():
                     if self.gsd_data[int(i)].particles.position[:,1][j] > ymax:
                         ymax = self.gsd_data[int(i)].particles.position[:,1][j]
             potential = self.generatePotential(self.parameters.getNumberChains(),1000)
-            print("Total frames = " + str(len(self.gsd_data)))
             def update(i):
 
                 # Update the line and the axes (with a new xlabel). Return a tuple of
                 # "artists" that have to be redrawn for this frame.
-                print(int(i))
+
                 x = self.gsd_data[int(i)].particles.position[:,0]
                 y = self.gsd_data[int(i)].particles.position[:,1]
 
@@ -476,7 +501,7 @@ class DataVisualizer():
 
             self.gsd_data =gsd.hoomd.open(fileLocation,'rb')
             self.polymers = []
-            print(len(self.gsd_data))
+
             #print(self.parameters.getNumberChains(),self.parameters.getLength(),len(self.gsd_data))
             for i in range(int(self.parameters.getNumberChains())):
 
@@ -491,7 +516,7 @@ class DataVisualizer():
                         x[-1].append(self.gsd_data[k].particles.position[i*self.parameters.getLength() + j,0])
 
                         y[-1].append(self.gsd_data[k].particles.position[i*self.parameters.getLength() + j,1])
-                    #print(i*self.parameters.getNumberChains()+j)
+                    print(i*self.parameters.getNumberChains()+j)
                 self.polymers.append(PolymerObject([x,y],L=self.parameters.getNumberChains()))
 
 
@@ -607,12 +632,13 @@ class GlobalDataAnalyzer():
 
                 tilt.append(0)
                 x.append(0)
+                length = 0
                 for j in range(len(self.polymers[i])):
+                    length += self.polymers[i][j].getLength()
                     tilt[-1] += self.polymers[i][j].getTilt()
-                    x[-1] += self.polymers[i][j].getDX()
                 tilt[-1] = tilt[-1]/len(self.polymers[i])
-                #print(x[-1])
-                x[-1] = x[-1]/len(self.polymers[i])
+                print(tilt[-1])
+                x[-1] = (math.cos(tilt[-1]/180*math.pi))*length/len(self.polymers[i])
 
         plt.clf()
 
@@ -653,7 +679,6 @@ class PolymerObject():
     def __init__(self,data,L = 0):
         self.L = L
         self.particle = data
-        self.dx=0
         # x = []
         # y = []
         #
@@ -677,29 +702,20 @@ class PolymerObject():
         for i in range(len(self.particle[0])):
             self.particleWidth.append([   self.stdDevX(self.particle[0][i])  , self.stdDevY(self.particle[1][i])])
             self.particleMean.append([self.calculateMeanX(self.particle[0][i]),self.calculateMeanY(self.particle[1][i])])
-        for i in range(1,len(self.particleMean)):
-            if self.particleMean[i][0] - self.particleMean[i-1][0] <= -self.L/2:
-                self.particleMean[i][0] = self.particleMean[i][0] + self.L
-            elif self.particleMean[i][0] - self.particleMean[i-1][0] >= self.L/2:
-                self.particleMean[i][0] = self.particleMean[i][0] - self.L
 
         self.tilt = numpy.arctan((self.particleMean[-1][1] - self.particleMean[0][1])/(self.particleMean[-1][0] - self.particleMean[0][0]))/math.pi*180
-        self.dx = (self.particleMean[-1][0] - self.particleMean[0][0])
-        print(self.dx)
         self.Length = math.sqrt((self.particleMean[-1][1] - self.particleMean[0][1])**2 + (self.particleMean[-1][0] - self.particleMean[0][0])**2)
 
     def getLength(self):
         return self.Length
     def calculateMeanX(self,arr):
         for i in range(1,len(arr)):
-            if arr[i] - arr[i-1] <= -self.L/2:
+            if arr[i] - arr[i-1] < -self.L/2:
                 arr[i] = arr[i] + self.L
-            elif arr[i] - arr[i-1] >= self.L/2:
+            elif arr[i] - arr[i-1] > self.L/2:
                 arr[i] = arr[i] - self.L
 
         return sum(arr)/len(arr)
-    def getDX(self):
-        return self.dx
     def getTilt(self):
         return self.tilt
     def calculateMeanY(self,arr):
