@@ -169,10 +169,16 @@ class PolymerSimulation():
 
     def run(self,forceRange=None,equalibriate = False):
         self.setupFileSystem()
+        length = []
         for i in range(forceRange[1]):
-            gsdname='file_' + str(i)
+            gsdname='file_' + str(i) + ".gsd"
             hoomd.dump.gsd(gsdname, period=10, group=self.all, overwrite=True);
             hoomd.run(100)
+            gsd_data =gsd.hoomd.open(gsdname,'rb')
+            length.append(len(gsd_data))
+        print(length)
+        exit()
+        return ""
 
     def initializeIntegrator(self):
 
@@ -371,7 +377,7 @@ class DataVisualizer():
             energyFileLocations = [file for file in glob.glob(location + "**/*.log", recursive=True)]
 
             for i in range(len(simulationParameterLocations)):
-
+                print(i)
                 self.name = str(gsdFileLocations[i]).split('/')[-1].split('.')[0]
                 location = str(gsdFileLocations).split('/')[0] + "/" + str(gsdFileLocations).split('/')[1] + "/" + str(gsdFileLocations).split('/')[2] + "/ "
                 self.getSimulationParameters(simulationParameterLocations[i])
