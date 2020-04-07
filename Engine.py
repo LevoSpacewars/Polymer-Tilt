@@ -1,13 +1,15 @@
 import Simulations
 import math
 parameters = Simulations.PolymerSimulationParameters()
-dt = 0.0000001
-runl = 10000000
+dt = 0.000001
+runl = 1000
 vAverage = 0.05
-vs = 100000
+vs = 10
 A=1
 print("\n\n\n\n\n")
-parameters.setLength(100)
+parameters.setSheerForceRange(1)
+parameters.setDf(2)
+parameters.setLength(10)
 parameters.setNumberChains(8)
 parameters.setPairRadius(.3)
 parameters.setPairPotentialStrength(10e4)
@@ -24,7 +26,7 @@ parameters.setRunLength(runl)
 sim = Simulations.PolymerSimulation()
 sim.init(parameter=parameters,initializer='--mode=cpu')
 
-filelocation = sim.run(forceRange=[0,1,1])
+filelocation = sim.run()
 print(filelocation)
 
 renderer = Simulations.DataVisualizer(basedirectory=filelocation,interval=0)
