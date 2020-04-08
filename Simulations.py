@@ -594,6 +594,31 @@ class DataVisualizer():
                 writename = "heatmap_" +name
                 plt.savefig(writename + ".png")
 
+        def plotTilt(self):
+            tilt = []
+            x = []
+            sheerForce = []
+            for i in range(len(self.forceValues)):
+                for j in range(len(self.polymers[i])):
+                    sheerForce.append(self.forceValues[i])
+                    tilt.append(0)
+                    x.append(0)
+                    length = 0
+                    for j in range(len(self.polymers[i][j])):
+                        length += self.polymers[i][j].getLength()
+                        tilt[-1] += self.polymers[i][j].getTilt()
+                    tilt[-1] = tilt[-1]/len(self.polymers[i])
+                    print(tilt[-1])
+                    x[-1] = (math.cos(tilt[-1]/180*math.pi))*length/len(self.polymers[i])
+
+            plt.clf()
+
+            plt.title('Tilt vs SheerForce: Ft:' + str(tension) + ' kbT=' + str(temp))
+            #plt.plot(sheerForce,tilt,'.')
+            plt.plot(sheerForce,x,'.')
+            plt.savefig("forceVstilt.png")
+
+
 class GlobalDataAnalyzer():
     def __init__(self,location):
 
@@ -715,7 +740,7 @@ class PolymerObject():
         for i in range(len(self.particle[0])):
             self.particleWidth.append([   self.stdDevX(self.particle[0][i])  , self.stdDevY(self.particle[1][i])])
             self.particleMean.append([self.calculateMeanX(self.particle[0][i]),self.calculateMeanY(self.particle[1][i])])
-
+        self.dx = (self.particleMean[-1][0] - self.particleMean[0][0])
         self.tilt = numpy.arctan((self.particleMean[-1][1] - self.particleMean[0][1])/(self.particleMean[-1][0] - self.particleMean[0][0]))/math.pi*180
         self.Length = math.sqrt((self.particleMean[-1][1] - self.particleMean[0][1])**2 + (self.particleMean[-1][0] - self.particleMean[0][0])**2)
 
