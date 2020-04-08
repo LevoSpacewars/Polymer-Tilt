@@ -414,10 +414,11 @@ class DataVisualizer():
                 location = str(gsdFileLocations).split('/')[0] + "/"
                 self.getSimulationParameters(simulationParameterLocations[i])
                 self.constructPolymerObjects(gsdFileLocations[i])
+                self.plotTilt()
                 #self.plotGeneralPolymerProfiles()
                 #self.plotPositionProbabilityData(name = self.name,location=location)
                 #self.plotEnergy(location=energyFileLocations[i],name=self.name+"energy.png")
-                self.animatePositionData(fps=200)
+                #self.animatePositionData(fps=200)
 
         def plotEnergy(self,location="",name='energy.png'):
             print(location)
@@ -598,24 +599,24 @@ class DataVisualizer():
             tilt = []
             x = []
             sheerForce = []
+            ux=[]
             for i in range(len(self.forceValues)):
+                sheerForce.append(self.forceValues[i])
+                x.append(0)
+                ux.append(0)
                 for j in range(len(self.polymers[i])):
-                    sheerForce.append(self.forceValues[i])
-                    tilt.append(0)
-                    x.append(0)
-                    length = 0
-                    for j in range(len(self.polymers[i][j])):
-                        length += self.polymers[i][j].getLength()
-                        tilt[-1] += self.polymers[i][j].getTilt()
-                    tilt[-1] = tilt[-1]/len(self.polymers[i])
-                    print(tilt[-1])
-                    x[-1] = (math.cos(tilt[-1]/180*math.pi))*length/len(self.polymers[i])
+                    x[-1] += self.polymers[i][j].getDx()
+                x[-1] = x[-1]/len(self.polymers[i])
+                for j in range(len(self.polymers[i])):
+                    ux[-1] += (self.polymers[i][j].getDx() - x[-1])**2
+                ux[-1] = math.sqrt(ux[-1]*1/(len(self.polymers[i])-1))
 
             plt.clf()
 
-            plt.title('Tilt vs SheerForce: Ft:' + str(tension) + ' kbT=' + str(temp))
-            #plt.plot(sheerForce,tilt,'.')
-            plt.plot(sheerForce,x,'.')
+            plt.title('dX vs SheerForce: Ft:' + str(self.parameters.getPullForce()) + ' kbT=' + str(self.parameters.getKBT()))
+            plt.xlabel("sheerforce")
+            plt.ylabel("dx")
+            plt.errorbar(sheerForce,x,yerr=ux,fmt='.')
             plt.savefig("forceVstilt.png")
 
 
@@ -736,16 +737,18 @@ class PolymerObject():
     def generateWidths(self):
         self.particleWidth = []
         self.particleMean = []
-        self.base = self.particle[0][0][0]
         for i in range(len(self.particle[0])):
             self.particleWidth.append([   self.stdDevX(self.particle[0][i])  , self.stdDevY(self.particle[1][i])])
             self.particleMean.append([self.calculateMeanX(self.particle[0][i]),self.calculateMeanY(self.particle[1][i])])
-        self.dx = (self.particleMean[-1][0] - self.particleMean[0][0])
-        self.tilt = numpy.arctan((self.particleMean[-1][1] - self.particleMean[0][1])/(self.particleMean[-1][0] - self.particleMean[0][0]))/math.pi*180
-        self.Length = math.sqrt((self.particleMean[-1][1] - self.particleMean[0][1])**2 + (self.particleMean[-1][0] - self.particleMean[0][0])**2)
+        for i in range(1,len(self.particleMean[0])):
+            if self.particleMean[0][i] - self.particleMean[0][i-1] < -self.L/2:
+                self.particleMean[0][i] = self.particleMean[0][i] + self.L
+            elif self.particleMean[0][i] - self.particleMean[0][i-1] > self.L/2:
+                self.particleMean[0][i] = self.particleMean[0][i] - self.L
 
-    def getLength(self):
-        return self.Length
+        self.dx = (self.particleMean[-1][0] - self.particleMean[0][0])
+    def getDx(self):
+        return self.dx
     def calculateMeanX(self,arr):
         for i in range(1,len(arr)):
             if arr[i] - arr[i-1] < -self.L/2:
@@ -754,8 +757,7 @@ class PolymerObject():
                 arr[i] = arr[i] - self.L
 
         return sum(arr)/len(arr)
-    def getTilt(self):
-        return self.tilt
+
     def calculateMeanY(self,arr):
         return sum(arr)/len(arr)
 
