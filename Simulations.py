@@ -243,10 +243,6 @@ class PolymerSimulation():
             hoomd.run(self.parameter.getRunLength())
             hoomd.dump.gsd(filename="save_ " + str(sheerforce) + ".gsd", period=None, group=self.all, overwrite=True)
             hoomd.run(1)
-            name.append("save_ " + str(sheerforce) + ".gsd")
-        for i in range(len(name)):
-            gsd_data =gsd.hoomd.open(name[i],'rb')
-            print(len(gsd_data))
 
         os.system("mv " + "trajectory.gsd" + " " + self.DirectoryName + "/")
         os.system("mv " + "Energy.log"+ " " +self.DirectoryName + "/")
@@ -453,8 +449,8 @@ class DataVisualizer():
                 self.constructPolymerObjects(gsdFileLocations[i])
 
                 self.plotTilt()
-#                self.plotGeneralPolymerProfiles()
-#                self.plotPositionProbabilityData(name = self.name,location=gsdFileLocations[i])
+                self.plotGeneralPolymerProfiles()
+                self.plotPositionProbabilityData(name = self.name,location=gsdFileLocations[i])
                 #self.plotEnergy(location=energyFileLocations[i],name=self.name+"energy.png")
                 #self.animatePositionData(fps=200)
 
@@ -614,13 +610,13 @@ class DataVisualizer():
             indexrange = int(self.parameters.getRunLength() / self.parameters.getProbePeriod())
             self.forceValues = self.getForceRange()
             for m in range(len(self.forceValues)):
-                p = []
+
 
                 p_t = []
                 p_t.append([])
                 p_t.append([])
                 for particle in range(len(self.gsd_data[0].particles.position)):
-                    p.append([])
+
                     p[-1].append([])
                     p[-1].append([])
                     for i in range(int(indexrange*(m + self.interval)),indexrange*(m+1)):
@@ -632,12 +628,12 @@ class DataVisualizer():
                 #Plot heatmap
                 plt.clf()
 
-                plt.title('heatmap test')
+                plt.title('F:' + str(m) + " probaility map")
                 plt.ylabel('y')
                 plt.xlabel('x')
                 plt.hist2d(p_t[0],p_t[1],bins=(rez[0],rez[1]))
                 name= "F_" + str(self.forceValues[m])
-                writename = "heatmap_" +name
+                writename = "ProbabilityMap" +name
                 plt.savefig(writename + ".png")
 
         def plotTilt(self):
