@@ -4,10 +4,10 @@ parameters = Simulations.PolymerSimulationParameters()
 dt = 0.000001
 runl = 100000000
 vAverage = 0.05
-vs = 100000
+vs = 1000000
 A=1
 print("\n\n\n\n\n")
-parameters.setSheerForceRange(0,3)
+parameters.setSheerForceRange(0,0.8)
 parameters.setDf(10)
 parameters.setLength(100)
 parameters.setNumberChains(10)

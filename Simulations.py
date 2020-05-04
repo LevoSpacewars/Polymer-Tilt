@@ -194,11 +194,11 @@ class PolymerSimulation():
         self.parameter = None
         random.seed()
 
-    def init(self, name=None, parameter=None,initializer='--mode=cpu'):
+    def init(self, parameter=None,initializer='--mode=cpu',loadSave=None):
         hoomd.context.initialize(initializer)
         self.parameter = parameter
-        random.seed()
-        if name is None:
+        if loadSave is None:
+            random.seed()
 
             self.setupFileSystem(True)
             #1. create new directory for this run
@@ -209,10 +209,12 @@ class PolymerSimulation():
             self.initializeForces()
             self.initializeIntegrator()
 
-            #3. insert parameters for simulation
         else:
-            pass
-            ## TODO: Add ability to load snapshot
+            hoomd.init.read_snapshot(hoomd.data.gsd_snapshot(loadSave))
+            self.setupFileSystem(True)
+            self.initializeForces()
+            self.initializeIntegrator()
+
 
     def run(self):
 
@@ -248,20 +250,6 @@ class PolymerSimulation():
         os.system("mv " + "Energy.log"+ " " +self.DirectoryName + "/")
         self.simulationReadMeDump()
 
-    def runFromSave(self):
-        self.setupFileSystem()
-        hoomd.dump.gsd(filename="trajectory.gsd", period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
-        hoomd.analyze.log(filename="Energy.log",quantities=['potential_energy', 'temperature'],period=self.parameter.getProbePeriod(),overwrite=True);
-        for i in range(self.parameter.getDf()):
-            sheerforce = i/self.parameter.getDf()*self.parameter.getSheerForceRange()
-            self.tensionForce = hoomd.md.force.constant(group=self.pulley , fvec=(sheerforce,self.parameter.getPullForce(),0.0))
-            self.tensionForce = hoomd.md.force.constant(group=self.anchor , fvec=(-sheerforce,0,0))
-            hoomd.run(self.parameter.getRunLength())
-            hoomd.dump.gsd(filename="save_ " + str(sheerforce) + ".gsd", period=None, group=self.all, overwrite=True)
-            hoomd.run(1)
-        os.system("mv " + "trajectory.gsd" + " " + self.DirectoryName + "/")
-        os.system("mv " + "Energy.log"+ " " +self.DirectoryName + "/")
-        self.simulationReadMeDump()
 
     def initializeIntegrator(self):
 
@@ -434,7 +422,7 @@ class DataVisualizer():
             import glob
 
             location = self.directory
-            gsdFileLocations = [file for file in glob.glob(location + "**/*.gsd", recursive=True)]
+            gsdFileLocations = [file for file in glob.glob(location + "**/trajectory.gsd", recursive=True)]
             simulationParameterLocations = [file for file in glob.glob(location + "**/*.txt", recursive=True)]
             energyFileLocations = [file for file in glob.glob(location + "**/*.log", recursive=True)]
 
@@ -446,13 +434,13 @@ class DataVisualizer():
                 self.name = str(gsdFileLocations[i]).split('/')[-1].split('.')[0]
                 location = str(gsdFileLocations).split('/')[0] + "/"
                 self.getSimulationParameters(simulationParameterLocations[i])
-                self.constructPolymerObjects(gsdFileLocations[i])
+                #self.constructPolymerObjects(gsdFileLocations[i])
 
-                self.plotTilt()
-                self.plotGeneralPolymerProfiles()
-                self.plotPositionProbabilityData(name = self.name,location=gsdFileLocations[i])
+                #self.plotTilt()
+                #self.plotGeneralPolymerProfiles()
+                #self.plotPositionProbabilityData(name = self.name,location=gsdFileLocations[i])
                 #self.plotEnergy(location=energyFileLocations[i],name=self.name+"energy.png")
-                #self.animatePositionData(fps=200)
+                self.animatePositionData(gsdFileLocations[i],fps=200)
 
         def plotEnergy(self,location="",name='energy.png'):
             print(location)
@@ -465,6 +453,7 @@ class DataVisualizer():
             plt.savefig(name)
 
         def generatePotential(self,dimx,rez):
+
             boxdimx = dimx
             rez=rez
             p=[]
@@ -476,7 +465,8 @@ class DataVisualizer():
             return p
 
 
-        def animatePositionData(self,fps=500,Interval = 0.9):
+        def animatePositionData(self,fileLocation,fps=250,Interval = 0):
+            self.gsd_data =gsd.hoomd.open(fileLocation,'rb')
             circles = False
             fig, ax = plt.subplots(figsize=(10, 10))
             xmax = self.gsd_data[0].particles.position[:,0][0]
@@ -499,7 +489,6 @@ class DataVisualizer():
 
                 # Update the line and the axes (with a new xlabel). Return a tuple of
                 # "artists" that have to be redrawn for this frame.
-
                 x = self.gsd_data[int(i)].particles.position[:,0]
                 y = self.gsd_data[int(i)].particles.position[:,1]
                 print("timeStep:" + str(i) + "/" + str(len(self.gsd_data)) )
@@ -520,7 +509,7 @@ class DataVisualizer():
                 return ax
             indexrange = int(self.parameters.getRunLength() / self.parameters.getProbePeriod())
             for m in range(len(self.forceValues)):
-                anim = FuncAnimation(fig, update, frames=numpy.arange(m*indexrange +int(indexrange * Interval) , (m+1)*indexrange), interval=int(fps))
+                anim = FuncAnimation(fig, update, frames=numpy.arange((m+Interval)*indexrange , (m+1)*indexrange), interval=int(fps))
                 anim.save(self.name + "_F_" + str(self.forceValues[m]) + "_animation"+'.gif', dpi=80, writer='imagemagick')
             print("finished")
 
@@ -599,7 +588,7 @@ class DataVisualizer():
 
 
 
-        def plotPositionProbabilityData(self,rez=None,Interval=0,name = "foo",location=""):
+        def plotPositionProbabilityData(self,rez=None,Interval=0.0,name = "foo",location=""):
             print("plotting height map")
             if rez == None:
                 rez = [100,100]
@@ -609,6 +598,9 @@ class DataVisualizer():
 
             indexrange = int(self.parameters.getRunLength() / self.parameters.getProbePeriod())
             self.forceValues = self.getForceRange()
+
+            print(indexrange)
+            print(self.forceValues)
             for m in range(len(self.forceValues)):
 
 
@@ -616,10 +608,9 @@ class DataVisualizer():
                 p_t.append([])
                 p_t.append([])
                 for particle in range(len(self.gsd_data[0].particles.position)):
-
-                    p[-1].append([])
-                    p[-1].append([])
+                    print("F:" + str(round(self.forceValues[m],1)) + ", P:" + str(particle))
                     for i in range(int(indexrange*(m + self.interval)),indexrange*(m+1)):
+
                         p_t[0].append(self.gsd_data[i].particles.position[particle,0])
                         p_t[1].append(self.gsd_data[i].particles.position[particle,1])
 
@@ -628,11 +619,11 @@ class DataVisualizer():
                 #Plot heatmap
                 plt.clf()
 
-                plt.title('F:' + str(m) + " probaility map")
+                plt.title('F:' + str(round(self.forceValues[m],3)) + " probaility map")
                 plt.ylabel('y')
                 plt.xlabel('x')
                 plt.hist2d(p_t[0],p_t[1],bins=(rez[0],rez[1]))
-                name= "F_" + str(self.forceValues[m])
+                name= "F_" + str(round(self.forceValues[m],3))
                 writename = "ProbabilityMap" +name
                 plt.savefig(writename + ".png")
 
@@ -668,15 +659,7 @@ class PolymerObject():
     def __init__(self,data,L = 0):
         self.L = L
         self.particle = data
-        # x = []
-        # y = []
-        #
-        # for i in range(len(data[0])):
-        #         x.append(data[0][i][10])
-        #         y.append(data[1][i][10])
-        # plt.plot(x,y,'o')
-        # plt.plot(x,y)
-        # plt.savefig("TEST.png")
+
         self.generateWidths()
     def getParticleData(self,id):
         return [self.particle[0][id],self.particle[1][id]]
