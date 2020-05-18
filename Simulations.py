@@ -17,21 +17,36 @@ def hardContact(r, rmin, ramx, l_0,K):
     F = -2*K*(r-l_0)
     return (V,F)
 
-def harmonicF(r, rmin, rmax,l_0,l_max,K):
-    if r < (l_0-l_max + 0.00001):
-        V = K*(r-l_0)**2
-        F = -2*K*(r-l_0)
-        return (V,F)
-    if r >= (l_0 + l_max):
-        V = - 0.5*K*l_max**2*math.log(1-(l_max-0.001)**2/l_max**2)
-        F =  - (K*(l_max-0.001))/(1-(l_max-0.001)**2/l_max**2)
-        # V = K*(r-l_0)**6
-        # F = -5*K*(r-l_0)**5
-        return (V,F)
+def particlePotential(r, rmin, rmax,paricle_radius,max_bond_radius,strength_coef):
+    # r                     : float :   radius between two particles
+    # rmin                  : float :   minimum radius
+    # rmax                  : float :   maximum radius
+    # paricle_radius        : float :   The radius of each particle (also the equlibrium point)
+    # max_bond_radius       : float :   the maximum distance between the surfaces of 2 particles
+    # strength_coef         : float :   Prefactor meant to increase the effectiveness of the function
 
-    V = - 0.5*K*l_max**2*math.log(1-(r-l_0)**2/l_max**2)
-    F =  - (K*(r-l_0))/(1-(r-l_0)**2/l_max**2)
-    return (V,F)
+
+    contactRegime = paricle_radius-max_bond_radius + 0.00001
+    correctionRegime = paricle_radius + max_bond_radius
+    particleDistance = r - paricle_radius
+    correction = max_bond_radius - 0.00001
+
+    if r < contactRegime:
+        potential = strength_coef * (particleDistance)**2
+        force = -2 * strength_coef * (particleDistance)
+        return (potential,force)
+
+
+    elif r >= correctionRegime:
+        potential = - 0.5 * strength_coef * max_bond_radius**2 * math.log( 1 - correction**2 / max_bond_radius**2 )
+        force = - ( strength_coef * correction ) / ( 1 - correction**2 / max_bond_radius**2 )
+        return (potential,force)
+
+
+    else:
+        potential = - 0.5 * strength_coef * max_bond_radius**2 * math.log( 1- particleDistance**2 / max_bond_radius**2 )
+        force =  - ( strength_coef * particleDistance ) / ( 1 - particleDistance**2 / max_bond_radius**2 )
+        return (potential,force)
 
 
 class PolymerSimulationParameters():
@@ -200,7 +215,7 @@ class PolymerSimulation():
         if loadSave is None:
             random.seed()
 
-            self.setupFileSystem(True)
+            self.setupFileSystem()
             #1. create new directory for this run
 
             self.populateSystem()
@@ -211,44 +226,39 @@ class PolymerSimulation():
 
         else:
             hoomd.init.read_snapshot(hoomd.data.gsd_snapshot(loadSave))
-            self.setupFileSystem(True)
+            self.setupFileSystem()
             self.initializeForces()
             self.initializeIntegrator()
 
 
     def run(self):
 
-        # needs add the ability
         self.setupFileSystem()
+
+
         hoomd.dump.gsd(filename="trajectory.gsd", period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
         hoomd.analyze.log(filename="Energy.log",quantities=['potential_energy', 'temperature'],period=self.parameter.getProbePeriod(),overwrite=True);
+
+
+
         for i in range(self.parameter.getDf()):
             sheerforce = i/self.parameter.getDf()*(self.parameter.getSheerForceRange()[1] - self.parameter.getSheerForceRange()[0]) + self.parameter.getSheerForceRange()[0]
+
             self.tensionForce = hoomd.md.force.constant(group=self.pulley , fvec=(sheerforce,self.parameter.getPullForce(),0.0))
             self.tensionForce = hoomd.md.force.constant(group=self.anchor , fvec=(-sheerforce,0,0))
-            hoomd.run(self.parameter.getRunLength())
-        os.system("mv " + "trajectory.gsd" + " " + self.DirectoryName + "/")
-        os.system("mv " + "Energy.log"+ " " +self.DirectoryName + "/")
-        self.simulationReadMeDump()
 
-        return self.DirectoryName + "/"
-
-    def runTest(self):
-        self.setupFileSystem()
-        hoomd.dump.gsd(filename="trajectory.gsd", period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
-        hoomd.analyze.log(filename="Energy.log",quantities=['potential_energy', 'temperature'],period=self.parameter.getProbePeriod(),overwrite=True);
-        name = []
-        for i in range(self.parameter.getDf()):
-            sheerforce = i/self.parameter.getDf()*(self.parameter.getSheerForceRange()[1] - self.parameter.getSheerForceRange()[0]) + self.parameter.getSheerForceRange()[0]
-            self.tensionForce = hoomd.md.force.constant(group=self.pulley , fvec=(sheerforce,self.parameter.getPullForce(),0.0))
-            self.tensionForce = hoomd.md.force.constant(group=self.anchor , fvec=(-sheerforce,0,0))
             hoomd.run(self.parameter.getRunLength())
+
+            #creating frame 0 load state
             hoomd.dump.gsd(filename="save_ " + str(sheerforce) + ".gsd", period=None, group=self.all, overwrite=True)
             hoomd.run(1)
 
         os.system("mv " + "trajectory.gsd" + " " + self.DirectoryName + "/")
         os.system("mv " + "Energy.log"+ " " +self.DirectoryName + "/")
         self.simulationReadMeDump()
+
+        return self.DirectoryName + "/"
+
 
 
     def initializeIntegrator(self):
@@ -260,24 +270,20 @@ class PolymerSimulation():
         bs.set_gamma('C', gamma=self.parameter.getGamma())
 
 
-    def setupFileSystem(self,init=False,name=None):
+    def setupFileSystem(self):
+
+        #  constructs a directory file based on the computer time, for the simulation being run.
+
         from datetime import datetime
         time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
-        if init is True:
-            if name==None:
+        if True is True:
+            if True:
                 self.DirectoryName = "Simulation_" + time
                 os.system("mkdir " + self.DirectoryName)
             else:
                 self.DirectoryName = "Simulation_" + name
                 os.system("mkdir " + self.DirectoryName)
-
-
-        else:
-            tempName = "Simulation_" + time
-            self.currentSimulation = tempName
-            os.system("mkdir " + self.DirectoryName + "/" + tempName)
-
 
 
     def initializeForces(self):
@@ -312,7 +318,7 @@ class PolymerSimulation():
         nl.reset_exclusions(exclusions = [])
 
         harmonic = hoomd.md.bond.table(width = 100000);
-        harmonic.bond_coeff.set('polymer', func = harmonicF,rmin=0, rmax=10,coeff = dict(l_0=l_0,l_max=l_max,K=K));
+        harmonic.bond_coeff.set('polymer', func = particlePotential,rmin=0, rmax=10,coeff = dict(paricle_radius=l_0,max_bond_radius=l_max,strength_coef=K));
 
         # fene = hoomd.md.bond.fene()
         # fene.bond_coeff.set('polymer', k=10**3, r0=6.0, sigma=0.0, epsilon= 0.0)
@@ -414,33 +420,45 @@ class PolymerSimulation():
 class DataVisualizer():
         def __init__(self,basedirectory="",interval=0):
 
+            #basedirectory  : string : base directory for the simulation in question
+            #interval       : float  : 0.0-1.0 which is used to offset the start of sampling
+
             self.interval = interval
             self.directory = basedirectory
 
 
-        def init(self):
+        def init(self, plotTilt= False, plotPolymerProfiles = False, plotProbabilityMap = False, plotEnergy = False, animatePolymers = False):
             import glob
 
             location = self.directory
-            gsdFileLocations = [file for file in glob.glob(location + "**/trajectory.gsd", recursive=True)]
-            simulationParameterLocations = [file for file in glob.glob(location + "**/*.txt", recursive=True)]
-            energyFileLocations = [file for file in glob.glob(location + "**/*.log", recursive=True)]
 
-            self.parameters = []
+            self.parameters = None
             self.polymers = []
             self.forceValues = []
-            for i in range(len(simulationParameterLocations)):
 
-                self.name = str(gsdFileLocations[i]).split('/')[-1].split('.')[0]
-                location = str(gsdFileLocations).split('/')[0] + "/"
-                self.getSimulationParameters(simulationParameterLocations[i])
-                #self.constructPolymerObjects(gsdFileLocations[i])
 
-                #self.plotTilt()
-                #self.plotGeneralPolymerProfiles()
-                #self.plotPositionProbabilityData(name = self.name,location=gsdFileLocations[i])
-                #self.plotEnergy(location=energyFileLocations[i],name=self.name+"energy.png")
-                self.animatePositionData(gsdFileLocations[i],fps=200)
+
+
+            self.name = "trajectory.gsd"
+            location = location.split('/')[0] + "/"
+            self.gsd_data =gsd.hoomd.open(location + self.name,'rb')
+            parameterfilename=location+ "_simulation_parameters.txt"
+            dataname= location + self.name
+
+            self.getSimulationParameters(parameterfilename)
+            self.constructPolymerObjects(dataname)
+
+            self.plotLengthDx()
+            if plotTilt:
+                self.plotTilt()
+            if plotPolymerProfiles:
+                self.plotGeneralPolymerProfiles()
+            if plotProbabilityMap:
+                self.plotPositionProbabilityData(name = self.name,location=dataname)
+            if plotEnergy:
+                self.plotEnergy(location="ADDNAME",name=self.name+"energy.png")
+            if animatePolymers:
+                self.animatePositionData(dataname,fps=200)
 
         def plotEnergy(self,location="",name='energy.png'):
             print(location)
@@ -453,7 +471,6 @@ class DataVisualizer():
             plt.savefig(name)
 
         def generatePotential(self,dimx,rez):
-
             boxdimx = dimx
             rez=rez
             p=[]
@@ -465,8 +482,9 @@ class DataVisualizer():
             return p
 
 
+
         def animatePositionData(self,fileLocation,fps=250,Interval = 0):
-            self.gsd_data =gsd.hoomd.open(fileLocation,'rb')
+
             circles = False
             fig, ax = plt.subplots(figsize=(10, 10))
             xmax = self.gsd_data[0].particles.position[:,0][0]
@@ -527,7 +545,7 @@ class DataVisualizer():
         def constructPolymerObjects(self,fileLocation):
             import time
             print("constructing polymer Objects")
-            self.gsd_data =gsd.hoomd.open(fileLocation,'rb')
+
             self.forceValues = self.getForceRange()
             timer = 0
             indexrange = int(self.parameters.getRunLength() / self.parameters.getProbePeriod())
@@ -586,6 +604,48 @@ class DataVisualizer():
 
 
 
+        def plotLengthDx(self):
+            self.forceValues = self.getForceRange()
+            timer = 0
+
+            length=[]
+            ulength=[]
+
+            dx=[]
+            udx=[]
+
+            f = []
+            output = []
+            uoutput = []
+            for m in range(len(self.forceValues)):
+                f.append(self.forceValues[m]/self.parameters.getPullForce())
+                dx.append(0)
+                length.append(0)
+                udx.append(0)
+                ulength.append(0)
+                output.append(0)
+                uoutput.append(0)
+                for j in range(len(self.polymers[m])):
+                    dx[-1] += self.polymers[m][j].getDx()
+                    length[-1] += self.polymers[m][j].getLength()
+                dx[-1] = dx[-1]/len(self.polymers[m])
+                length[-1] = length[-1]/len(self.polymers[m])
+                output[-1] = dx[-1]/length[-1]
+                for j in range(len(self.polymers[m])):
+                    udx[-1] += (self.polymers[m][j].getDx() - dx[-1])**2
+                    ulength[-1] += (self.polymers[m][j].getLength() - length[-1])**2
+                udx[-1] = math.sqrt( udx[-1] * 1/(len(self.polymers[m])-1) )
+                ulength[-1] = math.sqrt( ulength[-1] * 1/(len(self.polymers[m])-1) )
+                square = ( udx[-1] / dx[-1] )**2 + ( ulength[-1] / length[-1] )**2
+                uoutput[-1] = output[-1] * math.sqrt(square)
+
+            plt.clf()
+
+            plt.title('dX/Length vs SheefForce/Tension: Ft:' + str(self.parameters.getPullForce()) + ' kbT=' + str(self.parameters.getKBT()))
+            plt.xlabel("SheefForce/Tension")
+            plt.ylabel("dX/Length")
+            plt.errorbar(f,output,yerr=uoutput,fmt='.')
+            plt.savefig("dXLengthvsSheefForceTension.png")
 
 
         def plotPositionProbabilityData(self,rez=None,Interval=0.0,name = "foo",location=""):
@@ -594,7 +654,7 @@ class DataVisualizer():
                 rez = [100,100]
 
 
-            self.gsd_data =gsd.hoomd.open(location,'rb')
+
 
             indexrange = int(self.parameters.getRunLength() / self.parameters.getProbePeriod())
             self.forceValues = self.getForceRange()
@@ -658,9 +718,13 @@ class DataVisualizer():
 class PolymerObject():
     def __init__(self,data,L = 0):
         self.L = L
-        self.particle = data
+        self.particle = self.sortData(data)
+
+
 
         self.generateWidths()
+
+
     def getParticleData(self,id):
         return [self.particle[0][id],self.particle[1][id]]
 
@@ -670,9 +734,12 @@ class PolymerObject():
     def generateWidths(self):
         self.particleWidth = []
         self.particleMean = []
+        self.particleStdMean = []
+
         for i in range(len(self.particle[0])):
-            self.particleWidth.append([   self.stdDevX(self.particle[0][i])  , self.stdDevY(self.particle[1][i])])
-            self.particleMean.append([self.calculateMeanX(self.particle[0][i]),self.calculateMeanY(self.particle[1][i])])
+            self.particleWidth.append([self.stdDevX(self.particle[0][i])  , self.stdDevY(self.particle[1][i])])
+            self.particleMean.append([ self.calculateMeanX(self.particle[0][i]) , self.calculateMeanY(self.particle[1][i]) ])
+            self.particleStdMean.append([self.particleWidth[-1][0]/math.sqrt(len(self.particle[0][i])),self.particleWidth[-1][1]/len(self.particle[1][i])])
         for i in range(1,len(self.particleMean)):
 
             if ((self.particleMean[i][0] - self.particleMean[0][0]) < -self.L/2):
@@ -681,17 +748,42 @@ class PolymerObject():
                 self.particleMean[i][0] = self.particleMean[i][0] - self.L
 
         self.dx = (self.particleMean[-1][0] - self.particleMean[0][0])
-
-
+        self.calulateLength()
+    def getParticleStdMean(self):
+        return self.particleStdMean
     def getDx(self):
         return self.dx
-    def calculateMeanX(self,arr):
-        for i in range(1,len(arr)):
-            if arr[i] - arr[i-1] < -self.L/2:
-                arr[i] = arr[i] + self.L
-            elif arr[i] - arr[i-1] > self.L/2:
-                arr[i] = arr[i] - self.L
+    def calulateLength(self):
+        self.polymerLength = 0
 
+        x = 0
+        y = 0
+        for i in range(1,len(self.particleMean)):
+            x += self.particleMean[i][0] - self.particleMean[i-1][0]
+            y += self.particleMean[i][1] - self.particleMean[i-1][1]
+
+        self.polymerLength = math.sqrt(x**2 + y**2)
+        return self.polymerLength
+    def getLength(self):
+        return self.polymerLength
+    def sortData(self,arr):
+
+        for i in range(len(arr[0])):
+            for j in range(1,len(arr[0][i])):
+                if arr[0][i][j] - arr[0][i][j-1] < -self.L/2:
+                    arr[0][i][j] = (arr[0][i][j] + self.L)
+                elif arr[0][i][j] - arr[0][i][j-1] > self.L/2:
+                    arr[0][i][j] = (arr[0][i][j] - self.L)
+
+        for i in range(len(arr[0])):
+            for j in range(1,len(arr[0][i])):
+                assert(arr[0][i][j] - arr[0][i][j-1] > -self.L/2)
+                assert(arr[0][i][j] - arr[0][i][j-1] < self.L/2)
+
+        return arr
+
+
+    def calculateMeanX(self,arr):
         return sum(arr)/len(arr)
 
     def calculateMeanY(self,arr):
@@ -702,18 +794,21 @@ class PolymerObject():
     def getWidths(self):
         return self.particleWidth
 
+    def getAngle(self, deg = False):
+        if deg:
+            return numpy.arccos(self.dx / self.polymerLength)
+        else:
+            return self.dx / self.polymerLength
+
     def stdDevX(self,data):
         std = 0
         mean = self.calculateMeanX(data)
         difference = 0
-        for i in range(1,len(data)):
-            if data[i] - data[i-1] < -self.L/2:
-                data[i] = data[i] + self.L
-            elif data[i] - data[i-1] > self.L/2:
-                data[i] = data[i] - self.L
         for i in range(len(data)):
-            difference += (data[i]-mean)**2
-        std = math.sqrt(1/(len(data)-1)*difference)
+            difference += (data[i] - mean)**2
+
+        std = math.sqrt(1 / (len(data) - 1) * difference)
+
         return std
     def stdDevY(self,data):
         std = 0
@@ -726,35 +821,4 @@ class PolymerObject():
 
         return std
 
-class SaveStates:
-    def __init__(self, gsdFile, parameterFile):
-
-        self.parameters = self.getSimulationParameters(parameterFile)
-        self.forcerange = getForceRange()
-        self.createGSDLoadStates(gsdFile)
-
-
-
-    def getForceRange(self):
-        forcerange=[]
-        for i in range(self.parameters.getDf()):
-            forcerange.append(i/self.parameters.getDf() * (self.parameters.getSheerForceRange()[1] - self.parameters.getSheerForceRange()[0]) + self.parameters.getSheerForceRange()[0])
-        return forcerange
-
-    def createGSDLoadStates(self, gsdFile):
-        hoomd.context.initialize("--mode=cpu")
-        self.gsd_data =gsd.hoomd.open(fileLocation,'rb')
-        self.forceValues = self.getForceRange()
-        indexrange = int(self.parameters.getRunLength() / self.parameters.getProbePeriod())
-        for m in range(len(self.forceValues)):
-            sheerforce = self.forceValues[m]
-            k = indexrange*(m+1)
-            snapshot = hooomd.data.gsd_snapshot(gsdFile)
-            hoomd.init.read_snapshot(snapshot)
-            hoomd.dump.gsd(filename="save_ " + str(sheerforce) + ".gsd", period=None, group=self.all, overwrite=True)
-            hoomd.run(1)
-
-
-    def getSimulationParameters(self,fileLocation):
-        self.parameters = PolymerSimulationParameters()
-        self.parameters.loadParameters(fileLocation=fileLocation)
+## TODO: IMPLEMENT A DATAEXPORTER/IMPORTER

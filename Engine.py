@@ -7,9 +7,9 @@ vAverage = 0.05
 vs = 1000000
 A=1
 print("\n\n\n\n\n")
-parameters.setSheerForceRange(0,0.8)
+parameters.setSheerForceRange(0,1.5)
 parameters.setDf(10)
-parameters.setLength(100)
+parameters.setLength(200)
 parameters.setNumberChains(10)
 parameters.setPairRadius(.3)
 parameters.setPairPotentialStrength(10e4)
@@ -26,8 +26,8 @@ parameters.setRunLength(runl)
 sim = Simulations.PolymerSimulation()
 sim.init(parameter=parameters,initializer='--mode=gpu')
 
-filelocation = sim.runTest()
+filelocation = sim.run()
 print(filelocation)
 
 renderer = Simulations.DataVisualizer(basedirectory=filelocation,interval=0)
-renderer.init()
+renderer.init(plotTilt=True,plotProbabilityMap = True )
