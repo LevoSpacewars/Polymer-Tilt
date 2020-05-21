@@ -9,6 +9,8 @@ import gsd
 import gsd.hoomd
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
+
+from PIL import Image
 circles = False
 
 
@@ -438,7 +440,6 @@ class DataVisualizer():
 
 
 
-
             self.name = "trajectory.gsd"
             location = location.split('/')[0] + "/"
             self.gsd_data =gsd.hoomd.open(location + self.name,'rb')
@@ -446,10 +447,12 @@ class DataVisualizer():
             dataname= location + self.name
 
             self.getSimulationParameters(parameterfilename)
-            self.constructPolymerObjects(dataname)
 
-            self.plotLengthDx()
+
+
             if plotTilt:
+                self.constructPolymerObjects(dataname)
+                self.plotLengthDx()
                 self.plotTilt()
             if plotPolymerProfiles:
                 self.plotGeneralPolymerProfiles()
@@ -648,10 +651,11 @@ class DataVisualizer():
             plt.savefig("dXLengthvsSheefForceTension.png")
 
 
-        def plotPositionProbabilityData(self,rez=None,Interval=0.0,name = "foo",location=""):
+        def plotPositionProbabilityData(self,rez=None,Interval=0.5,name = "foo",location=""):
             print("plotting height map")
+            frames = []
             if rez == None:
-                rez = [100,100]
+                rez = [50,50]
 
 
 
@@ -686,7 +690,10 @@ class DataVisualizer():
                 name= "F_" + str(round(self.forceValues[m],3))
                 writename = "ProbabilityMap" +name
                 plt.savefig(writename + ".png")
+                new_frame = Image.open(writename+".png")
+                frames.append(new_frame)
 
+            frames[0].save("probabilityMapAnimated.gif", format='GIF',append_images=frames[1:],save_all=True,duration=300,loop=0)
         def plotTilt(self):
             print("plotting tilt")
             tilt = []

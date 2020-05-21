@@ -299,13 +299,14 @@ class GlobalDataPlotter(object):
                 axs[i].legend([self.createLegend(length)[i]])
 
 
-            fig.text(0.5, 0.04, 'common xlabel', ha='center', va='center')
-            fig.text(0.06, 0.5, 'common ylabel', ha='center', va='center', rotation='vertical')
+            fig.text(0.5, 0.04, 'Sheer/Tension Force', ha='center', va='center')
+            fig.text(0.06, 0.5, 'Dx/Length', ha='center', va='center', rotation='vertical')
             plt.show()
             plt.savefig('test.pdf')
 
 
-
+compile = GlobalDataManager()
+compile.compileNew()
 
 plotter = GlobalDataPlotter()
 plotter.PlotTiltvsForce()
