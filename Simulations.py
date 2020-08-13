@@ -28,10 +28,10 @@ def particlePotential(r, rmin, rmax,paricle_radius,max_bond_radius,strength_coef
     # strength_coef         : float :   Prefactor meant to increase the effectiveness of the function
 
 
-    contactRegime = paricle_radius-max_bond_radius + 0.00001
+    contactRegime = paricle_radius + 0.00001
     correctionRegime = paricle_radius + max_bond_radius
     particleDistance = r - paricle_radius
-    correction = max_bond_radius - 0.00001
+    correction = max_bond_radius - 0.0001
 
     if r < contactRegime:
         potential = strength_coef * (particleDistance)**2
@@ -49,7 +49,25 @@ def particlePotential(r, rmin, rmax,paricle_radius,max_bond_radius,strength_coef
         potential = - 0.5 * strength_coef * max_bond_radius**2 * math.log( 1- particleDistance**2 / max_bond_radius**2 )
         force =  - ( strength_coef * particleDistance ) / ( 1 - particleDistance**2 / max_bond_radius**2 )
         return (potential,force)
+def particlePotentialHarmonic(r, rmin, rmax,paricle_radius,strength_coef):
+    # r                     : float :   radius between two particles
+    # rmin                  : float :   minimum radius
+    # rmax                  : float :   maximum radius
+    # paricle_radius        : float :   The radius of each particle (also the equlibrium point)
+    # strength_coef         : float :   Prefactor meant to increase the effectiveness of the function
 
+
+    contactRegime = paricle_radius
+    particleDistance = r - paricle_radius
+
+    if r < contactRegime:
+        potential = strength_coef * (particleDistance)**2
+        force = -2 * strength_coef * (particleDistance)
+        return (potential,force)
+    else:
+        potential = 1/2*(strength_coef * particleDistance**2)
+        force     = -strength_coef * particleDistance
+        return (potential, force)
 
 class PolymerSimulationParameters():
     def __init__(self,sheerforcerange=[0,0],df=0,length=0,lines=0,rez=0,K=0,l_0=0,l_max=0,pull=0,amplitude=0,gamma=0,kbT=0,dt=0,probePeriod=0,runLength=0,boxdimx=0,boxdimy=0):
@@ -70,6 +88,7 @@ class PolymerSimulationParameters():
         self.runLength=int(runLength)
         self.boxdimx= boxdimx
         self.boxdimy=boxdimy
+        self.integrator="brownian"
 
     def setSheerForceRange(self,x1,x2):
         self.sheerForceRange = [x1,x2]
@@ -105,6 +124,8 @@ class PolymerSimulationParameters():
         self.boxdimx = x
     def setBoxDimy(self,x):
         self.boxdimy = x
+    def setIntegrator(self,x):
+        self.integrator = x
 
 
     def getSheerForceRange(self):
@@ -141,6 +162,9 @@ class PolymerSimulationParameters():
         return self.boxdimx
     def getBoxDimy(self):
         return self.boxdimy
+    def getIntegrator(self):
+        return self.integrator
+
 
     def writeParameters(self,name="",dir=""):
         text = None
@@ -163,6 +187,7 @@ class PolymerSimulationParameters():
         text.write("runLength=" +      str(self.getRunLength())              + "\n")
         text.write("BoxDimx="    +      str(self.getBoxDimx())               + "\n")
         text.write("BoxDimy="    +      str(self.getBoxDimy())               + "\n")
+        text.write("Integrator=" +     str(self.getIntegrator())             + "\n")
         text.close()
     def loadParameters(self,fileLocation):
         file = open(fileLocation,'r');
@@ -201,6 +226,8 @@ class PolymerSimulationParameters():
                 self.setBoxDimx(float(lines[i].split('=')[1]))
             elif "BoxDimy=" in obj:
                 self.setBoxDimy(float(lines[i].split('=')[1]))
+            elif "Integrator=" in obj:
+                self.setIntegrator(lines[i].split('=')[1])
 
         file.close()
 
@@ -211,7 +238,7 @@ class PolymerSimulation():
         self.parameter = None
         random.seed()
 
-    def init(self, parameter=None,initializer='--mode=cpu',loadSave=None):
+    def init(self, parameter=None,initializer='--mode=gpu',loadSave=None):
         hoomd.context.initialize(initializer)
         self.parameter = parameter
         if loadSave is None:
@@ -242,34 +269,51 @@ class PolymerSimulation():
         hoomd.analyze.log(filename="Energy.log",quantities=['potential_energy', 'temperature'],period=self.parameter.getProbePeriod(),overwrite=True);
 
 
+        self.simulationReadMeDump()
 
         for i in range(self.parameter.getDf()):
             sheerforce = i/self.parameter.getDf()*(self.parameter.getSheerForceRange()[1] - self.parameter.getSheerForceRange()[0]) + self.parameter.getSheerForceRange()[0]
 
-            self.tensionForce = hoomd.md.force.constant(group=self.pulley , fvec=(sheerforce,self.parameter.getPullForce(),0.0))
-            self.tensionForce = hoomd.md.force.constant(group=self.anchor , fvec=(-sheerforce,0,0))
-
+            self.tensionForce.set_force(fvec=(sheerforce,self.parameter.getPullForce(),0.0))
+            self.sheerForce.set_force(fvec=(-sheerforce,0,0))
+            print(sheerforce)
             hoomd.run(self.parameter.getRunLength())
 
-            #creating frame 0 load state
+            # creating frame 0 load state
             hoomd.dump.gsd(filename="save_ " + str(sheerforce) + ".gsd", period=None, group=self.all, overwrite=True)
             hoomd.run(1)
 
         os.system("mv " + "trajectory.gsd" + " " + self.DirectoryName + "/")
         os.system("mv " + "Energy.log"+ " " +self.DirectoryName + "/")
-        self.simulationReadMeDump()
 
         return self.DirectoryName + "/"
 
 
+    def revRun(self):
+        
 
     def initializeIntegrator(self):
 
         hoomd.md.integrate.mode_standard(dt=self.parameter.getTimeStep());
-        bs = hoomd.md.integrate.brownian(group=self.all, kT=self.parameter.getKBT(), seed=random.randint(0,999999));
-        bs.set_gamma('A', gamma=self.parameter.getGamma())
-        bs.set_gamma('B', gamma=self.parameter.getGamma())
-        bs.set_gamma('C', gamma=self.parameter.getGamma())
+        if (self.parameter.getIntegrator() == "brownian"):
+            if(self.parameter.getNumberChains() == 1):
+                bs = hoomd.md.integrate.brownian(group=self.most, kT=self.parameter.getKBT(), seed=random.randint(0,999999));
+
+            else:
+                bs = hoomd.md.integrate.brownian(group=self.all, kT=self.parameter.getKBT(), seed=random.randint(0,999999));
+                pass
+            bs.set_gamma('A', gamma=self.parameter.getGamma())
+            bs.set_gamma('B', gamma=self.parameter.getGamma())
+            bs.set_gamma('C', gamma=self.parameter.getGamma())
+        else:
+            if(self.parameter.getNumberChains() == 1):
+                bs = hoomd.md.integrate.langevin(group = self.most, kT=self.parameter.getKBT(), seed=random.randint(0,99999),noiseless_r=True);
+            else:
+                bs = hoomd.md.integrate.langevin(group = self.all, kT=self.parameter.getKBT(), seed=random.randint(0,99999),noiseless_r=True);
+
+            bs.set_gamma('A', gamma=self.parameter.getGamma())
+            bs.set_gamma('B', gamma=self.parameter.getGamma())
+            bs.set_gamma('C', gamma=self.parameter.getGamma())
 
 
     def setupFileSystem(self):
@@ -277,32 +321,40 @@ class PolymerSimulation():
         #  constructs a directory file based on the computer time, for the simulation being run.
 
         from datetime import datetime
-        time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        time = datetime.now().strftime('%H-%M-%S')
 
-        if True is True:
-            if True:
-                self.DirectoryName = "Simulation_" + time
-                os.system("mkdir " + self.DirectoryName)
-            else:
-                self.DirectoryName = "Simulation_" + name
-                os.system("mkdir " + self.DirectoryName)
+        if self.parameter.getNumberChains() is not 1:
+            length = self.parameter.getLength();
+            T      = self.parameter.getKBT();
+            A      = self.parameter.getPeriodicAmplitude();
+
+            self.DirectoryName = str(length) + "," + str(T) + "," + str(A) + "," + time;
+            os.system("mkdir " + self.DirectoryName)
+        else:
+            length = self.parameter.getLength();
+            T      = self.parameter.getKBT();
+            A      = self.parameter.getPeriodicAmplitude();
+            self.DirectoryName = "BASE," + str(length) + "," + str(T) + "," + str(A) + "," + time;
+            os.system("mkdir " + self.DirectoryName)
 
 
     def initializeForces(self):
         added = 0
         lines       = self.parameter.getNumberChains()
         length      = self.parameter.getLength()
-        l_0         = self.parameter.getPairRadiusEqualibrium()
+        l_0         = self.parameter.getPairRadiusEqualibrium()*2
         l_max       = self.parameter.getPairMaximumRadius()
         K           = self.parameter.getPairPotentialStrength()
         amplitude   = self.parameter.getPeriodicAmplitude()
         pull        = self.parameter.getPullForce()
         rmax        = l_0 + l_max - 0.000000000001
+        width       = self.parameter.getBoxDimx()
 
         self.all    = hoomd.group.all()
         self.anchor = hoomd.group.type(name='anchor', type='A')
         self.pulley = hoomd.group.type(name='pulley',type='B')
         self.chain  = hoomd.group.type(name='chain', type='C')
+        self.most   = hoomd.group.union(name='most',  a = self.chain, b = self.pulley);
 
         nl = hoomd.md.nlist.cell();
 
@@ -320,18 +372,27 @@ class PolymerSimulation():
         nl.reset_exclusions(exclusions = [])
 
         harmonic = hoomd.md.bond.table(width = 100000);
-        harmonic.bond_coeff.set('polymer', func = particlePotential,rmin=0, rmax=10,coeff = dict(paricle_radius=l_0,max_bond_radius=l_max,strength_coef=K));
+        harmonic.bond_coeff.set('polymer', func = particlePotentialHarmonic,rmin=0, rmax=100,coeff = dict(paricle_radius=l_0, strength_coef=K));
 
         # fene = hoomd.md.bond.fene()
-        # fene.bond_coeff.set('polymer', k=10**3, r0=6.0, sigma=0.0, epsilon= 0.0)
+        # radius = 2**(-1/6)*0.6
+        # fene.bond_coeff.set('polymer', k=30.0, r0=0.66, sigma=radius, epsilon= 1)
 
-        self.tensionForce = hoomd.md.force.constant(group = self.pulley, fvec=(0.0,pull,0.0))  # ?
+        self.tensionForce = hoomd.md.force.constant(group = self.pulley, fvec=(0.0,0,0.0))  # ?
+        self.sheerForce   = hoomd.md.force.constant(group = self.anchor, fvec=(0.0,0.0,0.0))
         periodic = hoomd.md.external.periodic()
-        periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=lines+added)
-        periodic.force_coeff.set('B', A=amplitude, i=0, w=1, p=lines+added)
-        periodic.force_coeff.set('C', A=amplitude, i=0, w=1, p=lines+added)
+        if lines is not 1:
+            periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=lines+added)
+            periodic.force_coeff.set('B', A=amplitude, i=0, w=1, p=lines+added)
+            periodic.force_coeff.set('C', A=amplitude, i=0, w=1, p=lines+added)
+        else:
+            periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=width)
+            periodic.force_coeff.set('B', A=amplitude, i=0, w=1, p=width)
+            periodic.force_coeff.set('C', A=amplitude, i=0, w=1, p=width)
+            periodic.force_coeff.set('A', A=-10000000.0, i=0, w=1, p=10)
 
-        periodic.force_coeff.set('A', A=-10000000.0, i=1, w=1, p=100)
+
+        periodic.force_coeff.set('A', A=-10000000.0, i=1, w=1, p=10)
 
     def definePositions(self):
         lines   = self.parameter.getNumberChains()
@@ -340,13 +401,23 @@ class PolymerSimulation():
         l_max   = self.parameter.getPairMaximumRadius()
         pos     = []
 
-        for i in range(lines):
-            x = i - lines/2
+        if lines == 1:
+            x = 0
             y = 0
-
-            for j in range(length):
-                y = y + l_0
+            pos.append([x,y,0])
+            for j in range(1,length):
+                y = y + 2*l_0
                 pos.append([x,y,0])
+
+        else:
+
+            for i in range(lines):
+                x = i - lines/2
+                y = 0
+                pos.append([x,y,0])
+                for j in range(1,length):
+                    y = y + 2*l_0
+                    pos.append([x,y,0])
 
         return pos
 
@@ -385,9 +456,17 @@ class PolymerSimulation():
             mass.append(1)
         return mass
 
+    def defineDiameter(self):
+        d = []
+        lines   = self.parameter.getNumberChains()
+        length  = self.parameter.getLength()
+        for i in range(lines*length):
+            d.append(self.parameter.getPairRadiusEqualibrium())
+        return d
 
     def populateSystem(self):
         pos = []
+        diameter = []
         bonds = []
         id = []
         mass = []
@@ -399,6 +478,12 @@ class PolymerSimulation():
         self.parameter.setBoxDimx(self.boxdim[0])
         self.parameter.setBoxDimy(self.boxdim[1])
 
+
+        if self.parameter.getNumberChains() == 1:
+            self.boxdim[0] = 10;
+            self.parameter.setBoxDimx(self.boxdim[0])
+
+
         boundary = hoomd.data.boxdim(Lx = self.boxdim[0], Ly = self.boxdim[1], dimensions=2)
         snapshot = hoomd.data.make_snapshot(N=  int(self.parameter.getNumberChains()  *  self.parameter.getLength()), box=boundary, particle_types=types, bond_types=['polymer'])
 
@@ -406,13 +491,14 @@ class PolymerSimulation():
         bonds   = self.defineBonds()
         id      = self.defineIds()
         mass    = self.defineMass()
-
+        diameter= self.defineDiameter()
 
         snapshot.particles.position[:] = pos
         snapshot.bonds.resize(len(bonds))
         snapshot.bonds.group[:] = bonds
         snapshot.particles.typeid[:] = id
         snapshot.particles.mass[:] = mass
+        snapshot.particles.diameter[:] = diameter
 
         hoomd.init.read_snapshot(snapshot)
 
@@ -443,25 +529,28 @@ class DataVisualizer():
             self.name = "trajectory.gsd"
             location = location.split('/')[0] + "/"
             self.gsd_data =gsd.hoomd.open(location + self.name,'rb')
+            print(self.gsd_data[0])
+            print(len(self.gsd_data))
             parameterfilename=location+ "_simulation_parameters.txt"
             dataname= location + self.name
 
             self.getSimulationParameters(parameterfilename)
-
-
-
-            if plotTilt:
-                self.constructPolymerObjects(dataname)
-                self.plotLengthDx()
-                self.plotTilt()
-            if plotPolymerProfiles:
-                self.plotGeneralPolymerProfiles()
+            self.forceValues = self.getForceRange()
             if plotProbabilityMap:
                 self.plotPositionProbabilityData(name = self.name,location=dataname)
+            if plotTilt or plotPolymerProfiles:
+                self.constructPolymerObjects(dataname)
+
+            if plotTilt:
+                self.plotTilt()
+                self.plotLengthDx()
+            if plotPolymerProfiles:
+                self.plotGeneralPolymerProfiles()
+
             if plotEnergy:
                 self.plotEnergy(location="ADDNAME",name=self.name+"energy.png")
             if animatePolymers:
-                self.animatePositionData(dataname,fps=200)
+                self.animatePositionData(dataname,fps=200,Interval = self.interval)
 
         def plotEnergy(self,location="",name='energy.png'):
             print(location)
@@ -480,7 +569,7 @@ class DataVisualizer():
             for i in range(rez):
                 p.append([])
                 for j in range(rez):
-                    p[-1].append(-math.cos(j*2*math.pi/rez*boxdimx - boxdimx/2))
+                    p[-1].append(math.sin(j*2*math.pi/rez*boxdimx - boxdimx/2))
 
             return p
 
@@ -489,22 +578,24 @@ class DataVisualizer():
         def animatePositionData(self,fileLocation,fps=250,Interval = 0):
 
             circles = False
+            print("begining animation")
             fig, ax = plt.subplots(figsize=(10, 10))
-            xmax = self.gsd_data[0].particles.position[:,0][0]
-            xmin = xmax
-            ymax = self.gsd_data[0].particles.position[:,1][0]
-            ymin = ymax
-            for i in range(len(self.gsd_data)):
-                for j in range(len(self.gsd_data[int(i)].particles.position[:,0])):
-                    if self.gsd_data[int(i)].particles.position[:,0][j] < xmin:
-                        xmin = self.gsd_data[int(i)].particles.position[:,0][j]
-                    if self.gsd_data[int(i)].particles.position[:,0][j] > xmax:
-                        xmax = self.gsd_data[int(i)].particles.position[:,0][j]
+            # xmax = self.gsd_data[0].particles.position[:,0][0]
+            # xmin = xmax
+            # ymax = self.gsd_data[0].particles.position[:,1][0]
+            # ymin = ymax
+            # for i in range(len(self.gsd_data)):
+            #     for j in range(len(self.gsd_data[int(i)].particles.position[:,0])):
+                    # if self.gsd_data[int(i)].particles.position[:,0][j] < xmin:
+                    #     xmin = self.gsd_data[int(i)].particles.position[:,0][j]
+                    # if self.gsd_data[int(i)].particles.position[:,0][j] > xmax:
+                    #     xmax = self.gsd_data[int(i)].particles.position[:,0][j]
 
-                    if self.gsd_data[int(i)].particles.position[:,1][j] < ymin:
-                        ymin = self.gsd_data[int(i)].particles.position[:,1][j]
-                    if self.gsd_data[int(i)].particles.position[:,1][j] > ymax:
-                        ymax = self.gsd_data[int(i)].particles.position[:,1][j]
+                    # if self.gsd_data[int(i)].particles.position[:,1][j] < ymin:
+                    #     ymin = self.gsd_data[int(i)].particles.position[:,1][j]
+                    # if self.gsd_data[int(i)].particles.position[:,1][j] > ymax:
+                    #     ymax = self.gsd_data[int(i)].particles.position[:,1][j]
+            print("finished sorting. sorting animation")
             potential = self.generatePotential(self.parameters.getNumberChains(),1000)
             def update(i):
 
@@ -516,20 +607,21 @@ class DataVisualizer():
 
                 ax.clear()
                 #ax.set_size_inches(10,10)
-                ax.imshow(potential,extent=[-self.parameters.getNumberChains()/2,self.parameters.getNumberChains()/2,ymin,ymax])
+                ax.imshow(potential,extent=[-self.parameters.getNumberChains()/2,self.parameters.getNumberChains()/2,0,self.parameters.getLength()*0.7])
                 for i in range(self.parameters.getNumberChains()):
                     length = self.parameters.getLength()
                     ax.plot(x[i*length:i*length + length],y[i*length:i*length + length])
                     ax.plot(x[i*length:i*length + length],y[i*length:i*length + length],'o')
 
-                ax.set_xlim(xmin,xmax)
-                ax.set_ylim(ymin,ymax)
+                # ax.set_xlim(xmin,xmax)
+                # ax.set_ylim(ymin,ymax)
                 ax.set_aspect('auto')
                 ax.set_xlabel(str(i) + "/" + str(len(self.gsd_data)))
 
                 return ax
             indexrange = int(self.parameters.getRunLength() / self.parameters.getProbePeriod())
             for m in range(len(self.forceValues)):
+                print(m)
                 anim = FuncAnimation(fig, update, frames=numpy.arange((m+Interval)*indexrange , (m+1)*indexrange), interval=int(fps))
                 anim.save(self.name + "_F_" + str(self.forceValues[m]) + "_animation"+'.gif', dpi=80, writer='imagemagick')
             print("finished")
@@ -537,12 +629,14 @@ class DataVisualizer():
 
         def getSimulationParameters(self,fileLocation):
             self.parameters = PolymerSimulationParameters()
+            print(type(self.parameters));
             self.parameters.loadParameters(fileLocation=fileLocation)
 
         def getForceRange(self):
             forcerange=[]
             for i in range(self.parameters.getDf()):
                 forcerange.append(i/self.parameters.getDf() * (self.parameters.getSheerForceRange()[1] - self.parameters.getSheerForceRange()[0]) + self.parameters.getSheerForceRange()[0])
+            print(forcerange)
             return forcerange
 
         def constructPolymerObjects(self,fileLocation):
@@ -559,18 +653,23 @@ class DataVisualizer():
                     print(str(m) + "." + str(i))
                     x = []
                     y = []
-                    for j in range(int(self.parameters.getLength())):
-
+                    for k in range(int(indexrange*(m + self.interval)),indexrange*(m+1)):
                         x.append([])
                         y.append([])
-                        for k in range(int(indexrange*(m + self.interval)),indexrange*(m+1)):
-
+                        for j in range(int(self.parameters.getLength())):
                             x[-1].append(self.gsd_data[k].particles.position[i*self.parameters.getLength() + j,0])
 
                             y[-1].append(self.gsd_data[k].particles.position[i*self.parameters.getLength() + j,1])
-                        #print(i*self.parameters[-1].getNumberChains()+j)
+
+
                     self.polymers[-1].append(PolymerObject([x,y],L=self.parameters.getNumberChains()))
+
+                    print('fin');
+
+
+
                     print("polymer construction time: " + str(time.perf_counter() - timer))
+
 
             print("done Constructing Polymers")
         def gaussian(self,x, mu, sig):
@@ -587,20 +686,17 @@ class DataVisualizer():
                         y=[]
                         x=[]
                         mu = self.polymers[i][j].getMean()
-                        for p in range(len(generalProfileWidths)):
-                            y.append(mu[p][1])
-                            x.append(mu[p][0])
+                        x = mu[0]
+                        y = mu[1]
 
-                        xerr = []
-                        for p in range(len(y)):
-                            xerr.append(generalProfileWidths[p][0])
+                        xerr = generalProfileWidths[0]
                         plt.plot(x,y)
                         plt.errorbar(x,y,xerr=xerr,fmt='o')
                         t = numpy.linspace(start=x[0]-2, stop=x[-1]+2, num=200)
                         for k in range(len(x)):
-                            plt.plot(t, self.gaussian(t, x[k] , generalProfileWidths[k][0]) + y[k],color='k',linewidth = 1)
+                            plt.plot(t, self.gaussian(t, x[k] , generalProfileWidths[k]) + y[k],color='k',linewidth = 1)
                         print(self.name + "_F_" + str(self.forceValues[i]) + "_N_" + str(j) +"_widths.png")
-
+                        plt.title("Polymer Profile")
                         plt.savefig(self.name + "_F_" + str(self.forceValues[i]) + "_N_" + str(j) +"_widths.png")
                         #os.system("mv " + self.name + "_p" + str(i)+ ".png " + saveLocation)
 
@@ -638,7 +734,7 @@ class DataVisualizer():
                     udx[-1] += (self.polymers[m][j].getDx() - dx[-1])**2
                     ulength[-1] += (self.polymers[m][j].getLength() - length[-1])**2
                 udx[-1] = math.sqrt( udx[-1] * 1/(len(self.polymers[m])-1) )
-                ulength[-1] = math.sqrt( ulength[-1] * 1/(len(self.polymers[m])-1) )
+                ulength[-1] = math.sqrt( ulength[-1] * 1/(len(self.polymers[m])) )
                 square = ( udx[-1] / dx[-1] )**2 + ( ulength[-1] / length[-1] )**2
                 uoutput[-1] = output[-1] * math.sqrt(square)
 
@@ -650,12 +746,41 @@ class DataVisualizer():
             plt.errorbar(f,output,yerr=uoutput,fmt='.')
             plt.savefig("dXLengthvsSheefForceTension.png")
 
+        def plotBrownianMotion(self,savePlot = True):
+
+            print("plotting general Motion-----------------")
+            if savePlot == True:
+                for i in range(len(self.polymers)):
+                    for j in range(len(self.polymers[i])):
+                        plt.clf()
+                        generalProfileWidths = self.polymers[i][j].getWidths()
+                        #y = range(len(generalProfileWidths),0,-1)
+                        y=[]
+                        x=[]
+                        mu = self.polymers[i][j].getMean()
+                        x = mu[0]
+                        y = mu[1]
+
+                        xerr = generalProfileWidths[0]
+                        x = [0]*len(x)
+                        plt.plot(y,xerr)
+                        #plt.errorbar(x,y,xerr=xerr,fmt='o')
+                        #plt.set_xlim(-1,1)
+
+                        #t = numpy.linspace(start=x[0]-1, stop=x[-1]+1, num=200)
+                        #for k in range(len(x)):
+
+                            #plt.plot(t, self.gaussian(t, x[k] , xerr[k]) + y[k],color='k',linewidth = 1)
+                        print(self.name + "_F_" + str(self.forceValues[i]) + "_N_" + str(j) +"_widths.png")
+
+                        plt.savefig(self.name + "_F_" + str(self.forceValues[i]) + "_N_" + str(j) +"_Bwidths.png")
+                        #os.system("mv " + self.name + "_p" + str(i)+ ".png " + saveLocation)
 
         def plotPositionProbabilityData(self,rez=None,Interval=0.5,name = "foo",location=""):
             print("plotting height map")
             frames = []
             if rez == None:
-                rez = [50,50]
+                rez = [100,100]
 
 
 
@@ -686,7 +811,7 @@ class DataVisualizer():
                 plt.title('F:' + str(round(self.forceValues[m],3)) + " probaility map")
                 plt.ylabel('y')
                 plt.xlabel('x')
-                plt.hist2d(p_t[0],p_t[1],bins=(rez[0],rez[1]))
+                plt.hist2d(p_t[0],p_t[1],bins=(rez[0],rez[1]),density=True)
                 name= "F_" + str(round(self.forceValues[m],3))
                 writename = "ProbabilityMap" +name
                 plt.savefig(writename + ".png")
@@ -697,26 +822,29 @@ class DataVisualizer():
         def plotTilt(self):
             print("plotting tilt")
             tilt = []
-            x = []
+            dxdy = []
             sheerForce = []
-            ux=[]
             for i in range(len(self.forceValues)):
-                sheerForce.append(self.forceValues[i])
-                x.append(0)
-                ux.append(0)
+                sheerForce.append(self.forceValues[i]/self.parameters.getPullForce())
+                dxdy.append(0)
                 for j in range(len(self.polymers[i])):
-                    x[-1] += self.polymers[i][j].getDx()
-                x[-1] = x[-1]/len(self.polymers[i])
-                for j in range(len(self.polymers[i])):
-                    ux[-1] += (self.polymers[i][j].getDx() - x[-1])**2
-                ux[-1] = math.sqrt(ux[-1]*1/(len(self.polymers[i])-1))
-
+                    dxdy[-1] += self.polymers[i][j].getdxdyoutput()
+                dxdy[-1] = dxdy[-1]/len(self.polymers[i])
+            print(sheerForce)
             plt.clf()
+            a = numpy.array(sheerForce)
+            d = numpy.array(dxdy)
 
-            plt.title('dX vs SheerForce: Ft:' + str(self.parameters.getPullForce()) + ' kbT=' + str(self.parameters.getKBT()))
-            plt.xlabel("sheerforce")
-            plt.ylabel("dx")
-            plt.errorbar(sheerForce,x,yerr=ux,fmt='.')
+            m,b = numpy.polyfit(a,d,1)
+
+
+            plt.title('dXdY vs SheerForce/Pull: Ft:' + str(self.parameters.getPullForce()) + ' kbT=' + str(self.parameters.getKBT()))
+            plt.xlabel("sheerforce/T")
+            plt.ylabel("dx/dy")
+            plt.plot(a,m*a+b)
+            plt.plot(a,d,'.')
+            plt.legend(["slope:"+str(m)])
+            plt.show()
             plt.savefig("forceVstilt.png")
 
 
@@ -726,7 +854,8 @@ class PolymerObject():
     def __init__(self,data,L = 0):
         self.L = L
         self.particle = self.sortData(data)
-
+        self.numParticles = len(self.particle[0][0])
+        self.numTime = len(self.particle[0])
 
 
         self.generateWidths()
@@ -743,31 +872,53 @@ class PolymerObject():
         self.particleMean = []
         self.particleStdMean = []
 
-        for i in range(len(self.particle[0])):
-            self.particleWidth.append([self.stdDevX(self.particle[0][i])  , self.stdDevY(self.particle[1][i])])
-            self.particleMean.append([ self.calculateMeanX(self.particle[0][i]) , self.calculateMeanY(self.particle[1][i]) ])
-            self.particleStdMean.append([self.particleWidth[-1][0]/math.sqrt(len(self.particle[0][i])),self.particleWidth[-1][1]/len(self.particle[1][i])])
-        for i in range(1,len(self.particleMean)):
+        self.particleWidth = [ self.stdDevX(self.particle[0])  , self.stdDevY(self.particle[1]) ]
 
-            if ((self.particleMean[i][0] - self.particleMean[0][0]) < -self.L/2):
-                self.particleMean[i][0] = self.particleMean[i][0] + self.L
-            if ((self.particleMean[i][0] - self.particleMean[0][0]) > self.L/2):
-                self.particleMean[i][0] = self.particleMean[i][0] - self.L
 
-        self.dx = (self.particleMean[-1][0] - self.particleMean[0][0])
-        self.calulateLength()
+        self.particleMean  = [ self.mean(self.particle[0]) , self.mean(self.particle[1]) ]
+
+        #self.particleStdMean.append( [self.particleWidth[-1][0]/math.sqrt(len(self.particle[0][i])),self.particleWidth[-1][1]/len(self.particle[1][i])])
+
+        # for i in range(1,len(self.particleMean)):
+        #     # check for dx with particles closer to the center # TODO
+        #     if ((self.particleMean[i][0] - self.particleMean[0][0]) < -self.L/2):
+        #         self.particleMean[i][0] = self.particleMean[i][0] + self.L
+        #     if ((self.particleMean[i][0] - self.particleMean[0][0]) > self.L/2):
+        #         self.particleMean[i][0] = self.particleMean[i][0] - self.L
+        a = int( 1 / 3 * len(self.particleMean[0]) )
+        b = int( 2 / 3 * len(self.particleMean[0]) )
+        self.dx = (self.particleMean[0][b] - self.particleMean[0][a])
+        self.dy = (self.particleMean[1][b] - self.particleMean[1][a])
+        print(type(self.particleMean[0][b]))
+
+        self.calulateLength(a,b)
+
+
     def getParticleStdMean(self):
         return self.particleStdMean
     def getDx(self):
         return self.dx
-    def calulateLength(self):
+    def getDy(self):
+        return self.dy
+    def getdxdyoutput(self):
+        return self.dx/self.dy
+    def mean(self, arr):
+        mn = []
+        for i in range(len(arr[0])):
+            t = 0
+            for j in range(len(arr)):
+                t += arr[j][i]
+            mn.append(t/len(arr))
+
+        return mn
+
+    def calulateLength(self,a,b):
         self.polymerLength = 0
 
-        x = 0
-        y = 0
-        for i in range(1,len(self.particleMean)):
-            x += self.particleMean[i][0] - self.particleMean[i-1][0]
-            y += self.particleMean[i][1] - self.particleMean[i-1][1]
+
+        print(len(self.particleMean));
+        x = self.particleMean[0][b] - self.particleMean[0][a]
+        y = self.particleMean[1][b] - self.particleMean[1][a]
 
         self.polymerLength = math.sqrt(x**2 + y**2)
         return self.polymerLength
@@ -775,26 +926,34 @@ class PolymerObject():
         return self.polymerLength
     def sortData(self,arr):
 
-        for i in range(len(arr[0])):
-            for j in range(1,len(arr[0][i])):
-                if arr[0][i][j] - arr[0][i][j-1] < -self.L/2:
-                    arr[0][i][j] = (arr[0][i][j] + self.L)
-                elif arr[0][i][j] - arr[0][i][j-1] > self.L/2:
-                    arr[0][i][j] = (arr[0][i][j] - self.L)
 
-        for i in range(len(arr[0])):
-            for j in range(1,len(arr[0][i])):
-                assert(arr[0][i][j] - arr[0][i][j-1] > -self.L/2)
-                assert(arr[0][i][j] - arr[0][i][j-1] < self.L/2)
+        for i in range(len(arr[0][0])):
+            for j in range(1,len(arr[0])):
+                if arr[0][j][i] - arr[0][j][i-1] < -self.L/2:
+                    arr[0][j][i] = (arr[0][j][i] + self.L)
+                elif arr[0][j][i] - arr[0][j][i-1] > self.L/2:
+                    arr[0][j][i] = (arr[0][j][i] - self.L)
+        # for k in range(len(arr)):
+        #     for i in range(len(arr[k])):
+        #         for j in range(1,len(arr[k][i])):
+        #             assert(arr[k][i][j] - arr[k][i][j-1] > -self.L/2)
+        #             assert(arr[k][i][j] - arr[k][i][j-1] < self.L/2)
 
         return arr
 
 
-    def calculateMeanX(self,arr):
-        return sum(arr)/len(arr)
+    def calculateMeanX(self,arr,particle):
+        mean = 0
+        for i in range(self.numTime):
+            mean += arr[i][particle]
+        return mean/len(arr)
+
 
     def calculateMeanY(self,arr):
-        return sum(arr)/len(arr)
+        mean = 0
+        for i in range(len(arr)):
+            mean += arr[i][particle]
+        return mean/len(arr)
 
     def getMean(self):
         return self.particleMean
@@ -808,24 +967,25 @@ class PolymerObject():
             return self.dx / self.polymerLength
 
     def stdDevX(self,data):
-        std = 0
-        mean = self.calculateMeanX(data)
-        difference = 0
-        for i in range(len(data)):
-            difference += (data[i] - mean)**2
+        stdx = []
+        for j in range(len(data[0])):
+            std = 0
+            mean = self.calculateMeanX(data,j)
+            difference = 0
+            for i in range(len(data)):
+                difference += (data[i][j] - mean)**2
 
-        std = math.sqrt(1 / (len(data) - 1) * difference)
+            stdx.append(math.sqrt(1 / (len(data) - 1) * difference))
 
-        return std
+        return stdx
     def stdDevY(self,data):
-        std = 0
-        mean = sum(data)/len(data)
-        difference = 0
-        for i in range(len(data)):
+        stdx = []
+        for j in range(len(data[0])):
+            std = 0
+            mean = self.calculateMeanX(data,j)
+            difference = 0
+            for i in range(len(data)):
+                difference += (data[i][j] - mean)**2
 
-            difference += (data[i]-mean)**2
-        std = math.sqrt(1/(len(data)-1)*difference)
-
-        return std
-
-## TODO: IMPLEMENT A DATAEXPORTER/IMPORTER
+            stdx.append(math.sqrt(1 / (len(data) - 1) * difference))
+        return stdx
