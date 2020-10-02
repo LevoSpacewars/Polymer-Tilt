@@ -4,172 +4,7 @@ import time
 import os
 import gsd.hoomd
 import math
-class GlobalDataManager(object):
-    # compile new data into files
-    # recompile all data into files
-    #this is a helper class for GlobalDataPlotter;
-    def __init__(self):
-        pass
-    def compileNew(self):
-        files = glob.glob('**/trajectory.gsd',recursive = True)
-        for i in range(len(files)):
-            dir = files[i].split('/')[0]
 
-            if (os.path.isfile(dir + "/data.txt")) == False:
-                print(files[i] + ": has no data.txt")
-                self.writeData(files[i],dir)
-
-
-    def recompileAll(self):
-        files = glob.glob('**/trajectory.gsd',recursive = True)
-        for i in range(len(files)):
-            dir = files[i].split('/')[0]
-
-            if (os.path.isfile(dir + "/data.txt")) == False:
-                print(files[i] + ": has no data.txt")
-                self.writeData(files[i],dir)
-
-            else:
-                os.system("rm "+ dir + "/data.txt")
-                print(files[i] + ": removed data.txt")
-                self.writeData(files[i],dir)
-    def recompile(self, filePath):
-        dir = filePath.split('/')[0]
-        if (os.path.isfile(dir + "/data.txt")) == False:
-            print(filePath + ": has no data.txt")
-            self.writeData(filePath,dir)
-
-        else:
-            os.system("rm "+ dir + "/data.txt")
-            print(filePath + ": removed data.txt")
-            self.writeData(filePath,dir)
-
-    def writeData(self,path,parentDirectory):
-        parameters = self.getSimulationParameters(parentDirectory)
-        polymers   = self.constructPolymerObjects(path,parameters)
-
-        file = open(parentDirectory + "/data.txt","w+")
-
-        dx,udx,length,ulength,output,uoutput = self.get_dx_length_output(polymers)
-        s_dx = "dx," + self.formatArray(dx) + "\n"
-        s_udx = "udx," + self.formatArray(udx) + "\n"
-        s_length= "length," + self.formatArray(length) + "\n"
-        s_ulength= "ulength," + self.formatArray(ulength) + "\n"
-        s_output= "output," + self.formatArray(output) + "\n"
-        s_uoutput= "uoutput," + self.formatArray(uoutput) + "\n"
-        file.write(s_dx)
-        file.write(s_udx)
-        file.write(s_length)
-        file.write(s_ulength)
-        file.write(s_output)
-        file.write(s_uoutput)
-        file.close()
-        #
-
-    def getSimulationParameters(self,dir):
-        parameters = Simulations.PolymerSimulationParameters()
-        parameters.loadParameters(fileLocation=(dir +"/_simulation_parameters.txt"))
-        return parameters
-    def constructPolymerObjects(self,fileLocation,parameters,interval=0.75):
-
-        print("constructing polymer Objects")
-
-        forceValues = self.getForceRange(parameters)
-        gsd_data = gsd.hoomd.open(fileLocation,'rb')
-        timer = 0
-        indexrange = int(parameters.getRunLength() / parameters.getProbePeriod())
-        polymers = []
-
-        for m in range(len(forceValues)):
-            polymers.append([])
-
-            for i in range(int(parameters.getNumberChains())):
-                timer = time.perf_counter()
-
-                print(str(m) + "." + str(i))
-                x = []
-                y = []
-                for k in range(int(indexrange*(m + interval)),indexrange*(m+1)):
-
-
-                    x.append([])
-                    y.append([])
-
-                    for j in range(int(parameters.getLength())):
-
-                        x[-1].append(gsd_data[k].particles.position[i*parameters.getLength() + j,0])
-
-                        y[-1].append(gsd_data[k].particles.position[i*parameters.getLength() + j,1])
-
-
-                polymers[-1].append(Simulations.PolymerObject([x,y],L=parameters.getNumberChains()))
-                print("polymer construction time: " + str(time.perf_counter() - timer))
-
-        print("done Constructing Polymers")
-        return polymers
-        for m in range(len(self.forceValues)):
-            self.polymers.append([])
-            for i in range(int(self.parameters.getNumberChains())):
-                timer = time.perf_counter()
-                print(str(m) + "." + str(i))
-                x = []
-                y = []
-                for k in range(int(indexrange*(m + self.interval)),indexrange*(m+1)):
-                    x.append([])
-                    y.append([])
-                    for j in range(int(self.parameters.getLength())):
-                        x[-1].append(self.gsd_data[k].particles.position[i*self.parameters.getLength() + j,0])
-
-                        y[-1].append(self.gsd_data[k].particles.position[i*self.parameters.getLength() + j,1])
-
-                self.polymers[-1].append(PolymerObject([x,y],L=self.parameters.getNumberChains()))
-
-
-                print("polymer construction time: " + str(time.perf_counter() - timer))
-
-    def getForceRange(self, parameters):
-        forcerange=[]
-        for i in range(parameters.getDf()):
-            forcerange.append(i/parameters.getDf() * (parameters.getSheerForceRange()[1] - parameters.getSheerForceRange()[0]) + parameters.getSheerForceRange()[0])
-        return forcerange
-
-    def get_dx_length_output(self,polymers):
-        length=[]
-        ulength=[]
-
-        dx=[]
-        udx=[]
-        output = []
-        uoutput = []
-        for m in range(len(polymers)):
-            dx.append(0)
-            length.append(0)
-            udx.append(0)
-            ulength.append(0)
-            output.append(0)
-            uoutput.append(0)
-            for j in range(len(polymers[m])):
-                dx[-1] += polymers[m][j].getDx()
-                length[-1] += polymers[m][j].getLength()
-            dx[-1] = dx[-1]/len(polymers[m])
-            length[-1] = length[-1]/len(polymers[m])
-            output[-1] = dx[-1]/length[-1]
-            for j in range(len(polymers[m])):
-                udx[-1] += (polymers[m][j].getDx() - dx[-1])**2
-                ulength[-1] += (polymers[m][j].getLength() - length[-1])**2
-            udx[-1] = math.sqrt( udx[-1] * 1/(len(polymers[m])-1) )
-            ulength[-1] = math.sqrt( ulength[-1] * 1/(len(polymers[m])-1) )
-            square = ( udx[-1] / dx[-1] )**2 + ( ulength[-1] / length[-1] )**2
-            uoutput[-1] = output[-1] * math.sqrt(square)
-
-        return dx,udx,length,ulength,output,uoutput
-
-    def formatArray(self,array):
-        fmt =""
-        for i in range(len(array)-1):
-            fmt += str(array[i]) + ","
-        fmt += str(array[-1])
-        return fmt
 class RunDataHandler(object):
     def __init__(self, fileName = "",allData=[],parameters = None):
         self.parameters = parameters
@@ -218,7 +53,6 @@ class RunDataHandler(object):
         self.ulength    = temp[3]
         self.output     = temp[4]
         self.uoutput    = temp[5]
-        self.dy         = temp[6]
     def getChainLength(self):
         return self.parameters.getLength()
     def getDx(self):
@@ -478,7 +312,7 @@ class GlobalDataPlotter(object):
         fig.text(0.06, 0.5, 'Dx/Length', ha='center', va='center', rotation='vertical')
         plt.savefig('test.pdf')
         plt.show()
-    def compareBases_CL(self,Tension = 2,CL=200,Dim3=False,kt=0,Amplitude = 0):
+    def compareBases_CL(self,Tension = 20,CL=200,Dim3=False,kt=1,Amplitude = 3):
         from matplotlib import pyplot as plt
         import numpy
         bx = []
@@ -495,7 +329,7 @@ class GlobalDataPlotter(object):
                 buy.append([])
                 for k in range(len(self.dataHandlers[p].getForceRange(normalized=True))):
                     bx[-1].append(self.dataHandlers[p].getForceRange(normalized=True)[k])
-                    by[-1].append(self.dataHandlers[p].getdxdyoutput()[k])
+                    by[-1].append(self.dataHandlers[p].getOutput()[0][k])
         m=[]
         for i in range(len(bx)):
             print('here')
@@ -508,14 +342,133 @@ class GlobalDataPlotter(object):
             plt.plot(x,ma*x + b)
         plt.ylabel("Dx/Dy")
         plt.xlabel("Fs/T")
-        plt.title("L:100,Ft:2,kT:0,SinglePolymer,A:0")
+        plt.title("L:" + str(CL) + ",Ft:" + str(Tension) + ",kT:"+str(kt)+",SinglePolymer,A:"+str(Amplitude))
         plt.legend(["measured","slope:" + str(m[0])])
         plt.show();
+    def PlotTiltvsForceX_CL(self,Tension = 10,CL=200,Dim3=False,kt=1):
+        from matplotlib.backends.backend_pdf import PdfPages
+        from mpl_toolkits.mplot3d import Axes3D
+        from matplotlib import pyplot as plt
+
+
+        print("---------------")
+        sortedDataHandler, length, temp = self.sortPolymerNumbers()
+        colorPallet = self.createColorPallet(temp)
+        print(temp);
+
+        colorassignment = []
+        x   = []
+        y   = []
+        uy  = []
+
+        for j in range(len(self.dataHandlers)):
+
+            if(self.dataHandlers[j].getTension() == Tension) and (self.dataHandlers[j].isChainLength(CL)):
+                x.append([])
+                y.append([])
+                uy.append([])
+                print("chain Lenght:")
+                for k in range(len(self.dataHandlers[j].getForceRange(normalized=True))):
+                    x[-1].append(self.dataHandlers[j].getForceRange(normalized=True)[k])
+                    y[-1].append(self.dataHandlers[j].getDx()[0][k])
+                    uy[-1].append(self.dataHandlers[j].getDx()[1][k])
+                for i in range(len(temp)):
+                    if(temp[i] == self.dataHandlers[j].getTemp()):
+
+                        colorassignment.append(i);
+                        plt.errorbar(x[-1],y[-1],yerr=uy[-1],fmt='.',c=colorPallet[i])
+                        print(colorPallet[i])
+        plt.legend(self.createLegendT(temp))
+        plt.title('Polymer dx/r vs sheerForce/Tension: T = 20, kbT= ' + str(kt));
+
+        fig, axs = plt.subplots(len(x))
+
+        fig.suptitle('Polymer dx/r vs sheerForce/Tension: T = 20, kbT= ' + str(kt))
+        if(len(x) > 1):
+            for i in range(len(x)):
+                axs[i].errorbar(x[i], y[i],yerr=uy[i],fmt='.',color = colorPallet[colorassignment[i]])
+
+                axs[i].legend([self.createLegendT(temp)[colorassignment[i]]])
+        else:
+            axs.errorbar(x[0], y[0],yerr=uy[0],fmt='.',color = colorPallet[colorassignment[0]])
+
+            axs.legend([self.createLegendT(temp)[colorassignment[i]]])
+
+
+        fig.text(0.5, 0.04, 'Sheer/Tension Force', ha='center', va='center')
+        fig.text(0.06, 0.5, 'Dx/Length', ha='center', va='center', rotation='vertical')
+        plt.savefig('test.pdf')
+        plt.show()
+
+
+    def plotdtiltvsdforce_CL(self,Tension = 10,CL=200,Dim3=False,kt=1):
+
+        from matplotlib.backends.backend_pdf import PdfPages
+        from mpl_toolkits.mplot3d import Axes3D
+        from matplotlib import pyplot as plt
+
+
+        print("---------------")
+        sortedDataHandler, length, temp = self.sortPolymerNumbers()
+        colorPallet = self.createColorPallet(temp)
+        print(temp);
+
+        colorassignment = []
+        df = []
+        do = []
+        x   = []
+        y   = []
+        uy  = []
+
+        for j in range(len(self.dataHandlers)):
+
+            if(self.dataHandlers[j].getTension() == Tension) and (self.dataHandlers[j].isChainLength(CL)):
+
+                x.append([])
+                y.append([])
+                uy.append([])
+                print("chain Lenght:")
+                for k in range(len(self.dataHandlers[j].getForceRange(normalized=True))):
+                    x[-1].append(self.dataHandlers[j].getForceRange(normalized=True)[k])
+                    y[-1].append(self.dataHandlers[j].getDx()[0][k])
+                    uy[-1].append(self.dataHandlers[j].getDx()[1][k])
+                for i in range(len(temp)):
+                    if(temp[i] == self.dataHandlers[j].getTemp()):
+                        colorassignment.append(i);
+                        #plt.errorbar(x[-1],y[-1],yerr=uy[-1],fmt='.',c=colorPallet[i])
+                        print(colorPallet[i])
+
+                df.append([])
+                do.append([])
+
+                for k in range(len(x[-1])-1):
+                    df[-1].append(x[-1][k+1] - x[-1][k])
+                    do[-1].append(y[-1][k+1] - y[-1][k])
+                    do[-1][-1] = do[-1][-1]/df[-1][-1]
+
+        plt.legend(self.createLegendT(temp))
+        plt.title('Polymer dx/r vs sheerForce/Tension: T = 20, kbT= ' + str(kt));
+
+        fig, axs = plt.subplots(len(x))
+
+        if(len(x) > 1):
+            for i in range(len(x)):
+                axs[i].errorbar(x[i][:-1], do[i],fmt='.',color = colorPallet[colorassignment[i]])
+
+                axs[i].legend([self.createLegendT(temp)[colorassignment[i]]])
+        else:
+            axs.errorbar(df[0], do[0],yerr=uy[0],fmt='.',color = colorPallet[colorassignment[0]])
+
+            axs.legend([self.createLegendT(temp)[colorassignment[i]]])
+        plt.show()
+
+
 
 
 
 # compile = GlobalDataManager()
 # compile.compileNew()
-
+# CHECK THE OUTPUT FOR A 0 0 thing again, SHIT I FUCKED UP
 plotter = GlobalDataPlotter()
-plotter.PlotTiltvsForce_CL(Tension=20)
+plotter.PlotTiltvsForce(Tension=20)
+plotter.compareBases_CL(Tension = 20,Amplitude = 0.3/0.1 * 1,kt=1)

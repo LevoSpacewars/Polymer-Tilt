@@ -70,7 +70,7 @@ def particlePotentialHarmonic(r, rmin, rmax,paricle_radius,strength_coef):
         return (potential, force)
 
 class PolymerSimulationParameters():
-    def __init__(self,sheerforcerange=[0,0],df=0,length=0,lines=0,rez=0,K=0,l_0=0,l_max=0,pull=0,amplitude=0,gamma=0,kbT=0,dt=0,probePeriod=0,runLength=0,boxdimx=0,boxdimy=0):
+    def __init__(self,sheerforcerange=[0,0],df=0,length=0,lines=0,rez=0,K=0,l_0=0,l_max=0,pull=0,amplitude=0,gamma=0,kbT=0,dt=0,probePeriod=0,runLength=0,boxdimx=0,boxdimy=0,integraor = "brownian", direction = "forward"):
         self.sheerForceRange=sheerforcerange
         self.df=df
         self.length=int(length)
@@ -89,6 +89,7 @@ class PolymerSimulationParameters():
         self.boxdimx= boxdimx
         self.boxdimy=boxdimy
         self.integrator="brownian"
+        self.direction = direction
 
     def setSheerForceRange(self,x1,x2):
         self.sheerForceRange = [x1,x2]
@@ -126,6 +127,8 @@ class PolymerSimulationParameters():
         self.boxdimy = x
     def setIntegrator(self,x):
         self.integrator = x
+    def setRunDirection(self,x):
+        self.direction  =x
 
 
     def getSheerForceRange(self):
@@ -164,6 +167,8 @@ class PolymerSimulationParameters():
         return self.boxdimy
     def getIntegrator(self):
         return self.integrator
+    def getRunDirection(self):
+        return self.direction;
 
 
     def writeParameters(self,name="",dir=""):
@@ -188,6 +193,7 @@ class PolymerSimulationParameters():
         text.write("BoxDimx="    +      str(self.getBoxDimx())               + "\n")
         text.write("BoxDimy="    +      str(self.getBoxDimy())               + "\n")
         text.write("Integrator=" +     str(self.getIntegrator())             + "\n")
+        text.write("Direction=" +       str(self.getRunDirection()))
         text.close()
     def loadParameters(self,fileLocation):
         file = open(fileLocation,'r');
@@ -228,6 +234,8 @@ class PolymerSimulationParameters():
                 self.setBoxDimy(float(lines[i].split('=')[1]))
             elif "Integrator=" in obj:
                 self.setIntegrator(lines[i].split('=')[1])
+            elif "Direction=" in obj:
+                self.setRunDirection(lines[i].split('=')[1])
 
         file.close()
 
@@ -259,12 +267,8 @@ class PolymerSimulation():
             self.initializeForces()
             self.initializeIntegrator()
 
-
-    def run(self):
-
+    def probe(self):
         self.setupFileSystem()
-
-
         hoomd.dump.gsd(filename="trajectory.gsd", period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
         hoomd.analyze.log(filename="Energy.log",quantities=['potential_energy', 'temperature'],period=self.parameter.getProbePeriod(),overwrite=True);
 
@@ -279,8 +283,37 @@ class PolymerSimulation():
             print(sheerforce)
             hoomd.run(self.parameter.getRunLength())
 
+        os.system("mv " + "trajectory.gsd" + " " + self.DirectoryName + "/")
+        os.system("mv " + "Energy.log"+ " " +self.DirectoryName + "/")
+
+        return self.DirectoryName + "/"
+
+
+    def run(self):
+
+        self.setupFileSystem()
+
+
+        file = hoomd.dump.gsd(filename="trajectory.gsd", period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
+        hoomd.analyze.log(filename="Energy.log",quantities=['potential_energy', 'temperature'],period=self.parameter.getProbePeriod(),overwrite=True);
+
+
+        self.simulationReadMeDump()
+
+        for i in range(self.parameter.getDf()):
+            
+
+            
+            sheerforce = i/self.parameter.getDf()*(self.parameter.getSheerForceRange()[1] - self.parameter.getSheerForceRange()[0]) + self.parameter.getSheerForceRange()[0]
+
+            self.tensionForce.set_force(fvec=(sheerforce,self.parameter.getPullForce(),0.0))
+            self.sheerForce.set_force(fvec=(-sheerforce,0,0))
+            print(sheerforce)
+
+            hoomd.run(self.parameter.getRunLength())
+
             # creating frame 0 load state
-            hoomd.dump.gsd(filename="save_ " + str(sheerforce) + ".gsd", period=None, group=self.all, overwrite=True)
+            hoomd.dump.gsd(filename="save_ " + str(sheerforce) + ".gsd", period=None, group=self.all, overwrite=True, dynamic=['attribute', 'property', 'momentum', 'topology'])
             hoomd.run(1)
 
         os.system("mv " + "trajectory.gsd" + " " + self.DirectoryName + "/")
@@ -289,31 +322,65 @@ class PolymerSimulation():
         return self.DirectoryName + "/"
 
 
-    def revRun(self):
-        
+    def revRun(self,server=False):
+        self.setupFileSystem()
+
+
+        hoomd.dump.gsd(filename="trajectory.gsd", period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
+        hoomd.analyze.log(filename="Energy.log",quantities=['potential_energy', 'temperature'],period=self.parameter.getProbePeriod(),overwrite=True);
+
+        self.parameter.setRunDirection("reverse")
+        self.simulationReadMeDump()
+
+        for k in range(1,self.parameter.getDf()+1):
+            i = self.parameter.getDf() - k
+            print(i)
+            sheerforce = i/self.parameter.getDf()*(self.parameter.getSheerForceRange()[1] - self.parameter.getSheerForceRange()[0]) + self.parameter.getSheerForceRange()[0]
+            print(sheerforce)
+            self.tensionForce.set_force(fvec=(sheerforce,self.parameter.getPullForce(),0.0))
+            self.sheerForce.set_force(fvec=(-sheerforce,0,0))
+            print(sheerforce)
+            hoomd.run(self.parameter.getRunLength())
+
+
+
+        os.system("mv " + "trajectory.gsd" + " " + self.DirectoryName + "/")
+        os.system("mv " + "Energy.log"+ " " +self.DirectoryName + "/")
+        if server:
+            os.system("mv " + self.DirectoryName + " /projects/softmatter/apatapof/runs")
+
+        return self.DirectoryName + "/"
+
 
     def initializeIntegrator(self):
 
         hoomd.md.integrate.mode_standard(dt=self.parameter.getTimeStep());
+        TRamp = []
+
+        for i in range(self.parameter.getDf()):
+            TRamp.append((self.parameter.runLength*i, self.parameter.kbT * 0.5 + self.parameter.kbT))
+            TRamp.append( (self.parameter.runLength*i + self.parameter.runLength/2, self.parameter.kbT))
+            TRamp.append( (self.parameter.runLength*i + self.parameter.runLength -1 , self.parameter.kbT))
+
         if (self.parameter.getIntegrator() == "brownian"):
             if(self.parameter.getNumberChains() == 1):
-                bs = hoomd.md.integrate.brownian(group=self.most, kT=self.parameter.getKBT(), seed=random.randint(0,999999));
+                self.bs = hoomd.md.integrate.brownian(group=self.most, kT= hoomd.variant.linear_interp(points = TRamp), seed=random.randint(0,999999));
 
             else:
-                bs = hoomd.md.integrate.brownian(group=self.all, kT=self.parameter.getKBT(), seed=random.randint(0,999999));
-                pass
-            bs.set_gamma('A', gamma=self.parameter.getGamma())
-            bs.set_gamma('B', gamma=self.parameter.getGamma())
-            bs.set_gamma('C', gamma=self.parameter.getGamma())
+                self.bs = hoomd.md.integrate.brownian(group=self.all, kT= hoomd.variant.linear_interp(points = TRamp), seed=random.randint(0,999999));
+
+            self.bs.set_gamma('A', gamma=self.parameter.getGamma())
+            self.bs.set_gamma('B', gamma=self.parameter.getGamma())
+            self.bs.set_gamma('C', gamma=self.parameter.getGamma())
         else:
             if(self.parameter.getNumberChains() == 1):
-                bs = hoomd.md.integrate.langevin(group = self.most, kT=self.parameter.getKBT(), seed=random.randint(0,99999),noiseless_r=True);
+                self.bs = hoomd.md.integrate.langevin(group = self.most, kT= hoomd.variant.linear_interp(points = TRamp), seed=random.randint(0,99999),noiseless_r=True);
             else:
-                bs = hoomd.md.integrate.langevin(group = self.all, kT=self.parameter.getKBT(), seed=random.randint(0,99999),noiseless_r=True);
+                self.bs = hoomd.md.integrate.langevin(group = self.all, kT= hoomd.variant.linear_interp(points = TRamp), seed=random.randint(0,99999),noiseless_r=True);
 
-            bs.set_gamma('A', gamma=self.parameter.getGamma())
-            bs.set_gamma('B', gamma=self.parameter.getGamma())
-            bs.set_gamma('C', gamma=self.parameter.getGamma())
+            self.bs.set_gamma('A', gamma=self.parameter.getGamma())
+            self.bs.set_gamma('B', gamma=self.parameter.getGamma())
+            self.bs.set_gamma('C', gamma=self.parameter.getGamma())
 
 
     def setupFileSystem(self):
@@ -701,7 +768,22 @@ class DataVisualizer():
                         #os.system("mv " + self.name + "_p" + str(i)+ ".png " + saveLocation)
 
 
-
+        def grabParticleFrame(self, interval):
+            step = self.parameters.getRunLength()/self.parameters.getProbePeriod()
+            for i in range(self.parameters.getDf()):
+                location = int(step * interval + step*i)
+                print(len(self.gsd_data))
+                print(location);
+                x = self.gsd_data[location].particles.position[:,0]
+                y = self.gsd_data[location].particles.position[:,1]
+                p = self.generatePotential(10,1000)
+                plt.imshow(p,extent=[-self.parameters.getNumberChains()/2,self.parameters.getNumberChains()/2,0,self.parameters.getLength()*0.2])
+                plt.plot(x,y,'.',color='r')
+                plt.title("Polymer System")
+                plt.xlabel("$\hat{x}$")
+                plt.ylabel("$\hat{y}$")
+                plt.axes().set_aspect('auto')
+                plt.show()
 
         def plotLengthDx(self):
             self.forceValues = self.getForceRange()
@@ -796,12 +878,16 @@ class DataVisualizer():
                 p_t = []
                 p_t.append([])
                 p_t.append([])
-                for particle in range(len(self.gsd_data[0].particles.position)):
-                    print("F:" + str(round(self.forceValues[m],1)) + ", P:" + str(particle))
-                    for i in range(int(indexrange*(m + self.interval)),indexrange*(m+1)):
+                x = numpy.array([])
+                y = numpy.array([])
+                # for particle in range(len(self.gsd_data[0].particles.position)):
+                #     print("F:" + str(round(self.forceValues[m],1)) + ", P:" + str(particle))
+                for i in range(int(indexrange*(m + self.interval)),indexrange*(m+1)):
 
-                        p_t[0].append(self.gsd_data[i].particles.position[particle,0])
-                        p_t[1].append(self.gsd_data[i].particles.position[particle,1])
+                    x = numpy.append(x,self.gsd_data[i].particles.position[:,0])
+                    y = numpy.append(y,self.gsd_data[i].particles.position[:,1])
+                    print(i/indexrange)
+
 
 
 
@@ -811,7 +897,7 @@ class DataVisualizer():
                 plt.title('F:' + str(round(self.forceValues[m],3)) + " probaility map")
                 plt.ylabel('y')
                 plt.xlabel('x')
-                plt.hist2d(p_t[0],p_t[1],bins=(rez[0],rez[1]),density=True)
+                plt.hist2d(x,y,bins=(rez[0],rez[1]),density=True)
                 name= "F_" + str(round(self.forceValues[m],3))
                 writename = "ProbabilityMap" +name
                 plt.savefig(writename + ".png")
