@@ -289,7 +289,7 @@ class PolymerSimulation():
         return self.DirectoryName + "/"
 
 
-    def run(self):
+    def run(self, server = False):
 
         self.setupFileSystem()
 
@@ -315,9 +315,14 @@ class PolymerSimulation():
             # creating frame 0 load state
             hoomd.dump.gsd(filename="save_ " + str(sheerforce) + ".gsd", period=None, group=self.all, overwrite=True, dynamic=['attribute', 'property', 'momentum', 'topology'])
             hoomd.run(1)
-
         os.system("mv " + "trajectory.gsd" + " " + self.DirectoryName + "/")
         os.system("mv " + "Energy.log"+ " " +self.DirectoryName + "/")
+        if server == True:
+            os.system("mv " + self.DirectoryName + " /projects/softmatter/apatapof/runs/" + self.DirectoryName)
+        
+
+        
+            
 
         return self.DirectoryName + "/"
 
