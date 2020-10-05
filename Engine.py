@@ -28,8 +28,8 @@ parameters.setRunDirection("forward")
 sim = Simulations.PolymerSimulation()
 sim.init(parameter=parameters,initializer='--mode=gpu')
 
-filelocation = sim.run()
-print(filelocation)
+#filelocation = sim.run()
+#print(filelocation)
 
-renderer = Simulations.DataVisualizer(basedirectory=filelocation,interval=0.5)
-renderer.init(plotTilt=False,plotProbabilityMap = True,animatePolymers=False,plotPolymerProfiles=False)
+#renderer = Simulations.DataVisualizer(basedirectory=filelocation,interval=0.5)
+#renderer.init(plotTilt=False,plotProbabilityMap = True,animatePolymers=False,plotPolymerProfiles=False)
