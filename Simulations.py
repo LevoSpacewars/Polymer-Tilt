@@ -246,7 +246,7 @@ class PolymerSimulation():
         self.parameter = None
         random.seed()
 
-    def init(self, parameter=None,initializer='--mode=gpu',loadSave=None):
+    def init(self, parameter=None,initializer='--mode=gpu',loadSave=None,dirName=None):
         hoomd.context.initialize(initializer)
         self.parameter = parameter
         if loadSave is None:
@@ -291,12 +291,13 @@ class PolymerSimulation():
 
     def run(self, server = False):
 
-        self.setupFileSystem()
+        #self.setupFileSystem()
 
-
-        file = hoomd.dump.gsd(filename="trajectory.gsd", period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
-        hoomd.analyze.log(filename="Energy.log",quantities=['potential_energy', 'temperature'],period=self.parameter.getProbePeriod(),overwrite=True);
-
+        print( self.DirectoryName)
+        
+        
+        file = hoomd.dump.gsd(filename= self.DirectoryName + "/trajectory.gsd", period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
+        hoomd.analyze.log(filename=self.DirectoryName + "/Energy.log",quantities=['potential_energy', 'temperature'],period=self.parameter.getProbePeriod(),overwrite=True);
 
         self.simulationReadMeDump()
 
