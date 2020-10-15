@@ -316,6 +316,7 @@ class PolymerSimulation():
             # creating frame 0 load state
             hoomd.dump.gsd(filename="save_ " + str(sheerforce) + ".gsd", period=None, group=self.all, overwrite=True, dynamic=['attribute', 'property', 'momentum', 'topology'])
             hoomd.run(1)
+            os.system("mv " + "save_\ " + str(sheerforce) + ".gsd " + self.DirectoryName + "/")
         os.system("mv " + "trajectory.gsd" + " " + self.DirectoryName + "/")
         os.system("mv " + "Energy.log"+ " " +self.DirectoryName + "/")
         if server == True:

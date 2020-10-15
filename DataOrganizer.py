@@ -4,7 +4,7 @@ import time
 import os
 import gsd.hoomd
 import math
-
+from matplotlib.backends.backend_pdf import PdfPages
 class RunDataHandler(object):
     def __init__(self, fileName = "",allData=[],parameters = None):
         self.parameters = parameters
@@ -95,30 +95,62 @@ class GlobalDataPlotter(object):
         print(len(self.dataHandlers));
 
     def sortPolymerNumbers(self):
-        length = []
-        handlers = []
         temp    = []
+        amplitude = []
+        length = []
+
+        handlers = []
+        thandlers = []
+        ahandlers = []
+        
 
 
         length.append(self.dataHandlers[0].getChainLength())
         temp.append(self.dataHandlers[0].getTemp())
+        amplitude.append(self.dataHandlers[0].getPeriodicAmplitude())
+        
         handlers.append([])
+        thandlers.append([])
+        ahandlers.append([])
+        
         handlers[0].append(self.dataHandlers[0])
+        thandlers[0].append(self.dataHandlers[0])
+        ahandlers[0].append(self.dataHandlers[0])
+        
         for i in range(1,len(self.dataHandlers)):
             for j in range(len(length)):
 
-                if self.dataHandlers[i].getChainLength() not in length:
-                    if self.dataHandlers[i].getTemp() not in temp:
+
+
+                if self.dataHandlers[i].getTemp() not in temp:
                         temp.append(self.dataHandlers[i].getTemp())
+                        thandlers.append([])
+                        thandlers[-1].append(self.dataHandlers[i])
+                else:
+                    thandlers[temp.index(self.dataHandlers[i].getTemp())].append(self.dataHandlers[i])
+
+
+
+                if self.dataHandlers[i].getPeriodicAmplitude() not in amplitude:
+                        amplitude.append(self.dataHandlers[i].getPeriodicAmplitude())
+                        ahandlers.append([])
+                        ahandlers[-1].append(self.dataHandlers[i])
+                else:
+                    ahandlers[amplitude.index(self.dataHandlers[i].getPeriodicAmplitude())].append(self.dataHandlers[i])
+
+
+
+                if self.dataHandlers[i].getChainLength() not in length:                
                     length.append(self.dataHandlers[i].getChainLength())
                     handlers.append([])
                     handlers[-1].append(self.dataHandlers[i])
                 else:
                     handlers[length.index(self.dataHandlers[i].getChainLength())].append(self.dataHandlers[i])
-                    if self.dataHandlers[i].getTemp() not in temp:
-                        temp.append(self.dataHandlers[i].getTemp())
+                    
 
-        return handlers, length, temp;
+
+
+        return handlers, thandlers, ahandlers, length, temp, amplitude;
     def createColorPallet(self, array):
         num = len(array)
         conv = 1/num
@@ -447,7 +479,7 @@ class GlobalDataPlotter(object):
                     do[-1][-1] = do[-1][-1]/df[-1][-1]
 
         plt.legend(self.createLegendT(temp))
-        plt.title('Polymer dx/r vs sheerForce/Tension: T = 20, kbT= ' + str(kt));
+        plt.title('Polymer dx/r vs sheerForce/Tension: T = 20, kbT= ' + str(kt))
 
         fig, axs = plt.subplots(len(x))
 
@@ -462,13 +494,110 @@ class GlobalDataPlotter(object):
             axs.legend([self.createLegendT(temp)[colorassignment[i]]])
         plt.show()
 
+    
+
+    def GraphEverythingToOrganizedPDF(self):
+        from matplotlib import pyplot as plt
+        slength, stemp, samplitude, list_l, list_t, list_a = self.sortPolymerNumbers()
+        
+        #By Tempterature
+        # first by identical parameters
+        tfigures = []
+        ttitles = []
+        list_colors = ["aqua","black","chocolate", "blue", "green","grey","red"]
+        with PdfPages("exportTest.pdf") as export_pdf:
+            for i in range(len(list_a)):
+                for j in range(len(list_l)):
+                    title = "Varied Temperature with Length:" + str(list_l[j]) + ", Amplitude:" + str(list_a[i])
+                    
+                    ttitles.append(title)
+                    fig = (plt.figure(title))
+                    tfigures.append(fig)
+                    plt.title(title)
+                    plt.xlabel("sheerforce/tension")
+                    plt.ylabel("dx/length")
+                    for k in range(len(stemp)):
+                        for l in range(len(stemp[k])):
+                            if list_a[i] == stemp[k][l].getPeriodicAmplitude() and list_l[j] == stemp[k][l].getChainLength():
+                                x = stemp[k][l].getForceRange()
+                                y,uy = stemp[k][l].getOutput()
+                                color = list_colors[list_t.index(stemp[k][l].getTemp())]
+                                
+                                plt.errorbar(x,y,yerr=uy,color=color)
+                    export_pdf.savefig()
+                    plt.close()
+                    plt.clf()
+            
+                    
+
+
+
+        
+            tfigures.append(plt.figure("VariedTemperature_constant_Merged"))
+        #By Length
+            lfigures = []
+            ltitles = []
+            for i in range(len(list_a)):
+                    for j in range(len(list_t)):
+                        title = "Varied length with Temperature:" + str(list_t[j]) + ", Amplitude:" + str(list_a[i])
+                        
+                        ttitles.append(title)
+                        fig = (plt.figure(title))
+                        tfigures.append(fig)
+                        plt.title(title)
+                        plt.xlabel("sheerforce/tension")
+                        plt.ylabel("dx/length")
+                        for k in range(len(stemp)):
+                            for l in range(len(stemp[k])):
+                                if list_a[i] == stemp[k][l].getPeriodicAmplitude() and list_t[j] == stemp[k][l].getTemp():
+                                    x = stemp[k][l].getForceRange()
+                                    y,uy = stemp[k][l].getOutput()
+                                    color = list_colors[list_l.index(stemp[k][l].getChainLength())]
+                                    
+                                    plt.errorbar(x,y,yerr=uy,color=color)
+                        export_pdf.savefig(figure=fig)
+                        plt.close()
+                        plt.clf()
+        # lfigures.append(plt.figure("VariedLength_constant_Temperature:" + str()))
+        # lfigures.append(plt.figure("VariedLength_constant_Merged"))
+        #By Amplitude 
+            lfigures = []
+            ltitles = []
+            for i in range(len(list_t)):
+                    for j in range(len(list_l)):
+                        title = "Varied Amplitude with Length:" + str(list_l[j]) + ", Temperature:" + str(list_t[i])
+                        
+                        ttitles.append(title)
+                        fig = (plt.figure(title))
+                        tfigures.append(fig)
+                        plt.title(title)
+                        plt.xlabel("sheerforce/tension")
+                        plt.ylabel("dx/length")
+                        for k in range(len(stemp)):
+                            for l in range(len(stemp[k])):
+                                if list_t[i] == stemp[k][l].getTemp() and list_l[j] == stemp[k][l].getChainLength():
+                                    x = stemp[k][l].getForceRange()
+                                    y,uy = stemp[k][l].getOutput()
+                                    color = list_colors[list_t.index(stemp[k][l].getTemp())]
+                                    
+                                    plt.errorbar(x,y,yerr=uy,color=color)
+                        export_pdf.savefig(figure=fig)
+                        plt.close()
+                        plt.clf()
+
+        
+        #All Together
+
+        #Export to pdf
+
 
 
 
 
 # compile = GlobalDataManager()
 # compile.compileNew()
-# CHECK THE OUTPUT FOR A 0 0 thing again, SHIT I FUCKED UP
+
 plotter = GlobalDataPlotter()
-plotter.PlotTiltvsForce(Tension=20)
-plotter.compareBases_CL(Tension = 20,Amplitude = 0.3/0.1 * 1,kt=1)
+# plotter.PlotTiltvsForce(Tension=20)
+# plotter.compareBases_CL(Tension = 20,Amplitude = 0.3/0.1 * 1,kt=1)
+plotter.GraphEverythingToOrganizedPDF()
