@@ -879,13 +879,7 @@ int Compiler::writeResults(string path)
         writeFile << this->uoutput.at(0)<<endl;
 
     }
-    try {
-        std::filesystem::remove(path + "/data.txt");
-        std::filesystem::copy("data.txt", path+"/data.txt");
-        //std::filesystem::remove("data.txt");
-    } catch (std::filesystem::filesystem_error& e) {
-        std::cout << e.what() << '\n';
-    }
+    
 
 
     return 0;
