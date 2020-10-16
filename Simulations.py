@@ -319,8 +319,9 @@ class PolymerSimulation():
             os.system("mv " + "save_\ " + str(sheerforce) + ".gsd " + self.DirectoryName + "/")
         #os.system("mv " + "trajectory.gsd" + " " + self.DirectoryName + "/")
         #os.system("mv " + "Energy.log"+ " " +self.DirectoryName + "/")
-        os.system("DataHandler/Executable " + self.DirectoryName + "/")
+        os.system("DataHandler/Executable " + " /projects/softmatter/apatapof/jobs/" + self.DirectoryName + "/")
         if server == True:
+            os.system("/projects/softmatter/apatapof/Polymer-Tilt/DataHandler/Executable " + " /projects/softmatter/apatapof/jobs/" + self.DirectoryName + "/")
             os.system("mv " + self.DirectoryName + " /projects/softmatter/apatapof/runs/" + self.DirectoryName)
         
 

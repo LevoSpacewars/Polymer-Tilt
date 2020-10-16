@@ -219,8 +219,8 @@ int Compiler::compileData(string *filename, float interval)
         for(int j = (int)(runLength*interval); j < runLength-1; j++)
         {
             t_step = i*runLength + j;
-            cout<<t_step<<endl;
-            cout<< runLength<<endl;
+            // cout<<t_step<<endl;
+            // cout<< runLength<<endl;
             t_adj = j - (int)(runLength*interval);
             
             auto chunk_entry = gsd_find_chunk(&this->handler,t_step,"particles/position"); //retrives the chunk information from a time step from the gsd file
@@ -264,16 +264,16 @@ int Compiler::compileData(string *filename, float interval)
         float * avg_x = calcAveragePosition(&pos_x, n_polymers, l_polymer, adj_run);
         float * avg_y = calcAveragePosition(&pos_y, n_polymers, l_polymer, adj_run);
         writeProfileOutput(&avg_x, &avg_y, n_polymers, l_polymer, current_force ,current_path);
-
+        cout<<"writePorfileoutput"<<endl;
         exportDensityFunction_avg(&avg_x, &avg_y, n_polymers, l_polymer, current_force ,current_path);
-        
+        cout<<"exportDensityFunction_avg"<<endl;
 
         float * dx = calcAverageDx(&avg_x,n_polymers,l_polymer);
-        cout<<"here"<<endl;
+        cout<<"calcAverageDx"<<endl;
         float * length = calcAverageLength(&avg_x,&avg_y,n_polymers,l_polymer);
-        cout<<"here"<<endl;
+        cout<<"calcAverageLength"<<endl;
         float * output = calcSystemOutput(&dx,&length,0);
-        cout<<"here"<<endl; 
+        cout<<"calcSystemoutput"<<endl; 
         this->output.emplace_back(output[0]);
         this->uoutput.emplace_back(output[1]);
         
@@ -300,13 +300,6 @@ int Compiler::compileData(string *filename, float interval)
 
 
     }// end of force Iteration
-
-    try {
-        std::filesystem::remove(current_path + "/profileData.txt");
-        std::filesystem::copy("profileData.txt", current_path+"/profileData.txt");
-    } catch (std::filesystem::filesystem_error& e) {
-        std::cout << e.what() << '\n';
-    }
 
     return -1;
 }
@@ -336,7 +329,7 @@ bool Compiler::exportDensityFunction_avg(float** xa, float ** ya, int p_n, int p
     
     return true;
 }
-bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p_length,float force_value, string path)
+bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p_length,float force_value, string path)//M SAFE
 {
     float* x = *xa;
     float* y = *ya;
@@ -362,7 +355,7 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
     return true;
 }
 
-bool Compiler::writeProfileOutput(float** xa, float ** ya, int p_n, int p_length,float force_value, string path)
+bool Compiler::writeProfileOutput(float** xa, float ** ya, int p_n, int p_length,float force_value, string path) //memory safe
 {
     
     float* x = *xa;
@@ -391,7 +384,7 @@ bool Compiler::writeProfileOutput(float** xa, float ** ya, int p_n, int p_length
 
 
 
-bool Compiler::writeHeatMap(float** xs, float** ys, int time_steps, int nParticles, float force_value, bool normalized, HeatMapParameters param, string path)
+bool Compiler::writeHeatMap(float** xs, float** ys, int time_steps, int nParticles, float force_value, bool normalized, HeatMapParameters param, string path) //memory safe
 {
     float *x = *xs;
     float *y = *ys;
@@ -420,16 +413,16 @@ bool Compiler::writeHeatMap(float** xs, float** ys, int time_steps, int nParticl
     {
         
         tablex[i] = xconv * i + param.x;
-        cout <<tablex[i]<< " ";
+        // cout <<tablex[i]<< " ";
     }
-    cout<<endl;
+    // cout<<endl;
     for (int i = 0; i < param.rezy; i++)
     {
         tabley[i] = yconv * i + param.y;
         
     }
 
-    std::cout<<"done init"<<endl;
+    // std::cout<<"done init"<<endl;
     for (int i = 0; i < time_steps;i++)
     {
         offset = nParticles * i;
@@ -543,7 +536,7 @@ bool Compiler::writeHeatMap(float** xs, float** ys, int time_steps, int nParticl
             int h_index = param.rezx* (b) + a;
             heatmap[h_index] +=1;
         }
-        cout<< float(i)/float(time_steps)<<endl;
+        // cout<< float(i)/float(time_steps)<<endl;
     }
 
     //normalize?
@@ -599,7 +592,7 @@ bool Compiler::writeHeatMap(float** xs, float** ys, int time_steps, int nParticl
 
 }
 
-void Compiler::unwrapData(float ** data, int n_polymers, int l_polymer,int step){
+void Compiler::unwrapData(float ** data, int n_polymers, int l_polymer,int step){//M SAFE
 
 
     int base_offset = step*n_polymers*l_polymer;
@@ -635,7 +628,7 @@ void Compiler::unwrapData(float ** data, int n_polymers, int l_polymer,int step)
 
 }
 
-float* Compiler::calcAveragePosition(float ** data, int n_polymers, int l_polymer,int sampleLength)
+float* Compiler::calcAveragePosition(float ** data, int n_polymers, int l_polymer,int sampleLength)//M SAFE
 {
     float* r_data = *data;
     float *avg_unc = new float[(2 * n_polymers*l_polymer)]; // array where [0,N/2) is average positional data, and [N/2,N) the uncertainty on that
@@ -699,7 +692,7 @@ float* Compiler::calcAverageDx(float ** avg_unc_x, int n_polymer, int l_polymer)
        
 
         sum += data[b] - data[a];
-        cout<< data[b]<<endl;
+        // cout<< data[b]<<endl;
         square += pow(data[b] - data[a],2);
         a += l_polymer;
         b += l_polymer;
@@ -709,7 +702,7 @@ float* Compiler::calcAverageDx(float ** avg_unc_x, int n_polymer, int l_polymer)
     
     
     system_dx[0] = sum/n_polymer;
-    cout<<sum<<endl;
+    // cout<<sum<<endl;
     float unc = square - sum * sum / n_polymer;
     unc = unc / n_polymer;
     unc = pow(unc, 0.5);
