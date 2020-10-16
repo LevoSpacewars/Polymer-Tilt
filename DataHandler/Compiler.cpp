@@ -264,6 +264,8 @@ int Compiler::compileData(string *filename, float interval)
         float * avg_x = calcAveragePosition(&pos_x, n_polymers, l_polymer, adj_run);
         float * avg_y = calcAveragePosition(&pos_y, n_polymers, l_polymer, adj_run);
         writeProfileOutput(&avg_x, &avg_y, n_polymers, l_polymer, current_force ,current_path);
+
+        exportDensityFunction_avg(&avg_x, &avg_y, n_polymers, l_polymer, current_force ,current_path);
         
 
         float * dx = calcAverageDx(&avg_x,n_polymers,l_polymer);
@@ -316,7 +318,7 @@ bool Compiler::exportDensityFunction_avg(float** xa, float ** ya, int p_n, int p
     int unc_offset = p_n*p_length;
     ofstream writeFile;
     float conv = this->profile.boxdimx/p_n;
-    writeFile.open("profileData.txt",std::ios_base::app);
+    writeFile.open(this->current_path + "/DensityData_avg.txt",std::ios_base::app);
     for (int i = 0; i < p_n; i++)
     {
         writeFile<< "Polymer," << i<<endl;
@@ -341,7 +343,7 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
     int unc_offset = p_n*p_length;
     ofstream writeFile;
     float conv = this->profile.boxdimx/p_n;
-    writeFile.open("profileData.txt",std::ios_base::app);
+    writeFile.open("DensityData_raw.txt",std::ios_base::app);
     for (int i = 0; i < p_n; i++)
     {
         writeFile<< "Polymer," << i<<endl;
@@ -349,7 +351,7 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
 
         for(int j = i*p_length; j < (i+1)*p_length; j++)
         {
-            writeFile<< x[j] - i* << "," << x[j+unc_offset] << "," << y[j] << "," << y[j + unc_offset]<<endl;
+            writeFile<< x[j] - i* conv<< "," << x[j+unc_offset] << "," << y[j] << "," << y[j + unc_offset]<<endl;
         }
 
     }
@@ -367,7 +369,7 @@ bool Compiler::writeProfileOutput(float** xa, float ** ya, int p_n, int p_length
     float* y = *ya;
     int unc_offset = p_n*p_length;
     ofstream writeFile;
-    writeFile.open("profileData.txt",std::ios_base::app);
+    writeFile.open(this->current_path + "/profileData.txt",std::ios_base::app);
     for (int i = 0; i < p_n; i++)
     {
         writeFile<< "Polymer," << i<<endl;
@@ -790,7 +792,7 @@ int Compiler::writeResults(string path)
     if (this->profile.read_direciton == "forward")
     {
         ofstream writeFile;
-        writeFile.open("data.txt", ios::trunc);
+        writeFile.open(this->current_path + "/data.txt", ios::trunc);
         writeFile << "dx,";
         for (int i = 0; i < this->dx.size()-1;i++){
             writeFile << this->dx.at(i) << ",";
@@ -838,7 +840,7 @@ int Compiler::writeResults(string path)
     else
     {
         ofstream writeFile;
-        writeFile.open("data.txt", ios::trunc);
+        writeFile.open(this->current_path + "/data.txt", ios::trunc);
         writeFile << "dx,";
         for (int i = this->dx.size() -1; i > 0 ;i--){
             writeFile << this->dx.at(i) << ",";
