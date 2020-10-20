@@ -2,13 +2,13 @@ import Simulations
 import math
 parameters = Simulations.PolymerSimulationParameters()
 dt = 0.001
-runl =  2*10**5
+runl =  2*10**6
 vs =    1*10**0
 A= 0.3/0.1 * 1
 print("\n\n\n\n\n")
 
 parameters.setSheerForceRange(0,2)
-parameters.setDf(10)
+parameters.setDf(15)
 parameters.setLength(100)
 parameters.setNumberChains(10)
 parameters.setPairRadius(0.1)
