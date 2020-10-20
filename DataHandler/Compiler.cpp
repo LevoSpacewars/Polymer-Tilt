@@ -229,7 +229,14 @@ int Compiler::compileData(string *filename, float interval)
              // (number of particles) by (dimensions)
             // cout<<"failed?"<<endl;
             int errorch = gsd_read_chunk(&this->handler,raw_data, chunk_entry); // retrives data from chunk
-            assert(errorch == 0); // if read is successfull
+            if(errorch != 0){
+                
+            cout<<"read not"<<endl;
+            cout<<"time-step:"<<t_step<<endl;
+            cout << i*runLength<< "," << j<<endl;
+            exit(1);
+
+            } // if read is successfull
 
             int indext = 0;
             int base_offset = t_adj * (l_polymer*n_polymers);
