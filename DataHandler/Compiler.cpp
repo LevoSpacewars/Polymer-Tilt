@@ -166,6 +166,7 @@ int Compiler::compileData(string *filename, float interval)
 {
     cout<<"compiling data"<<endl;
     runLength = (int) (this->profile.runLength / this->profile.sampleRate);
+    
     int l_polymer = this->profile.length;
     int n_polymers = this->profile.lines; 
 
@@ -183,6 +184,7 @@ int Compiler::compileData(string *filename, float interval)
     int a       = ((int) (this->pi * l_polymer));
     int b       = ((int) (this->pf * l_polymer));
     float currentt = 0;
+    int totalRunLength = runLength * df;
 
     int gsd_open_error = gsd_open(&this->handler,filename->c_str(), GSD_OPEN_READONLY);
 
@@ -225,7 +227,7 @@ int Compiler::compileData(string *filename, float interval)
             // cout<<t_step<<endl;
             // cout<< runLength<<endl;
             t_adj = j - (int)(runLength*interval);
-            cout<<"getting chunk info"<<endl;
+            cout<<"getting chunk info"<<t_step<<","<< totalRunLength<< ","<<t_step/totalRunLength<<endl;
             auto chunk_entry = gsd_find_chunk(&this->handler,t_step,"particles/position"); //retrives the chunk information from a time step from the gsd file
             cout<<"done"<<endl;
             //cout<<"assigning raw data"<<endl;
