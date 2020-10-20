@@ -243,7 +243,7 @@ int Compiler::compileData(string *filename, float interval)
 
             int indext = 0;
             int base_offset = t_adj * (l_polymer*n_polymers);
-
+            cout<< "assigning raw data" << j<<","<<runLength<<endl;
             for (int v = 0; v < e->N*e->M; v=v+3) // 0,1,2 | ,3,4,5 |,6,7,8 ... // need to implement a proper starting index func 
             {
                  pos_x[indext + base_offset] = (float) raw_data[v];
@@ -253,6 +253,7 @@ int Compiler::compileData(string *filename, float interval)
 
                  indext++;
             }
+            cout<<"done"<<endl;
             // finally, correct for the boundary condition
             // kindof annoying to write out, so I just encaposlated into seperate function
             // boxdimy >> l_polymer, therefore no unwrap needed for y^hat
