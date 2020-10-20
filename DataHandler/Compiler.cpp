@@ -225,13 +225,16 @@ int Compiler::compileData(string *filename, float interval)
             // cout<<t_step<<endl;
             // cout<< runLength<<endl;
             t_adj = j - (int)(runLength*interval);
-            
+            cout<<"getting chunk info"<<endl;
             auto chunk_entry = gsd_find_chunk(&this->handler,t_step,"particles/position"); //retrives the chunk information from a time step from the gsd file
+            cout<<"done"<<endl;
             //cout<<"assigning raw data"<<endl;
             //cout<< e->N * 3 * sizeof(float) <<endl;
              // (number of particles) by (dimensions)
             // cout<<"failed?"<<endl;
+            cout<<"attempting to read file"<<endl;
             int errorch = gsd_read_chunk(&this->handler,raw_data, chunk_entry); // retrives data from chunk
+            cout<<"done"<<endl;
             if(errorch != 0){
                 
             cout<<"read not valid"<<endl;
