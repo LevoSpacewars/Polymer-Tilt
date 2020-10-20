@@ -214,7 +214,10 @@ int Compiler::compileData(string *filename, float interval)
         cout<<i<<endl;
         //Next Sort through the data and "unwrap" the polymers from periodic boundary
         // Begin by 
+        cout<<"creating raw data"<<endl;
         float * raw_data = new float[e->N * 3];
+        cout<<"done"<<endl;
+        
         
         for(int j = (int)(runLength*interval); j < runLength-1; j++)
         {
@@ -231,7 +234,7 @@ int Compiler::compileData(string *filename, float interval)
             int errorch = gsd_read_chunk(&this->handler,raw_data, chunk_entry); // retrives data from chunk
             if(errorch != 0){
                 
-            cout<<"read not"<<endl;
+            cout<<"read not valid"<<endl;
             cout<<"time-step:"<<t_step<<endl;
             cout << i*runLength<< "," << j<<endl;
             exit(1);
@@ -253,7 +256,9 @@ int Compiler::compileData(string *filename, float interval)
             // finally, correct for the boundary condition
             // kindof annoying to write out, so I just encaposlated into seperate function
             // boxdimy >> l_polymer, therefore no unwrap needed for y^hat
+            cout<<"unwrapping data"<<endl;
             this->unwrapData(&pos_x, n_polymers,l_polymer,t_adj);
+            cout<<"done"<<endl;
         }// end of collecting and unwrapping force data
 
         //Begin processing the data
@@ -267,8 +272,9 @@ int Compiler::compileData(string *filename, float interval)
         param.x = -this->profile.lines/2;
         param.y = 0;
         //writeHeatMap(&pos_xr,&pos_yr, n_polymers*l_polymer,adj_run,i*conv,true,param,"sdf");
-
+        cout<<"calculatig average position x"<<endl;
         float * avg_x = calcAveragePosition(&pos_x, n_polymers, l_polymer, adj_run);
+        cout<<"calculating avg pos y"<<endl;
         float * avg_y = calcAveragePosition(&pos_y, n_polymers, l_polymer, adj_run);
         writeProfileOutput(&avg_x, &avg_y, n_polymers, l_polymer, current_force ,current_path);
         cout<<"writePorfileoutput"<<endl;
