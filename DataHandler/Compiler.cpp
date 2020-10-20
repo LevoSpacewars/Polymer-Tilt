@@ -187,6 +187,7 @@ int Compiler::compileData(string *filename, float interval)
     int totalRunLength = runLength * df;
 
     int gsd_open_error = gsd_open(&this->handler,filename->c_str(), GSD_OPEN_READONLY);
+    
 
     auto e = gsd_find_chunk(&this->handler,0,"particles/position");
 
@@ -227,16 +228,16 @@ int Compiler::compileData(string *filename, float interval)
             // cout<<t_step<<endl;
             // cout<< runLength<<endl;
             t_adj = j - (int)(runLength*interval);
-            cout<<"getting chunk info"<<t_step<<","<< totalRunLength<< ","<<t_step/totalRunLength<<endl;
+            //cout<<"getting chunk info"<<t_step<<","<< totalRunLength<< ","<<t_step/totalRunLength<<endl;
             auto chunk_entry = gsd_find_chunk(&this->handler,t_step,"particles/position"); //retrives the chunk information from a time step from the gsd file
-            cout<<"done"<<endl;
+            //cout<<"done"<<endl;
             //cout<<"assigning raw data"<<endl;
             //cout<< e->N * 3 * sizeof(float) <<endl;
              // (number of particles) by (dimensions)
             // cout<<"failed?"<<endl;
-            cout<<"attempting to read file"<<endl;
+            //cout<<"attempting to read file"<<endl;
             int errorch = gsd_read_chunk(&this->handler,raw_data, chunk_entry); // retrives data from chunk
-            cout<<"done"<<endl;
+            //cout<<"done"<<endl;
             if(errorch != 0){
                 
             cout<<"read not valid"<<endl;
@@ -248,7 +249,7 @@ int Compiler::compileData(string *filename, float interval)
 
             int indext = 0;
             int base_offset = t_adj * (l_polymer*n_polymers);
-            cout<< "assigning raw data" << j<<","<<runLength<<endl;
+            //cout<< "assigning raw data" << j<<","<<runLength<<endl;
             for (int v = 0; v < e->N*e->M; v=v+3) // 0,1,2 | ,3,4,5 |,6,7,8 ... // need to implement a proper starting index func 
             {
                  pos_x[indext + base_offset] = (float) raw_data[v];
@@ -258,13 +259,13 @@ int Compiler::compileData(string *filename, float interval)
 
                  indext++;
             }
-            cout<<"done"<<endl;
+            //cout<<"done"<<endl;
             // finally, correct for the boundary condition
             // kindof annoying to write out, so I just encaposlated into seperate function
             // boxdimy >> l_polymer, therefore no unwrap needed for y^hat
-            cout<<"unwrapping data"<<endl;
+            //tgcout<<"unwrapping data"<<endl;
             this->unwrapData(&pos_x, n_polymers,l_polymer,t_adj);
-            cout<<"done"<<endl;
+           // cout<<"done"<<endl;
         }// end of collecting and unwrapping force data
 
         //Begin processing the data
@@ -320,7 +321,7 @@ int Compiler::compileData(string *filename, float interval)
 
 
     }// end of force Iteration
-
+    gsd_close(&this->handler);
     return -1;
 }
 
