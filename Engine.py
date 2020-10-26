@@ -2,14 +2,14 @@ import Simulations
 import math
 parameters = Simulations.PolymerSimulationParameters()
 dt = 0.001
-runl =  2*10**6
-vs =    1*10**0
+runl = (1*10**8)
+vs =    1*10**3
 A= 0.3/0.1 * 1
 print("\n\n\n\n\n")
 
-parameters.setSheerForceRange(0,2)
-parameters.setDf(15)
-parameters.setLength(100)
+parameters.setSheerForceRange(0.5,1)
+parameters.setDf(5)
+parameters.setLength(200)
 parameters.setNumberChains(10)
 parameters.setPairRadius(0.1)
 parameters.setPairPotentialStrength(10e3)
@@ -26,7 +26,7 @@ parameters.setIntegrator("legavin")
 parameters.setRunDirection("forward")
 
 sim = Simulations.PolymerSimulation()
-sim.init(parameter=parameters,initializer='--mode=cpu')
+sim.init(parameter=parameters,initializer='--mode=gpu')
 
 filelocation = sim.run(server = True)
 print(filelocation)

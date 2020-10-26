@@ -67,7 +67,7 @@ class RunDataHandler(object):
             out.append(self.dx[i]/self.dy[i])
         return out
 
-    def getForceRange(self, normalized = False):
+    def getForceRange(self, normalized = True):
         if normalized == True:
             n_forceRange = []
             for i in range(len(self.forceRange)):

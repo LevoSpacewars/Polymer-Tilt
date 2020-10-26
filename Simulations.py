@@ -267,26 +267,20 @@ class PolymerSimulation():
             self.initializeForces()
             self.initializeIntegrator()
 
-    def probe(self):
+    def probe(self, run_id,sheer_value,path):
         self.setupFileSystem()
-        hoomd.dump.gsd(filename="trajectory.gsd", period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
-        hoomd.analyze.log(filename="Energy.log",quantities=['potential_energy', 'temperature'],period=self.parameter.getProbePeriod(),overwrite=True);
+        name = str(run_id) + "_sheer_ " + str(sheer_value)+".gsd"
+        hoomd.dump.gsd(filename=name, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
+        
 
+        
+        self.tensionForce.set_force(fvec=(sheer_value,self.parameter.getPullForce(),0.0))
+        self.sheerForce.set_force(fvec=(-sheer_value,0,0))
+        hoomd.run(self.parameter.getRunLength())
 
-        self.simulationReadMeDump()
+        os.system("mv " + name + " " + path)
 
-        for i in range(self.parameter.getDf()):
-            sheerforce = i/self.parameter.getDf()*(self.parameter.getSheerForceRange()[1] - self.parameter.getSheerForceRange()[0]) + self.parameter.getSheerForceRange()[0]
-
-            self.tensionForce.set_force(fvec=(sheerforce,self.parameter.getPullForce(),0.0))
-            self.sheerForce.set_force(fvec=(-sheerforce,0,0))
-            print(sheerforce)
-            hoomd.run(self.parameter.getRunLength())
-
-        os.system("mv " + "trajectory.gsd" + " " + self.DirectoryName + "/")
-        os.system("mv " + "Energy.log"+ " " +self.DirectoryName + "/")
-
-        return self.DirectoryName + "/"
+        return path
 
 
     def run(self, server = False):
@@ -367,9 +361,14 @@ class PolymerSimulation():
         TRamp = []
 
         for i in range(self.parameter.getDf()):
-            TRamp.append((self.parameter.runLength*i, self.parameter.kbT * 0.5 + self.parameter.kbT))
-            TRamp.append( (self.parameter.runLength*i + self.parameter.runLength/2, self.parameter.kbT))
-            TRamp.append( (self.parameter.runLength*i + self.parameter.runLength -1 , self.parameter.kbT))
+            TRamp.append((int(self.parameter.runLength*i),float(self.parameter.kbT * 0.5 + self.parameter.kbT)))
+            TRamp.append( (int(self.parameter.runLength*i + self.parameter.runLength/1.5), float(self.parameter.kbT)))
+            TRamp.append( (int(self.parameter.runLength*i + self.parameter.runLength -1), float(self.parameter.kbT)))
+            # TRamp.append((long(self.parameter.runLength)*long(i), self.parameter.kbT * 0.5 + self.parameter.kbT))
+            # TRamp.append( (long(self.parameter.runLength)*long(i) + long(self.parameter.runLength/2), self.parameter.kbT))
+            # TRamp.append( (long(self.parameter.runLength)*long(i) + long(self.parameter.runLength -1) , self.parameter.kbT))
+        for i in range(len(TRamp)):
+            print(str(type(TRamp[i][0])) + "," + str(type(TRamp[i][1])))
 
         if (self.parameter.getIntegrator() == "brownian"):
             if(self.parameter.getNumberChains() == 1):
