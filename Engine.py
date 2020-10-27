@@ -2,8 +2,8 @@ import Simulations
 import math
 parameters = Simulations.PolymerSimulationParameters()
 dt = 0.001
-runl = (1*10**8)
-vs =    1*10**3
+runl = (1*10**5)
+vs =    1*10**1
 A= 0.3/0.1 * 1
 print("\n\n\n\n\n")
 

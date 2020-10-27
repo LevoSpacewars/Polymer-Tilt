@@ -60,6 +60,7 @@ private:
     
 
     int compileData(string* fname,float interval);
+    bool truncateFiles();
     int definePolymerProfile(string* parameter_file_Location,struct PolymerProfile * p);
     void unwrapData(float ** data, int p_n, int p_length,int step);
     float* calcAveragePosition(float ** data, int p_n, int p_length,int runLength);

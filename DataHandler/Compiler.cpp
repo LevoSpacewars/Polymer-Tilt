@@ -166,6 +166,7 @@ int Compiler::compileData(string *filename, float interval)
 {
     cout<<"compiling data"<<endl;
     runLength = (int) (this->profile.runLength / this->profile.sampleRate);
+    truncateFiles();
     
     int l_polymer = this->profile.length;
     int n_polymers = this->profile.lines; 
@@ -222,7 +223,7 @@ int Compiler::compileData(string *filename, float interval)
         cout<<"done"<<endl;
         
         
-        for(int j = (int)(runLength*interval); j < runLength-1; j++)
+        for(int j = (int)(runLength*interval); j < runLength; j++)
         {
             t_step = i*runLength + j;
             // cout<<t_step<<endl;
@@ -284,7 +285,7 @@ int Compiler::compileData(string *filename, float interval)
         cout<<"calculating avg pos y"<<endl;
         float * avg_y = calcAveragePosition(&pos_y, n_polymers, l_polymer, adj_run);
         writeProfileOutput(&avg_x, &avg_y, n_polymers, l_polymer, current_force ,current_path);
-        cout<<"writePorfileoutput"<<endl;
+        //cout<<"writePorfileoutput"<<endl;
         exportDensityFunction_avg(&avg_x, &avg_y, n_polymers, l_polymer, current_force ,current_path);
         cout<<"exportDensityFunction_avg"<<endl;
 
@@ -325,6 +326,25 @@ int Compiler::compileData(string *filename, float interval)
     return -1;
 }
 
+bool Compiler::truncateFiles()
+{
+    ofstream writeFile;
+
+    writeFile.open(this->current_path + "/DensityData_avg.txt",std::ios_base::trunc);
+    writeFile.close();
+
+    writeFile.open(this->current_path + "/data.txt",std::ios_base::trunc);
+    writeFile.close();
+
+    writeFile.open(this->current_path + "/heatmaps.txt",std::ios_base::trunc);
+    writeFile.close();
+
+    writeFile.open(this->current_path + "/profileData.txt",std::ios_base::trunc);
+    writeFile.close();
+    
+
+}
+
 bool Compiler::exportDensityFunction_avg(float** xa, float ** ya, int p_n, int p_length,float force_value, string path)
 {
     float* x = *xa;
@@ -333,17 +353,37 @@ bool Compiler::exportDensityFunction_avg(float** xa, float ** ya, int p_n, int p
     ofstream writeFile;
     float conv = this->profile.boxdimx/p_n;
     writeFile.open(this->current_path + "/DensityData_avg.txt",std::ios_base::app);
-    for (int i = 0; i < p_n; i++)
+
+    writeFile<< "Polymer," << 0<<endl;
+    writeFile<< "ForceValue," << force_value<<endl;
+
+    for (int i= 0; i < p_n;i++)
+    {
+        cout<< x[i*p_length]<<",";
+    }
+    cout<<endl;
+
+    for(int j = 0; j < p_length; j++)
+    {
+        writeFile<< x[j] - this->profile.lines + 2 << "," << y[j] <<endl; //issue?
+    }
+    
+    cout<< x[0] - this->profile.lines +2<<",";
+    for (int i = 1; i < p_n; i++)
     {
         writeFile<< "Polymer," << i<<endl;
         writeFile<< "ForceValue," << force_value<<endl;
 
         for(int j = i*p_length; j < (i+1)*p_length; j++)
         {
-            writeFile<< x[j] - i*conv << "," << x[j+unc_offset] << "," << y[j] << "," << y[j + unc_offset]<<endl;
+            writeFile<< x[j] - (i-1)*conv<< "," << y[j] <<endl;
         }
+        cout <<x[i*p_length] - (i-1)*conv<<",";
+        
 
     }
+    cout<<endl;
+
 
     writeFile.close();
 
@@ -659,7 +699,9 @@ float* Compiler::calcAveragePosition(float ** data, int n_polymers, int l_polyme
     int index = 0;
     int unc_index = n_polymers*l_polymer;
     
+    //quick test
 
+    
 
     
 
@@ -691,6 +733,9 @@ float* Compiler::calcAveragePosition(float ** data, int n_polymers, int l_polyme
             
         }
     }
+
+
+    
 
     return avg_unc;
 

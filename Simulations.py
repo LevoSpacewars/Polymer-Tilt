@@ -262,12 +262,12 @@ class PolymerSimulation():
             self.initializeIntegrator()
 
         else:
-            hoomd.init.read_snapshot(hoomd.data.gsd_snapshot(loadSave))
+            hoomd.init.read_snapshot(hoomd.data.gsd_snapshot(loadSave)) # only used when I am loading a save state
             self.setupFileSystem()
             self.initializeForces()
             self.initializeIntegrator()
 
-    def probe(self, run_id,sheer_value,path):
+    def probe(self, run_id,sheer_value,path): #unused
         self.setupFileSystem()
         name = str(run_id) + "_sheer_ " + str(sheer_value)+".gsd"
         hoomd.dump.gsd(filename=name, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
@@ -283,7 +283,7 @@ class PolymerSimulation():
         return path
 
 
-    def run(self, server = False):
+    def run(self, server = False): #main run function
 
         #self.setupFileSystem()
 
@@ -325,7 +325,7 @@ class PolymerSimulation():
         return self.DirectoryName + "/"
 
 
-    def revRun(self,server=False):
+    def revRun(self,server=False): #unused
         self.setupFileSystem()
 
 
@@ -360,17 +360,15 @@ class PolymerSimulation():
         hoomd.md.integrate.mode_standard(dt=self.parameter.getTimeStep());
         TRamp = []
 
-        for i in range(self.parameter.getDf()):
+        for i in range(self.parameter.getDf()): #temperature parameters for annealing in hoomd.variant()
             TRamp.append((int(self.parameter.runLength*i),float(self.parameter.kbT * 0.5 + self.parameter.kbT)))
             TRamp.append( (int(self.parameter.runLength*i + self.parameter.runLength/1.5), float(self.parameter.kbT)))
             TRamp.append( (int(self.parameter.runLength*i + self.parameter.runLength -1), float(self.parameter.kbT)))
-            # TRamp.append((long(self.parameter.runLength)*long(i), self.parameter.kbT * 0.5 + self.parameter.kbT))
-            # TRamp.append( (long(self.parameter.runLength)*long(i) + long(self.parameter.runLength/2), self.parameter.kbT))
-            # TRamp.append( (long(self.parameter.runLength)*long(i) + long(self.parameter.runLength -1) , self.parameter.kbT))
         for i in range(len(TRamp)):
             print(str(type(TRamp[i][0])) + "," + str(type(TRamp[i][1])))
 
-        if (self.parameter.getIntegrator() == "brownian"):
+
+        if (self.parameter.getIntegrator() == "brownian"): # not used, since I've only been using the legavin integrator
             if(self.parameter.getNumberChains() == 1):
                 self.bs = hoomd.md.integrate.brownian(group=self.most, kT= hoomd.variant.linear_interp(points = TRamp), seed=random.randint(0,999999));
 
@@ -381,12 +379,12 @@ class PolymerSimulation():
             self.bs.set_gamma('B', gamma=self.parameter.getGamma())
             self.bs.set_gamma('C', gamma=self.parameter.getGamma())
         else:
-            if(self.parameter.getNumberChains() == 1):
+            if(self.parameter.getNumberChains() == 1): # for a single polymer all the particles except the base are simulated. 
                 self.bs = hoomd.md.integrate.langevin(group = self.most, kT= hoomd.variant.linear_interp(points = TRamp), seed=random.randint(0,99999),noiseless_r=True);
-            else:
+            else: #defualt
                 self.bs = hoomd.md.integrate.langevin(group = self.all, kT= hoomd.variant.linear_interp(points = TRamp), seed=random.randint(0,99999),noiseless_r=True);
 
-            self.bs.set_gamma('A', gamma=self.parameter.getGamma())
+            self.bs.set_gamma('A', gamma=self.parameter.getGamma()) #damping
             self.bs.set_gamma('B', gamma=self.parameter.getGamma())
             self.bs.set_gamma('C', gamma=self.parameter.getGamma())
 
@@ -413,29 +411,30 @@ class PolymerSimulation():
             os.system("mkdir " + self.DirectoryName)
 
 
-    def initializeForces(self):
+    def initializeForces(self): #where particle-particle and bond interactions are defined
         added = 0
         lines       = self.parameter.getNumberChains()
         length      = self.parameter.getLength()
         l_0         = self.parameter.getPairRadiusEqualibrium()*2
-        l_max       = self.parameter.getPairMaximumRadius()
+        l_max       = self.parameter.getPairMaximumRadius() # depricated
         K           = self.parameter.getPairPotentialStrength()
         amplitude   = self.parameter.getPeriodicAmplitude()
         pull        = self.parameter.getPullForce()
-        rmax        = l_0 + l_max - 0.000000000001
+        rmax        = l_0 + l_max - 0.000000000001 # depricated
         width       = self.parameter.getBoxDimx()
 
+        #defining group names for particle types
         self.all    = hoomd.group.all()
-        self.anchor = hoomd.group.type(name='anchor', type='A')
-        self.pulley = hoomd.group.type(name='pulley',type='B')
-        self.chain  = hoomd.group.type(name='chain', type='C')
-        self.most   = hoomd.group.union(name='most',  a = self.chain, b = self.pulley);
+        self.anchor = hoomd.group.type(name='anchor', type='A') #anchor is the base particle for each polymer
+        self.pulley = hoomd.group.type(name='pulley',type='B') # pulley is the top particle for each polymer
+        self.chain  = hoomd.group.type(name='chain', type='C') # everything else
+        self.most   = hoomd.group.union(name='most',  a = self.chain, b = self.pulley) #everthing but the anchor group
 
         nl = hoomd.md.nlist.cell();
 
 
 
-        table = hoomd.md.pair.table(width=10000, nlist=nl) #I think the radius cut is the ran
+        table = hoomd.md.pair.table(width=10000, nlist=nl) # describes stiff quadratic potential for particle-particle interactions
         table.pair_coeff.set('A', 'A', func=hardContact,rmin=0,rmax=l_0, coeff=dict(l_0=l_0, K=K))
         table.pair_coeff.set('A', 'B', func=hardContact,rmin=0,rmax=l_0, coeff=dict(l_0=l_0, K=K))
         table.pair_coeff.set('B', 'B', func=hardContact,rmin=0,rmax=l_0, coeff=dict(l_0=l_0, K=K))
@@ -446,16 +445,13 @@ class PolymerSimulation():
 
         nl.reset_exclusions(exclusions = [])
 
-        harmonic = hoomd.md.bond.table(width = 100000);
-        harmonic.bond_coeff.set('polymer', func = particlePotentialHarmonic,rmin=0, rmax=100,coeff = dict(paricle_radius=l_0, strength_coef=K));
+        harmonic = hoomd.md.bond.table(width = 100000); #defining the bond potential
+        harmonic.bond_coeff.set('polymer', func = particlePotentialHarmonic,rmin=0, rmax=100,coeff = dict(paricle_radius=l_0, strength_coef=K)); #bond potential
 
-        # fene = hoomd.md.bond.fene()
-        # radius = 2**(-1/6)*0.6
-        # fene.bond_coeff.set('polymer', k=30.0, r0=0.66, sigma=radius, epsilon= 1)
 
-        self.tensionForce = hoomd.md.force.constant(group = self.pulley, fvec=(0.0,0,0.0))  # ?
+        self.tensionForce = hoomd.md.force.constant(group = self.pulley, fvec=(0.0,0,0.0))  # FORCES INTIALIZED HERE -> CHANGED IN RUN FUNCTION
         self.sheerForce   = hoomd.md.force.constant(group = self.anchor, fvec=(0.0,0.0,0.0))
-        periodic = hoomd.md.external.periodic()
+        periodic = hoomd.md.external.periodic() #External potential defined
         if lines is not 1:
             periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=lines+added)
             periodic.force_coeff.set('B', A=amplitude, i=0, w=1, p=lines+added)
@@ -467,7 +463,7 @@ class PolymerSimulation():
             periodic.force_coeff.set('A', A=-10000000.0, i=0, w=1, p=10)
 
 
-        periodic.force_coeff.set('A', A=-10000000.0, i=1, w=1, p=10)
+        periodic.force_coeff.set('A', A=-10000000.0, i=1, w=1, p=10) #used to keep anchor on y=0 
 
     def definePositions(self):
         lines   = self.parameter.getNumberChains()
@@ -531,7 +527,7 @@ class PolymerSimulation():
             mass.append(1)
         return mass
 
-    def defineDiameter(self):
+    def defineDiameter(self): #not sure why this is needed... I define all the range of particle interactions in the initializeForces. Diameter is ONLY used for the periodic potential -> this would be a source of error since I have l_0 when it should be 2*l_0 
         d = []
         lines   = self.parameter.getNumberChains()
         length  = self.parameter.getLength()
@@ -580,6 +576,7 @@ class PolymerSimulation():
     def simulationReadMeDump(self,name="", dir=""):
         self.parameter.writeParameters(name=name,dir=self.DirectoryName)
 
+#################################### only for extracting data ####################################################
 class DataVisualizer():
         def __init__(self,basedirectory="",interval=0):
 
