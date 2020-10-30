@@ -74,7 +74,7 @@ private:
     float * calcSheerTension();
     int writeResults(string path);
 
-    float interval = 0.5;
+    float interval = 0.75;
     int runLength;
     string current_path;
 
