@@ -303,6 +303,7 @@ class PolymerSimulation():
 
             self.tensionForce.set_force(fvec=(sheerforce,self.parameter.getPullForce(),0.0))
             self.sheerForce.set_force(fvec=(-sheerforce,0,0))
+
             print(sheerforce)
 
             hoomd.run(self.parameter.getRunLength())
@@ -362,7 +363,7 @@ class PolymerSimulation():
 
         for i in range(self.parameter.getDf()): #temperature parameters for annealing in hoomd.variant()
             TRamp.append((int(self.parameter.runLength*i),float(self.parameter.kbT * 0.5 + self.parameter.kbT)))
-            TRamp.append( (int(self.parameter.runLength*i + self.parameter.runLength/1.5), float(self.parameter.kbT)))
+            TRamp.append( (int(self.parameter.runLength*i + self.parameter.runLength/2), float(self.parameter.kbT)))
             TRamp.append( (int(self.parameter.runLength*i + self.parameter.runLength -1), float(self.parameter.kbT)))
         for i in range(len(TRamp)):
             print(str(type(TRamp[i][0])) + "," + str(type(TRamp[i][1])))
@@ -415,12 +416,10 @@ class PolymerSimulation():
         added = 0
         lines       = self.parameter.getNumberChains()
         length      = self.parameter.getLength()
-        l_0         = self.parameter.getPairRadiusEqualibrium()*2
-        l_max       = self.parameter.getPairMaximumRadius() # depricated
+        bond_length = self.parameter.getPairRadiusEqualibrium()*2
         K           = self.parameter.getPairPotentialStrength()
         amplitude   = self.parameter.getPeriodicAmplitude()
         pull        = self.parameter.getPullForce()
-        rmax        = l_0 + l_max - 0.000000000001 # depricated
         width       = self.parameter.getBoxDimx()
 
         #defining group names for particle types
@@ -435,18 +434,18 @@ class PolymerSimulation():
 
 
         table = hoomd.md.pair.table(width=10000, nlist=nl) # describes stiff quadratic potential for particle-particle interactions
-        table.pair_coeff.set('A', 'A', func=hardContact,rmin=0,rmax=l_0, coeff=dict(l_0=l_0, K=K))
-        table.pair_coeff.set('A', 'B', func=hardContact,rmin=0,rmax=l_0, coeff=dict(l_0=l_0, K=K))
-        table.pair_coeff.set('B', 'B', func=hardContact,rmin=0,rmax=l_0, coeff=dict(l_0=l_0, K=K))
+        table.pair_coeff.set('A', 'A', func=hardContact,rmin=0,rmax=bond_length, coeff=dict(l_0=bond_length, K=K))
+        table.pair_coeff.set('A', 'B', func=hardContact,rmin=0,rmax=bond_length, coeff=dict(l_0=bond_length, K=K))
+        table.pair_coeff.set('B', 'B', func=hardContact,rmin=0,rmax=bond_length, coeff=dict(l_0=bond_length, K=K))
 
-        table.pair_coeff.set('B', 'C', func=hardContact,rmin=0,rmax=l_0, coeff=dict(l_0=l_0, K=K))
-        table.pair_coeff.set('A', 'C', func=hardContact,rmin=0,rmax=l_0, coeff=dict(l_0=l_0, K=K))
-        table.pair_coeff.set('C', 'C', func=hardContact,rmin=0,rmax=l_0, coeff=dict(l_0=l_0, K=K))
+        table.pair_coeff.set('B', 'C', func=hardContact,rmin=0,rmax=bond_length, coeff=dict(l_0=bond_length, K=K))
+        table.pair_coeff.set('A', 'C', func=hardContact,rmin=0,rmax=bond_length, coeff=dict(l_0=bond_length, K=K))
+        table.pair_coeff.set('C', 'C', func=hardContact,rmin=0,rmax=bond_length, coeff=dict(l_0=bond_length, K=K))
 
         nl.reset_exclusions(exclusions = [])
 
         harmonic = hoomd.md.bond.table(width = 100000); #defining the bond potential
-        harmonic.bond_coeff.set('polymer', func = particlePotentialHarmonic,rmin=0, rmax=100,coeff = dict(bond_length=l_0, strength_coef=K)); #bond potential
+        harmonic.bond_coeff.set('polymer', func = particlePotentialHarmonic,rmin=0, rmax=100,coeff = dict(bond_length=bond_length, strength_coef=K)); #bond potential
 
 
         self.tensionForce = hoomd.md.force.constant(group = self.pulley, fvec=(0.0,0,0.0))  # FORCES INTIALIZED HERE -> CHANGED IN RUN FUNCTION
