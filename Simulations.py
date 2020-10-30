@@ -49,7 +49,7 @@ def particlePotential(r, rmin, rmax,paricle_radius,max_bond_radius,strength_coef
         potential = - 0.5 * strength_coef * max_bond_radius**2 * math.log( 1- particleDistance**2 / max_bond_radius**2 )
         force =  - ( strength_coef * particleDistance ) / ( 1 - particleDistance**2 / max_bond_radius**2 )
         return (potential,force)
-def particlePotentialHarmonic(r, rmin, rmax,paricle_radius,strength_coef):
+def particlePotentialHarmonic(r, rmin, rmax,bond_radius,strength_coef):
     # r                     : float :   radius between two particles
     # rmin                  : float :   minimum radius
     # rmax                  : float :   maximum radius
@@ -57,8 +57,8 @@ def particlePotentialHarmonic(r, rmin, rmax,paricle_radius,strength_coef):
     # strength_coef         : float :   Prefactor meant to increase the effectiveness of the function
 
 
-    contactRegime = paricle_radius
-    particleDistance = r - paricle_radius
+    contactRegime = bond_radius
+    particleDistance = r - bond_radius
 
     if r < contactRegime:
         potential = strength_coef * (particleDistance)**2
@@ -446,7 +446,7 @@ class PolymerSimulation():
         nl.reset_exclusions(exclusions = [])
 
         harmonic = hoomd.md.bond.table(width = 100000); #defining the bond potential
-        harmonic.bond_coeff.set('polymer', func = particlePotentialHarmonic,rmin=0, rmax=100,coeff = dict(paricle_radius=l_0, strength_coef=K)); #bond potential
+        harmonic.bond_coeff.set('polymer', func = particlePotentialHarmonic,rmin=0, rmax=100,coeff = dict(bond_length=l_0, strength_coef=K)); #bond potential
 
 
         self.tensionForce = hoomd.md.force.constant(group = self.pulley, fvec=(0.0,0,0.0))  # FORCES INTIALIZED HERE -> CHANGED IN RUN FUNCTION
@@ -532,7 +532,7 @@ class PolymerSimulation():
         lines   = self.parameter.getNumberChains()
         length  = self.parameter.getLength()
         for i in range(lines*length):
-            d.append(self.parameter.getPairRadiusEqualibrium())
+            d.append(2*self.parameter.getPairRadiusEqualibrium())
         return d
 
     def populateSystem(self):
