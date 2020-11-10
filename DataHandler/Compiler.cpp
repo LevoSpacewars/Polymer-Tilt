@@ -885,7 +885,7 @@ float* Compiler::calcSystemOutput(float** sysdx, float ** syslength, float sheer
 
 
     cout<<length[1]/length[0]<< ","<<dx[1]/dx[0]<<endl;
-    output[1] = output[0] * pow( pow(length[1] / length[0], 2) + pow(dx[1] / dx[0], 2), 0.5);
+    output[1] = output[0] * pow( pow(0, 2) + pow(dx[1] / dx[0], 2), 0.5);
 
     return output;
 }
