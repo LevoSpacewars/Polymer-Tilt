@@ -16,11 +16,14 @@ using namespace std;
 int main(int argc, char*argv[]) {
 
     int choice = -1;
-    if (argc == 2)
+    if (argc >= 2)
     {
-        
-        Compiler * compiler = new Compiler(string(argv[1]),true);
+        for ( int i =1; i < argc; i++)
+        {
+            Compiler * compiler = new Compiler(string(argv[i]),true);
 
+        }
+        
         exit(0);
     }
     MainMenuHandler *menu = new MainMenuHandler();

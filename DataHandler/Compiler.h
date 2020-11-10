@@ -58,7 +58,6 @@ private:
 
     vector<float> sheerTension;
     
-
     int compileData(string* fname,float interval);
     bool truncateFiles();
     int definePolymerProfile(string* parameter_file_Location,struct PolymerProfile * p);
