@@ -279,7 +279,7 @@ int Compiler::compileData(string *filename, float interval)
         param.width = this->profile.lines;
         param.x = -this->profile.lines/2;
         param.y = 0;
-        writeHeatMap(&pos_xr,&pos_yr, n_polymers*l_polymer,adj_run,i*conv,true,param,"sdf");
+        //writeHeatMap(&pos_xr,&pos_yr, n_polymers*l_polymer,adj_run,i*conv,true,param,"sdf");
         cout<<"calculatig average position x"<<endl;
         float * avg_x = calcAveragePosition(&pos_x, n_polymers, l_polymer, adj_run);
         cout<<"calculating avg pos y"<<endl;
