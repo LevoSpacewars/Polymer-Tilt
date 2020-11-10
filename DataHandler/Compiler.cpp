@@ -945,7 +945,7 @@ int Compiler::writeResults(string path)
         for (int i = 0; i < this->dx.size()-1;i++){
             writeFile << this->uoutput.at(i) << ",";
         }
-        writeFile << this->output.at(this->dx.size()-1)<<endl;
+        writeFile << this->uoutput.at(this->dx.size()-1)<<endl;
 
        
 
