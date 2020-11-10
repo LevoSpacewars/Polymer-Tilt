@@ -219,7 +219,7 @@ int Compiler::compileData(string *filename, float interval)
         //Next Sort through the data and "unwrap" the polymers from periodic boundary
         // Begin by 
         cout<<"creating raw data"<<endl;
-        float * raw_data = new float[e->N * 3];
+        float * raw_data = new float[e->N * e->M];
         cout<<"done"<<endl;
         
         
@@ -279,7 +279,7 @@ int Compiler::compileData(string *filename, float interval)
         param.width = this->profile.lines;
         param.x = -this->profile.lines/2;
         param.y = 0;
-        //writeHeatMap(&pos_xr,&pos_yr, n_polymers*l_polymer,adj_run,i*conv,true,param,"sdf");
+        writeHeatMap(&pos_xr,&pos_yr, n_polymers*l_polymer,adj_run,i*conv,true,param,"sdf");
         cout<<"calculatig average position x"<<endl;
         float * avg_x = calcAveragePosition(&pos_x, n_polymers, l_polymer, adj_run);
         cout<<"calculating avg pos y"<<endl;
@@ -347,8 +347,63 @@ bool Compiler::truncateFiles()
 
 bool Compiler::exportDensityFunction_avg(float** xa, float ** ya, int p_n, int p_length,float force_value, string path)
 {
+
+    float width = this->profile.boxdimx;
+    float interval = width/p_n;
+    
+    
+
+
     float* x = *xa;
     float* y = *ya;
+    float* sortOrder = new float[p_n];
+    float* original= new float[p_n];
+    int* offsetOrder = new int[p_n];
+    
+    for (int i = 0; i < p_n;i++)
+    {
+        sortOrder[i] = x[i*p_length+1];
+        original[i] = sortOrder[i];
+    }
+    bool notdone = true;
+    float temp = sortOrder[0];
+    while(notdone == true){
+        bool reordered = false;
+        for (int i = 0; i < p_n - 1;i++)
+        {
+            if (sortOrder[i] < sortOrder[i+1]){
+                temp = sortOrder[i];
+                sortOrder[i] = sortOrder[i+1];
+                sortOrder[i+1] = temp;
+                reordered = true;
+            }
+        }
+        if (reordered == false)
+        {
+            notdone = false;  
+        }
+    }
+    
+    for (int i = 0; i < p_n;i++)
+    {
+        cout<<sortOrder[i]<<",";
+    }
+    cout<<endl;
+
+    for (int i = 0; i < p_n;i++)
+    {
+        for(int j = 0; j < p_n;j++)
+        {
+            if(sortOrder[i] == original[j])
+            {
+                offsetOrder[i] = j;
+            }
+        }
+    }
+
+
+
+    
     int unc_offset = p_n*p_length;
     ofstream writeFile;
     float conv = this->profile.boxdimx/p_n;
@@ -359,30 +414,30 @@ bool Compiler::exportDensityFunction_avg(float** xa, float ** ya, int p_n, int p
 
     for (int i= 0; i < p_n;i++)
     {
-        cout<< x[i*p_length]<<",";
+        //cout<< x[i*p_length]<<",";
     }
-    cout<<endl;
-
-    for(int j = 0; j < p_length; j++)
-    {
-        writeFile<< x[j] - this->profile.lines + 2 << "," << y[j] <<endl; //issue?
-    }
+    //cout<<endl;
     
-    cout<< x[0] - this->profile.lines +2<<",";
-    for (int i = 1; i < p_n; i++)
+    for (int i = 0; i < p_n; i++)
     {
         writeFile<< "Polymer," << i<<endl;
         writeFile<< "ForceValue," << force_value<<endl;
+        
 
-        for(int j = i*p_length; j < (i+1)*p_length; j++)
+        for(int j = offsetOrder[i]*p_length; j < (offsetOrder[i]+1)*p_length; j++)
         {
-            writeFile<< x[j] - (i-1)*conv<< "," << y[j] <<endl;
+            writeFile<< x[j] + (i)*conv<< "," << y[j] <<endl;
+            cout<< x[j] + (i)*conv<<","<<y[j]<<",";
         }
-        cout <<x[i*p_length] - (i-1)*conv<<",";
+        cout <<endl;
+        //cout <<x[i*p_length] - (offsetOrder[i])*conv<<",";
         
 
     }
-    cout<<endl;
+    //cout<<endl;
+
+  
+    
 
 
     writeFile.close();
@@ -632,7 +687,7 @@ bool Compiler::writeHeatMap(float** xs, float** ys, int time_steps, int nParticl
     }
 
     ofstream myfile;
-    myfile.open (this->current_path + "/heatmaps.txt",ios::app);
+    myfile.open (this->current_path + "/heatmap"+ to_string(force_value/this->profile.tension) + ".txt",ios::trunc);
     myfile << "parameters (x,y,w,h,rx,ry):" + to_string(param.x) + "," + to_string(param.y) + "," +to_string(param.width) + "," + to_string(param.height) + "," + to_string(param.rezx) + "," + to_string(param.rezy) <<endl<<"{";
 
     for (int i = 1; i < param.rezy;i++)
@@ -701,7 +756,10 @@ float* Compiler::calcAveragePosition(float ** data, int n_polymers, int l_polyme
     
     //quick test
 
-    
+    for (int i = 0; i < 2*n_polymers*l_polymer;i++)
+    {
+        avg_unc[i] = 0;
+    }
 
     
 

@@ -15,8 +15,8 @@ circles = False
 
 
 def hardContact(r, rmin, ramx, l_0,K):
-    V = K*(r-l_0)**2
-    F = -2*K*(r-l_0)
+    V = 1/2 *K*(r-l_0)**2
+    F = -K*(r-l_0)
     return (V,F)
 
 def particlePotential(r, rmin, rmax,paricle_radius,max_bond_radius,strength_coef):
@@ -57,17 +57,12 @@ def particlePotentialHarmonic(r, rmin, rmax,bond_radius,strength_coef):
     # strength_coef         : float :   Prefactor meant to increase the effectiveness of the function
 
 
-    contactRegime = bond_radius
     particleDistance = r - bond_radius
 
-    if r < contactRegime:
-        potential = strength_coef * (particleDistance)**2
-        force = -2 * strength_coef * (particleDistance)
-        return (potential,force)
-    else:
-        potential = 1/2*(strength_coef * particleDistance**2)
-        force     = -strength_coef * particleDistance
-        return (potential, force)
+    potential = 1/2*(strength_coef * particleDistance**2)
+    force     = -strength_coef * particleDistance
+    return (potential, force)
+        
 
 class PolymerSimulationParameters():
     def __init__(self,sheerforcerange=[0,0],df=0,length=0,lines=0,rez=0,K=0,l_0=0,l_max=0,pull=0,amplitude=0,gamma=0,kbT=0,dt=0,probePeriod=0,runLength=0,boxdimx=0,boxdimy=0,integraor = "brownian", direction = "forward"):
@@ -299,7 +294,7 @@ class PolymerSimulation():
             
 
             
-            sheerforce = i/self.parameter.getDf()*(self.parameter.getSheerForceRange()[1] - self.parameter.getSheerForceRange()[0]) + self.parameter.getSheerForceRange()[0]
+            sheerforce = (i/self.parameter.getDf())*(self.parameter.getSheerForceRange()[1] - self.parameter.getSheerForceRange()[0]) + self.parameter.getSheerForceRange()[0]
 
             self.tensionForce.set_force(fvec=(sheerforce,self.parameter.getPullForce(),0.0))
             self.sheerForce.set_force(fvec=(-sheerforce,0,0))
@@ -526,7 +521,7 @@ class PolymerSimulation():
             mass.append(1)
         return mass
 
-    def defineDiameter(self): #not sure why this is needed... I define all the range of particle interactions in the initializeForces. Diameter is ONLY used for the periodic potential -> this would be a source of error since I have l_0 when it should be 2*l_0 
+    def defineDiameter(self): 
         d = []
         lines   = self.parameter.getNumberChains()
         length  = self.parameter.getLength()
@@ -681,7 +676,7 @@ class DataVisualizer():
                 ax.imshow(potential,extent=[-self.parameters.getNumberChains()/2,self.parameters.getNumberChains()/2,0,self.parameters.getLength()*0.7])
                 for i in range(self.parameters.getNumberChains()):
                     length = self.parameters.getLength()
-                    ax.plot(x[i*length:i*length + length],y[i*length:i*length + length])
+                    #ax.plot(x[i*length:i*length + length],y[i*length:i*length + length])
                     ax.plot(x[i*length:i*length + length],y[i*length:i*length + length],'o')
 
                 # ax.set_xlim(xmin,xmax)

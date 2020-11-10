@@ -499,7 +499,7 @@ class GlobalDataPlotter(object):
     def GraphEverythingToOrganizedPDF(self):
         from matplotlib import pyplot as plt
         slength, stemp, samplitude, list_l, list_t, list_a = self.sortPolymerNumbers()
-        
+        import matplotlib.patches as mpatches
         #By Tempterature
         # first by identical parameters
         tfigures = []
@@ -516,14 +516,32 @@ class GlobalDataPlotter(object):
                     plt.title(title)
                     plt.xlabel("sheerforce/tension")
                     plt.ylabel("dx/length")
+                    lc=[]
+                    legendlabel=[]
                     for k in range(len(stemp)):
+                        
                         for l in range(len(stemp[k])):
                             if list_a[i] == stemp[k][l].getPeriodicAmplitude() and list_l[j] == stemp[k][l].getChainLength():
                                 x = stemp[k][l].getForceRange()
                                 y,uy = stemp[k][l].getOutput()
+                                color =""
+                                if list_colors[list_t.index(stemp[k][l].getTemp())] not in lc:
+                                    lc.append(list_colors[list_t.index(stemp[k][l].getTemp())])
+                                    legendlabel.append("MP: KbT="+str(stemp[k][l].getTemp()))
                                 color = list_colors[list_t.index(stemp[k][l].getTemp())]
+                                if stemp[k][l].base is True:
+                                    if "red" not in lc:
+                                        lc.append("red")
+                                        legendlabel.append("SP: KbT="+str(stemp[k][l].getTemp()))
+                                        color = "red"
+                                
+                                
                                 
                                 plt.errorbar(x,y,yerr=uy,color=color)
+                    patches = []
+                    for z in range(len(lc)):
+                        patches.append(mpatches.Patch(color=lc[z], label=legendlabel[z]))
+                    plt.legend(handles=patches)
                     export_pdf.savefig()
                     plt.close()
                     plt.clf()
