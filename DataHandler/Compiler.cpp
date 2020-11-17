@@ -436,7 +436,6 @@ bool Compiler::exportDensityFunction_avg(float** xa, float ** ya, int p_n, int p
 
 
     writeFile.close();
-    exit(-1);
     
     return true;
 }
