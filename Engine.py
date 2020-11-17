@@ -2,7 +2,7 @@ import Simulations
 import math
 parameters = Simulations.PolymerSimulationParameters()
 dt = 0.001
-runl = (2*10**7)
+runl = (1*10**8)
 vs =    1*10**4
 A= -0.3/0.1 * 1
 print("\n\n\n\n\n")
@@ -31,5 +31,5 @@ sim.init(parameter=parameters,initializer='--mode=gpu')
 filelocation = sim.run(server = False)
 print(filelocation)
 
-renderer = Simulations.DataVisualizer(basedirectory="200,1,-2.9999999999999996,12-40-06/",interval=0.75)
-renderer.init(plotTilt=False,plotProbabilityMap = True,animatePolymers=False,plotPolymerProfiles=False)
+#renderer = Simulations.DataVisualizer(basedirectory=filelocation,interval=0.75)
+#renderer.init(plotTilt=False,plotProbabilityMap = True,animatePolymers=False,plotPolymerProfiles=False)

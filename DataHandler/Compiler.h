@@ -57,7 +57,7 @@ private:
     vector<float> ulength;
 
     vector<float> sheerTension;
-    
+    bool writePolymerSystem(float** xa, float ** ya, int p_n, int p_length,string path);
     int compileData(string* fname,float interval);
     bool truncateFiles();
     int definePolymerProfile(string* parameter_file_Location,struct PolymerProfile * p);
