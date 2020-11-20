@@ -270,16 +270,16 @@ int Compiler::compileData(string *filename, float interval)
         param.width = this->profile.lines;
         param.x = -this->profile.lines/2;
         param.y = 0;
-        //writeHeatMap(&pos_x,&pos_y, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
+        writeHeatMap(&pos_x,&pos_y, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
         
         cout<<"calculatig average position x"<<endl;
         float * avg_x = calcAveragePosition(&pos_x, n_polymers, l_polymer, adj_run);
         cout<<"calculating avg pos y"<<endl;
         float * avg_y = calcAveragePosition(&pos_y, n_polymers, l_polymer, adj_run);
         writePolymerSystem(&avg_x, &avg_y, n_polymers, l_polymer,current_path);
-        writeProfileOutput(&avg_x, &avg_y, n_polymers, l_polymer, current_force ,current_path);
+        //writeProfileOutput(&avg_x, &avg_y, n_polymers, l_polymer, current_force ,current_path);
         //cout<<"writePorfileoutput"<<endl;
-        exportDensityFunction_avg(&avg_x, &avg_y, n_polymers, l_polymer, current_force ,current_path);
+        exportDensityFunction_raw(&pos_x, &pos_y, n_polymers, l_polymer, adj_run,current_force,current_path);
         cout<<"exportDensityFunction_avg"<<endl;
         float * dx = calcAverageDx(&avg_x,n_polymers,l_polymer);
         cout<<"calcAverageDx"<<endl;
@@ -439,25 +439,90 @@ bool Compiler::exportDensityFunction_avg(float** xa, float ** ya, int p_n, int p
     
     return true;
 }
-bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p_length,float force_value, string path)//M SAFE
+bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p_length,int time_length,float force_value, string path)//M SAFE
 {
     float* x = *xa;
     float* y = *ya;
-    int unc_offset = p_n*p_length;
+    int unc_offset = p_n*p_length*time_length/2;
+    float* sortOrder = new float[p_n];
+    float* original= new float[p_n];
+    int* offsetOrder = new int[p_n];
+    
+    for (int i = 0; i < p_n;i++)
+    {
+        sortOrder[i] = x[i*p_length+unc_offset];
+        original[i] = sortOrder[i];
+    }
+    bool notdone = true;
+    float temp = sortOrder[0];
+    while(notdone == true){
+        bool reordered = false;
+        for (int i = 0; i < p_n - 1;i++)
+        {
+            if (sortOrder[i] > sortOrder[i+1]){
+                temp = sortOrder[i];
+                sortOrder[i] = sortOrder[i+1];
+                sortOrder[i+1] = temp;
+                reordered = true;
+            }
+        }
+        if (reordered == false)
+        {
+            notdone = false;  
+        }
+    }
+    
+    for (int i = 0; i < p_n;i++)
+    {
+        cout<<sortOrder[i]<<",";
+    }
+    cout<<endl;
+    for (int i = 0; i < p_n;i++)
+    {
+        cout<<original[i]<<",";
+    }
+    cout<<endl; 
+    
+    for (int i = 0; i < p_n;i++)
+    {
+        for(int j = 0; j < p_n;j++)
+        {
+            if(sortOrder[i] == original[j])
+            {
+                offsetOrder[i] = j;
+            }
+        }
+    }
+    for (int i = 0; i < p_n;i++)
+    {
+        cout<<offsetOrder[i]<<",";
+    }
+    cout<<endl;
+    cout<<"writing raw"<<endl;
     ofstream writeFile;
     float conv = this->profile.boxdimx/p_n;
-    writeFile.open("DensityData_raw.txt",std::ios_base::app);
+    writeFile.open(this->current_path + "/DensityData_raw:" + to_string(force_value) + ".txt",std::ios_base::trunc);
+
+    writeFile << "parameters (p_n,p_l,force,Theta):" + to_string(p_n) + "," + to_string(p_length) + "," +to_string(force_value) + "," + to_string(0) <<endl;
+    writeFile <<"x,y"<<endl;
+        
     for (int i = 0; i < p_n; i++)
     {
-        writeFile<< "Polymer," << i<<endl;
-        writeFile<< "ForceValue," << force_value<<endl;
-
-        for(int j = i*p_length; j < (i+1)*p_length; j++)
+        
+        for(int j = offsetOrder[i]*p_length; j < (offsetOrder[i]+1)*p_length; j++)
         {
-            writeFile<< x[j] - i* conv<< "," << x[j+unc_offset] << "," << y[j] << "," << y[j + unc_offset]<<endl;
+            
+            for (int k = 0; k<time_length;k++)
+            {
+                int offset = k * p_length *p_n + j;
+                writeFile<< x[offset] - i* conv<<","<< y[offset] <<endl;
+            }
+            
+            
         }
-
     }
+
+    
 
     writeFile.close();
 
