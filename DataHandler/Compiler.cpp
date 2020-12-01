@@ -198,6 +198,7 @@ int Compiler::compileData(string *filename, float interval)
         //Begin by allocating the arrays needed for position data;
         int current_run = i;
         float current_force = i * conv + this->profile.sheerForceRange[0];
+        float theta = current_force/this->profile.tension;
 
         float * pos_x;
         float * pos_y;
@@ -279,7 +280,7 @@ int Compiler::compileData(string *filename, float interval)
         writePolymerSystem(&avg_x, &avg_y, n_polymers, l_polymer,current_path);
         //writeProfileOutput(&avg_x, &avg_y, n_polymers, l_polymer, current_force ,current_path);
         //cout<<"writePorfileoutput"<<endl;
-        exportDensityFunction_raw(&pos_x, &pos_y, n_polymers, l_polymer, adj_run,current_force,current_path);
+        exportDensityFunction_raw(&pos_x, &pos_y, n_polymers, l_polymer, adj_run,theta,current_path);
         cout<<"exportDensityFunction_avg"<<endl;
         float * dx = calcAverageDx(&avg_x,n_polymers,l_polymer);
         cout<<"calcAverageDx"<<endl;
