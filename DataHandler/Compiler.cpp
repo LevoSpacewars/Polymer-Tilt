@@ -507,7 +507,7 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
     writeFile << "parameters (p_n,p_l,force,Theta):" + to_string(p_n) + "," + to_string(p_length) + "," +to_string(force_value) + "," + to_string(0) <<endl;
     writeFile <<"x,y"<<endl;
         
-    for (int i = 0; i < p_n; i++)
+    for (int i = 0; i < 1; i++)
     {
         
         for(int j = offsetOrder[i]*p_length; j < (offsetOrder[i]+1)*p_length; j++)
@@ -806,7 +806,7 @@ void Compiler::unwrapData(float ** data, int n_polymers, int l_polymer,int step)
     for (int k = 0; k < n_polymers; k++) // iterates over the number of polymers
             {
                int line = k;
-               int offset_prev = base_offset_prev + + k * l_polymer;
+               int offset_prev = base_offset_prev  + k * l_polymer; //issue?
                int offset = base_offset + k * l_polymer;
                prevt = px[offset_prev ];
                currentt = px[offset];
