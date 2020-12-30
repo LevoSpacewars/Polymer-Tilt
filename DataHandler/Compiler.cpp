@@ -256,14 +256,14 @@ int Compiler::compileData(string *filename, float interval)
             // finally, correct for the boundary condition
             // kindof annoying to write out, so I just encaposlated into seperate function
             // boxdimy >> l_polymer, therefore no unwrap needed for y^hat
-            //tgcout<<"unwrapping data"<<endl;
             this->unwrapData(&pos_x, n_polymers,l_polymer,t_adj);
-           // cout<<"done"<<endl;
         }// end of collecting and unwrapping force data
 
         //Begin processing the data
         
         int adj_run = (int)((1-interval) * runLength);
+
+
         HeatMapParameters param;
         param.rezx = 100;
         param.rezy = 100;
@@ -271,23 +271,33 @@ int Compiler::compileData(string *filename, float interval)
         param.width = this->profile.lines;
         param.x = -this->profile.lines/2;
         param.y = 0;
-        //writeHeatMap(&pos_x,&pos_y, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
+        writeHeatMap(&pos_xr,&pos_yr, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
         
+
+
         cout<<"calculatig average position x"<<endl;
         float * avg_x = calcAveragePosition(&pos_x, n_polymers, l_polymer, adj_run);
+
         cout<<"calculating avg pos y"<<endl;
         float * avg_y = calcAveragePosition(&pos_y, n_polymers, l_polymer, adj_run);
+
+        cout<<"writePorfileoutput"<<endl;
         writePolymerSystem(&avg_x, &avg_y, n_polymers, l_polymer,current_path);
-        //writeProfileOutput(&avg_x, &avg_y, n_polymers, l_polymer, current_force ,current_path);
-        //cout<<"writePorfileoutput"<<endl;
-        exportDensityFunction_raw(&pos_x, &pos_y, n_polymers, l_polymer, adj_run,theta,current_path);
+
         cout<<"exportDensityFunction_avg"<<endl;
-        float * dx = calcAverageDx(&avg_x,n_polymers,l_polymer);
+        exportDensityFunction_raw(&pos_x, &pos_y, n_polymers, l_polymer, adj_run,theta,current_path);
+
         cout<<"calcAverageDx"<<endl;
-        float * length = calcAverageLength(&avg_x,&avg_y,n_polymers,l_polymer);
+        float * dx = calcAverageDx(&avg_x,n_polymers,l_polymer);
+
         cout<<"calcAverageLength"<<endl;
-        float * output = calcSystemOutput(&dx,&length,0);
+        float * length = calcAverageLength(&avg_x,&avg_y,n_polymers,l_polymer);
+
         cout<<"calcSystemoutput"<<endl; 
+        float * output = calcSystemOutput(&dx,&length,0);
+
+
+
         this->output.emplace_back(output[0]);
         this->uoutput.emplace_back(output[1]);
         
@@ -319,6 +329,23 @@ int Compiler::compileData(string *filename, float interval)
     }// end of force Iteration
     gsd_close(&this->handler);
     return -1;
+}
+
+
+void writeData(string filename, float** xb,int sizex, float**yb,int sizey)
+{
+    float * x = *xb;
+    float * y = *yb;
+
+    ofstream writeFile;
+    writeFile.open(filename + ".txt",std::ios_base::trunc);
+    if (sizex == sizey)
+    {
+        for(int i =0; i < sizex;i++){
+            writeFile << x[i]<<","<<y[i]<<"\n";
+        } 
+    }
+    
 }
 
 bool Compiler::truncateFiles()
@@ -507,7 +534,7 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
     writeFile << "parameters (p_n,p_l,force,Theta):" + to_string(p_n) + "," + to_string(p_length) + "," +to_string(force_value) + "," + to_string(0) <<endl;
     writeFile <<"x,y"<<endl;
         
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < p_n; i++)
     {
         
         for(int j = offsetOrder[i]*p_length; j < (offsetOrder[i]+1)*p_length; j++)
@@ -590,10 +617,12 @@ bool Compiler::writeHeatMap(float** xs, float** ys, int time_steps, int nParticl
     float *y = *ys;
 
     
-
+    //initialize spacing arrays
     float * tablex = new float[param.rezx];
-    float * tabley = new float[param.rezx];
-    float * heatmap = new float[param.rezx * param.rezy ];
+    float * tabley = new float[param.rezy];
+
+    //initalized output
+    float * heatmap = new float[param.rezx * param.rezy];
 
     bool done = false;
 
@@ -605,126 +634,51 @@ bool Compiler::writeHeatMap(float** xs, float** ys, int time_steps, int nParticl
 
     float xconv = param.width/param.rezx;
     float yconv = param.height/param.rezy;
-    for (int i = 0; i < param.rezx*param.rezy; i++)
+    for (int i = 0; i < param.rezx*param.rezy; i++) //zero heatmap
     {
         heatmap[i]=0;
     }
+
+    //assign values for spacing on spacing arrays
     for (int i = 0; i < param.rezx; i++)
     {
-        
-        tablex[i] = xconv * i + param.x;
-        // cout <<tablex[i]<< " ";
-    }
-    // cout<<endl;
-    for (int i = 0; i < param.rezy; i++)
-    {
-        tabley[i] = yconv * i + param.y;
-        
+        tablex[i] = xconv * (i+1) + param.x;
     }
 
-    // std::cout<<"done init"<<endl;
+    for (int i = 0; i < param.rezy; i++)
+    {
+        tabley[i] = yconv * (i+1) + param.y;
+    }
+
+
+
+    //begin sort
     for (int i = 0; i < time_steps;i++)
     {
         offset = nParticles * i;
-        for (int j = 0; j< nParticles; j++)
+        for (int j = 0; j < nParticles; j++)
         {
             int a = 0;
             int b = 0;
 
            
-
-            int left = 0;
-            int right = param.rezx;
-            int m = 0;
-            int iter = 0;
-            done = false;
-            while (left <= right && done == false)
+            bool done = false;
+            for (int k = 0; k < param.rezx;k++)
             {
-                
-                
-                m = int((left + right)/2);
-                if (tablex[m] <= x[offset + j])
+                if (x[offset + j] <= tablex[k])
                 {
-                    
-                    
-                    if (tablex[m+1] >= x[offset + j])
-                    {
-                        
-                        
-                        a = m;
-                        done = true;
-                    }
-                    else
-                    {
-                        left = m+1;
-                    }
-                }
-                    
-                else if(tablex[m] > x[offset + j]) 
-                {
-                    
-                    if (tablex[m-1] <= x[offset + j])
-                    {
-                        
-                        a = m-1;
-                        done = true;
-                    }
-                    else
-                    {
-                        right = m-1;
-                    }
-                    
+                    a = k;
+                    break;
                 }
             }
-            
-
-
-
-            
-
-            left = 0;
-            done = false;
-            right = param.rezy;
-
-             while (left <= right && done == false)
+            for (int k = 0; k < param.rezy;k++)
             {
-                
-                
-                m = int((left + right)/2);
-                if (tabley[m] <= y[offset + j])
+                if (y[offset + j] <= tabley[k])
                 {
-                    
-                    
-                    if (tabley[m+1] >= y[offset + j])
-                    {
-                        
-                        
-                        b = m;
-                        done = true;
-                    }
-                    else
-                    {
-                        left = m+1;
-                    }
-                }
-                    
-                else if(tabley[m] >= y[offset + j]) 
-                {
-                    
-                    if (tabley[m-1] <= y[offset + j])
-                    {
-                        
-                        b = m-1;
-                        done = true;
-                    }
-                    else
-                    {
-                        right = m-1;
-                    }
-                    
+                    b = k;
+                    break;
                 }
             }
-
 
            
             
@@ -736,7 +690,7 @@ bool Compiler::writeHeatMap(float** xs, float** ys, int time_steps, int nParticl
             int h_index = param.rezx* (b) + a;
             heatmap[h_index] +=1;
         }
-        // cout<< float(i)/float(time_steps)<<endl;
+        
     }
 
     //normalize?
@@ -758,17 +712,6 @@ bool Compiler::writeHeatMap(float** xs, float** ys, int time_steps, int nParticl
             heatmap[i]= heatmap[i]*weight;
         }
     }
-
-    //print the values in a readable way
-
-    // for (int i = 1; i < param.rezy;i++)
-    // {
-    //     for(int j = 0; j < param.rezx-1;j++)
-    //     {
-    //         cout<< heatmap[i* param.rezx + j] << ",";
-    //     }
-    //     cout<<endl;
-    // }
 
     ofstream myfile;
     myfile.open (this->current_path + "/heatmap"+ to_string(force_value/this->profile.tension) + ".txt",ios::trunc);
@@ -811,9 +754,9 @@ void Compiler::unwrapData(float ** data, int n_polymers, int l_polymer,int step)
                prevt = px[offset_prev ];
                currentt = px[offset];
                dl  = currentt - prevt;
-               if (  dl < -L/2 ){
-                        px[offset] = currentt + L;
-                    }
+                if (  dl < -L/2 ){
+                    px[offset] = currentt + L;
+                }
                 else if ( dl > L/2 ){
                     px[offset] = currentt - L;
                 }
