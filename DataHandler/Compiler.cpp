@@ -161,7 +161,21 @@ int Compiler::definePolymerProfile(string* parameter_file_location, PolymerProfi
 
     return -1;
 }
-
+void Compiler::trackParticle(float** data, int index, int time_steps, int nParticles,float theta)
+{
+    float* x = *data;
+    ofstream writeFile;
+    string filename = this->current_path+"/" + "particle_"+ to_string(index) + ":"+to_string(theta) + ".txt";
+    writeFile.open(filename,std::ios_base::trunc);
+    for (int i = 0; i < time_steps -1; i++)
+    {
+        writeFile << x[i*nParticles + index]<< ",";
+    }
+    writeFile << x[(time_steps-1) * nParticles + index];
+    writeFile.close();
+    
+    
+}
 int Compiler::compileData(string *filename, float interval)
 {
     cout<<"compiling data"<<endl;
@@ -207,8 +221,7 @@ int Compiler::compileData(string *filename, float interval)
 
         assert(l_polymer*n_polymers == e->N);
 
-        // pos_x = (float*)malloc(l_polymer*n_polymers * ((int)(1-interval))*runLength * sizeof(float)); //DEPRICATED
-        // pos_y = (float*)malloc(l_polymer*n_polymers * ((int)(1-interval))*runLength * sizeof(float));
+
         int memblock = l_polymer*n_polymers * ((int)((1-interval)*runLength));
         pos_x = new float[memblock];
         pos_y = new float[memblock];
@@ -220,7 +233,7 @@ int Compiler::compileData(string *filename, float interval)
         //Next Sort through the data and "unwrap" the polymers from periodic boundary
         // Begin by 
         cout<<"creating raw data"<<endl;
-        float * raw_data = new float[e->N * e->M];
+        
         cout<<"done"<<endl;
         
         
@@ -229,7 +242,7 @@ int Compiler::compileData(string *filename, float interval)
             t_step = i*runLength + j;
             t_adj = j - (int)(runLength*interval);
             auto chunk_entry = gsd_find_chunk(&this->handler,t_step,"particles/position"); //retrives the chunk information from a time step from the gsd file
-            
+            float * raw_data = new float[e->N * e->M];
             int errorch = gsd_read_chunk(&this->handler,raw_data, chunk_entry); // retrives data from chunk
             
             if(errorch != 0){
@@ -256,24 +269,34 @@ int Compiler::compileData(string *filename, float interval)
             // finally, correct for the boundary condition
             // kindof annoying to write out, so I just encaposlated into seperate function
             // boxdimy >> l_polymer, therefore no unwrap needed for y^hat
+
             this->unwrapData(&pos_x, n_polymers,l_polymer,t_adj);
+            
+            delete raw_data;
         }// end of collecting and unwrapping force data
 
         //Begin processing the data
+
         
         int adj_run = (int)((1-interval) * runLength);
+        this->writeData("position_uw:" + to_string(theta),&pos_x,&pos_y,memblock,l_polymer*n_polymers);//debug only
+        this->writeData("position_nw:" + to_string(theta),&pos_xr,&pos_yr,memblock,l_polymer*n_polymers);
 
 
         HeatMapParameters param;
         param.rezx = 100;
         param.rezy = 100;
-        param.height = this->profile.length /10;
-        param.width = this->profile.lines;
+        param.height = this->profile.length/3;
+        param.width = 2*this->profile.lines;
         param.x = -this->profile.lines/2;
         param.y = 0;
-        writeHeatMap(&pos_xr,&pos_yr, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
+        writeHeatMap(&pos_x,&pos_y, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
         
 
+        cout<<"tracking particles 0,100,200"<<endl;
+        trackParticle(&pos_x,0,adj_run,n_polymers*l_polymer,theta);
+        trackParticle(&pos_x,100,adj_run,n_polymers*l_polymer,theta);
+        trackParticle(&pos_x,200,adj_run,n_polymers*l_polymer,theta);
 
         cout<<"calculatig average position x"<<endl;
         float * avg_x = calcAveragePosition(&pos_x, n_polymers, l_polymer, adj_run);
@@ -309,16 +332,15 @@ int Compiler::compileData(string *filename, float interval)
 
         
 
-        delete(pos_x);
-        delete(pos_y);
-        delete(avg_x);
-        delete(avg_y);
-        delete(dx);
-        delete(length);
-        delete(output);
-        delete(raw_data);
-        delete(pos_xr);
-        delete(pos_yr);
+        delete pos_x;
+        delete pos_y;
+        delete avg_x;
+        delete avg_y;
+        delete dx;
+        delete length;
+        delete output;
+        delete pos_xr;
+        delete pos_yr;
 
 
 
@@ -332,19 +354,28 @@ int Compiler::compileData(string *filename, float interval)
 }
 
 
-void writeData(string filename, float** xb,int sizex, float**yb,int sizey)
+void Compiler::writeData(string filename, float** xb, float**yb,int size,int blocksize)
 {
     float * x = *xb;
     float * y = *yb;
 
     ofstream writeFile;
-    writeFile.open(filename + ".txt",std::ios_base::trunc);
-    if (sizex == sizey)
+    filename = this->current_path+"/" + filename + ".txt";
+    writeFile.open(filename,std::ios_base::trunc);
+   
+    for(int i =0; i < size;i++)
     {
-        for(int i =0; i < sizex;i++){
-            writeFile << x[i]<<","<<y[i]<<"\n";
-        } 
-    }
+        if(i%blocksize==0 & i !=0)
+        {
+            writeFile<<"\n";
+        }
+        writeFile << x[i]<<","<<y[i]<<",";
+    } 
+
+    writeFile.close();
+
+    
+    
     
 }
 
@@ -643,12 +674,16 @@ bool Compiler::writeHeatMap(float** xs, float** ys, int time_steps, int nParticl
     for (int i = 0; i < param.rezx; i++)
     {
         tablex[i] = xconv * (i+1) + param.x;
+        
     }
+    cout<<endl;
 
     for (int i = 0; i < param.rezy; i++)
     {
         tabley[i] = yconv * (i+1) + param.y;
+        cout<<tabley[i]<<",";
     }
+    cout<<endl;
 
 
 
@@ -662,12 +697,14 @@ bool Compiler::writeHeatMap(float** xs, float** ys, int time_steps, int nParticl
             int b = 0;
 
            
-            bool done = false;
+            bool donea = false;
+            bool doneb = false;
             for (int k = 0; k < param.rezx;k++)
             {
                 if (x[offset + j] <= tablex[k])
                 {
                     a = k;
+                    donea = true;
                     break;
                 }
             }
@@ -676,6 +713,7 @@ bool Compiler::writeHeatMap(float** xs, float** ys, int time_steps, int nParticl
                 if (y[offset + j] <= tabley[k])
                 {
                     b = k;
+                    doneb=true;
                     break;
                 }
             }
@@ -686,7 +724,13 @@ bool Compiler::writeHeatMap(float** xs, float** ys, int time_steps, int nParticl
 
                 
             
-
+            if (donea == false | doneb == false)
+            {
+                cout<<"sort didn't work"<<endl;
+                cout<<x[offset + j]<<","<<y[offset+j]<<endl;
+                cout<<donea<<","<<doneb<<endl;
+                exit(1);
+            }
             int h_index = param.rezx* (b) + a;
             heatmap[h_index] +=1;
         }
@@ -748,7 +792,7 @@ void Compiler::unwrapData(float ** data, int n_polymers, int l_polymer,int step)
     float L = this->profile.boxdimx;
     for (int k = 0; k < n_polymers; k++) // iterates over the number of polymers
             {
-               int line = k;
+               
                int offset_prev = base_offset_prev  + k * l_polymer; //issue?
                int offset = base_offset + k * l_polymer;
                prevt = px[offset_prev ];

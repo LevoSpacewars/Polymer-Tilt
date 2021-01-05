@@ -57,7 +57,7 @@ private:
     vector<float> ulength;
 
     vector<float> sheerTension;
-    void writeData(string filename, float** xb,int sizex, float**yb,int sizey);
+    
     bool writePolymerSystem(float** xa, float ** ya, int p_n, int p_length,string path);
     int compileData(string* fname,float interval);
     bool truncateFiles();
@@ -72,7 +72,9 @@ private:
     bool  writeHeatMap(float** x, float ** y, int time_steps, int nParticles,float force_value,bool normalized, HeatMapParameters param, string path);
     float * calcSystemOutput(float ** dx, float ** length, float sheer_tension);
     float * calcSheerTension();
+    void writeData(string filename, float** xb, float**yb,int size,int blocksize);
     int writeResults(string path);
+    void trackParticle(float** data,int index, int time_steps, int nParticles, float theta);
 
     float interval = 0.5;
     int runLength;
