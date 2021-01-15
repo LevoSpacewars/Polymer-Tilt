@@ -293,10 +293,10 @@ int Compiler::compileData(string *filename, float interval)
         writeHeatMap(&pos_x,&pos_y, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
         
 
-        cout<<"tracking particles 0,100,200"<<endl;
-        trackParticle(&pos_x,0,adj_run,n_polymers*l_polymer,theta);
-        trackParticle(&pos_x,100,adj_run,n_polymers*l_polymer,theta);
-        trackParticle(&pos_x,200,adj_run,n_polymers*l_polymer,theta);
+        //cout<<"tracking particles 0,100,200"<<endl;
+        //trackParticle(&pos_x,0,adj_run,n_polymers*l_polymer,theta);
+        //trackParticle(&pos_x,100,adj_run,n_polymers*l_polymer,theta);
+        //trackParticle(&pos_x,200,adj_run,n_polymers*l_polymer,theta);
 
         cout<<"calculatig average position x"<<endl;
         float * avg_x = calcAveragePosition(&pos_x, n_polymers, l_polymer, adj_run);
