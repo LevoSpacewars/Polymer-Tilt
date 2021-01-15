@@ -353,7 +353,6 @@ int Compiler::compileData(string *filename, float interval)
     return -1;
 }
 
-
 void Compiler::writeData(string filename, float** xb, float**yb,int size,int blocksize)
 {
     float * x = *xb;
@@ -557,6 +556,11 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
         cout<<offsetOrder[i]<<",";
     }
     cout<<endl;
+    for (int i = 0; i < p_n;i++)
+    {
+        cout<<x[i*p_length + p_length * p_n * (time_length-2)]<<",";
+    }
+    cout<<endl;
     cout<<"writing raw"<<endl;
     ofstream writeFile;
     float conv = this->profile.boxdimx/p_n;
@@ -565,21 +569,28 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
     writeFile << "parameters (p_n,p_l,force,Theta):" + to_string(p_n) + "," + to_string(p_length) + "," +to_string(force_value) + "," + to_string(0) <<endl;
     writeFile <<"x,y"<<endl;
         
-    for (int i = 0; i < p_n; i++)
+
+    for (int k = 0; k<time_length;k++)
     {
-        
-        for(int j = offsetOrder[i]*p_length; j < (offsetOrder[i]+1)*p_length; j++)
+        int avg = 0;
+        int offset = k * p_length*p_n;
+        for (int j = offsetOrder[0]*p_length; j < (offsetOrder[0]+1)*p_length; j++)
         {
-            
-            for (int k = 0; k<time_length;k++)
+            avg += x[j+offset];
+        }
+        avg= avg/((offsetOrder[0]+1)*p_length- offsetOrder[0]*p_length);
+
+        for (int i = 0; i < p_n; i++)
+        {
+            for(int j = offsetOrder[i]*p_length; j < (offsetOrder[i]+1)*p_length; j++)
             {
-                int offset = k * p_length *p_n + j;
-                writeFile<< x[offset] - i* conv<<","<< y[offset] <<endl;
+                 writeFile<< (x[j+offset] - avg) - (i)*conv<< "," << y[j+offset] <<endl;
             }
-            
-            
+
         }
     }
+    
+
 
     
 
