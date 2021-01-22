@@ -290,7 +290,7 @@ int Compiler::compileData(string *filename, float interval)
         param.width = 2*this->profile.lines;
         param.x = -this->profile.lines/2;
         param.y = 0;
-        writeHeatMap(&pos_x,&pos_y, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
+        //writeHeatMap(&pos_x,&pos_y, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
         
 
         //cout<<"tracking particles 0,100,200"<<endl;
@@ -499,16 +499,23 @@ bool Compiler::exportDensityFunction_avg(float** xa, float ** ya, int p_n, int p
 }
 bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p_length,int time_length,float force_value, string path)//M SAFE
 {
+    
+ 
+    float width = this->profile.boxdimx;
+    float interval = width/p_n;
+    
+    
+
+
     float* x = *xa;
     float* y = *ya;
-    int unc_offset = p_n*p_length*time_length/2;
     float* sortOrder = new float[p_n];
     float* original= new float[p_n];
     int* offsetOrder = new int[p_n];
     
     for (int i = 0; i < p_n;i++)
     {
-        sortOrder[i] = x[i*p_length+unc_offset];
+        sortOrder[i] = x[i*p_length+1];
         original[i] = sortOrder[i];
     }
     bool notdone = true;
@@ -556,11 +563,12 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
         cout<<offsetOrder[i]<<",";
     }
     cout<<endl;
-    for (int i = 0; i < p_n;i++)
-    {
-        cout<<x[i*p_length + p_length * p_n * (time_length-2)]<<",";
-    }
-    cout<<endl;
+ 
+ 
+ 
+    int unc_offset = p_n*p_length*time_length/2;
+    
+   
     cout<<"writing raw"<<endl;
     ofstream writeFile;
     float conv = this->profile.boxdimx/p_n;
@@ -568,24 +576,43 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
 
     writeFile << "parameters (p_n,p_l,force,Theta):" + to_string(p_n) + "," + to_string(p_length) + "," +to_string(force_value) + "," + to_string(0) <<endl;
     writeFile <<"x,y"<<endl;
+    ofstream debugFile;
+    debugFile.open(this->current_path + "/DebugDensityData_raw:" + to_string(force_value) + ".txt",std::ios_base::trunc);
         
 
     for (int k = 0; k<time_length;k++)
     {
-        int avg = 0;
+        float avg = 0;
+        float avg2= 0;
+        int da = 0;
         int offset = k * p_length*p_n;
         for (int j = offsetOrder[0]*p_length; j < (offsetOrder[0]+1)*p_length; j++)
         {
             avg += x[j+offset];
         }
-        avg= avg/((offsetOrder[0]+1)*p_length- offsetOrder[0]*p_length);
+        avg= avg/(p_length);
 
         for (int i = 0; i < p_n; i++)
         {
+            avg2=0;
+            for (int j = offsetOrder[i]*p_length; j < (offsetOrder[i]+1)*p_length; j++)
+            {
+                avg2 += x[j+offset];
+            }
+            avg2 = avg2/(p_length);
+            da = avg - avg2;
             for(int j = offsetOrder[i]*p_length; j < (offsetOrder[i]+1)*p_length; j++)
             {
-                 writeFile<< (x[j+offset] - avg) - (i)*conv<< "," << y[j+offset] <<endl;
+                
+
+                float calc = ((x[j+offset]) - avg) - i*conv;
+                if (calc > 4 | calc < -5)
+                {
+                    debugFile << "T:" + to_string(k) + " P_n:" + to_string(i) + " " << x[j+offset] << " " + to_string(calc)<<endl;
+                }
+                 writeFile<< calc<< "," << y[j+offset] <<endl;
             }
+            
 
         }
     }
@@ -593,7 +620,7 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
 
 
     
-
+    debugFile.close();
     writeFile.close();
 
     
@@ -795,48 +822,68 @@ void Compiler::unwrapData(float ** data, int n_polymers, int l_polymer,int step)
 
     int base_offset = step*n_polymers*l_polymer;
     int base_offset_prev = (step-1)*n_polymers*l_polymer * int(bool(base_offset));
-    
+    int offset = 0;
     float* px = *data;
-    float currentt = 0;
-    float prevt   = 0;
+
     float dl = 0;
+    float diff = 0;
+
     float L = this->profile.boxdimx;
-    for (int k = 0; k < n_polymers; k++) // iterates over the number of polymers
+
+    for (int k = 0; k < n_polymers; k++)
+    {
+        int poffset = k* l_polymer;
+        float dlt = px[base_offset + poffset] - px[base_offset_prev + poffset];
+        if(abs(dlt/L) >= 0.5)
+        {
+            px[base_offset + poffset] -= L*(int(dlt/L));
+            diff = dlt/L - int(dlt/L);
+            if (abs(diff) > 0.7)
             {
-               
-               int offset_prev = base_offset_prev  + k * l_polymer; //issue?
-               int offset = base_offset + k * l_polymer;
-               prevt = px[offset_prev ];
-               currentt = px[offset];
-               dl  = currentt - prevt;
-                if (  dl < -L/2 ){
-                    px[offset] = currentt + L;
-                }
-                else if ( dl > L/2 ){
-                    px[offset] = currentt - L;
-                }
-                for (int particle = 1; particle < l_polymer; particle++) //iterates over the number of particles within a polymer
-                {
-
-                    // here I am compensating for the periodic box, like pac-man: if a particle leaves the right side it will come out the left side, +- L to fix this
-                    currentt = px[offset + particle];
-                    prevt = px[offset + (particle-1)];
-                    dl  = currentt - prevt;
-                    
-
-                    if (  dl < -L/2 ){
-                        px[offset + particle] = currentt + L;
-                    }
-                    else if ( dl > L/2 ){
-                        px[offset + particle] = currentt - L;
-                    }
-
-                }
-
+                px[base_offset + poffset] -= copysign(L,dlt);
             }
+        }
+    
+    }
+
+
+    for (int i = 1 + base_offset; i < n_polymers*l_polymer + base_offset;i++)
+    {
+        dl = px[i] - px[i-1];
+        if(abs(dl/L) >= 0.5)
+        {
+            px[i] = px[i] - L* (int(dl/L));
+            diff = dl/L - int(dl/L);
+            if (abs(diff) > 0.7)
+            {
+                px[i] -=copysign(L,dl);
+            }
+        }    
+    }
+    for (int k = 1; k < n_polymers; k++) // iterates over the number of polymers
+    {
+        offset = base_offset + l_polymer * k;
+        
+        for(int i = offset; i < offset + l_polymer; i++)
+        {
+            dl = px[i] - px[i-1];
+            if(abs(dl/L) >= 0.5)
+            {
+                px[i] -= L* (int(dl/L));
+                diff = dl/L - int(dl/L);
+                if (abs(diff) > 0.7)
+                {
+                    px[i] -=copysign(L,dl);
+                }
+            }
+        }
+
+    }
 
 
 }
+
+
 
 float* Compiler::calcAveragePosition(float ** data, int n_polymers, int l_polymer,int sampleLength)//M SAFE
 {
