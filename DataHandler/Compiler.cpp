@@ -228,7 +228,7 @@ int Compiler::compileData(string *filename, float interval)
         pos_xr = new float[memblock];
         pos_yr = new float[memblock];
 
-        
+
         cout<<i<<endl;
         //Next Sort through the data and "unwrap" the polymers from periodic boundary
         // Begin by 
@@ -309,7 +309,7 @@ int Compiler::compileData(string *filename, float interval)
 
         cout<<"exportDensityFunction_avg"<<endl;
         exportDensityFunction_raw(&pos_x, &pos_y, n_polymers, l_polymer, adj_run,theta,current_path);
-
+        exportDensityFunction_avg(&avg_x,&avg_y, n_polymers, l_polymer, theta, current_path);
         cout<<"calcAverageDx"<<endl;
         float * dx = calcAverageDx(&avg_x,n_polymers,l_polymer);
 
