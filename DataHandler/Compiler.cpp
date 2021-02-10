@@ -571,8 +571,10 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
    
     cout<<"writing raw"<<endl;
     ofstream writeFile;
+    ofstream comFile;
     float conv = this->profile.boxdimx/p_n;
     writeFile.open(this->current_path + "/DensityData_raw:" + to_string(force_value) + ".txt",std::ios_base::trunc);
+    comFile.open(this->current_path + "/COM:" + to_string(force_value) + ".txt",std::ios_base::trunc);
 
     writeFile << "parameters (p_n,p_l,force,Theta):" + to_string(p_n) + "," + to_string(p_length) + "," +to_string(force_value) + "," + to_string(0) <<endl;
     writeFile <<"x,y"<<endl;
@@ -582,6 +584,7 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
 
     for (int k = 0; k<time_length;k++)
     {
+        float com = 0;
         float avg = 0;
         float avg2= 0;
         int da = 0;
@@ -600,6 +603,7 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
                 avg2 += x[j+offset];
             }
             avg2 = avg2/(p_length);
+            com += avg2;
             da = avg - avg2;
             for(int j = offsetOrder[i]*p_length; j < (offsetOrder[i]+1)*p_length; j++)
             {
@@ -615,11 +619,13 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
             
 
         }
+        com = com/p_n;
+        comFile << com <<","; 
     }
     
 
 
-    
+    comFile.close();
     debugFile.close();
     writeFile.close();
 
