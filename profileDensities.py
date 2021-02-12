@@ -228,6 +228,10 @@ def makeprofiledist(rawfilepath,dirpath):
     plt.yscale('log')
     pdf.savefig(fig)
     plt.close()
+
+    fig = plt.figure()
+    plt.plot(avgx,avgy)
+    plt.savefig(fig)
     
 
             
@@ -266,6 +270,8 @@ def makeCOMgraph():
     pdf.savefig(fig)
     plt.close()
 
+def makeTILTgraph(directory):
+
 
 
 print("RunDirectory:" + sys.argv[1])
@@ -301,6 +307,7 @@ for i in range(len(runDirs)):
     for j in range(len(files)):
         makeprofiledist(files[order[j]],runDirs[i])
     makeCOMgraph()
+    makeTILTgraph(runDirs[i])
     pdf.close()
    
 
