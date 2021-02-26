@@ -5,6 +5,7 @@ import os
 import gsd.hoomd
 import math
 from matplotlib.backends.backend_pdf import PdfPages
+import matplotlib.backends.backend_pdf
 class RunDataHandler(object):
     def __init__(self, fileName = "",allData=[],parameters = None):
         self.parameters = parameters
@@ -95,62 +96,70 @@ class GlobalDataPlotter(object):
         print(len(self.dataHandlers));
 
     def sortPolymerNumbers(self):
-        temp    = []
+        temp      = []
         amplitude = []
-        length = []
+        length    = []
+        tension   = []
 
-        handlers = []
+        handlers  = []
         thandlers = []
         ahandlers = []
-        
+        tnhandlers= []
 
 
         length.append(self.dataHandlers[0].getChainLength())
         temp.append(self.dataHandlers[0].getTemp())
         amplitude.append(self.dataHandlers[0].getPeriodicAmplitude())
+        tension.append(self.dataHandlers[0].getTension())
         
         handlers.append([])
         thandlers.append([])
         ahandlers.append([])
+        tnhandlers.append([])
         
         handlers[0].append(self.dataHandlers[0])
         thandlers[0].append(self.dataHandlers[0])
         ahandlers[0].append(self.dataHandlers[0])
-        
+        tnhandlers[0].append(self.dataHandlers[0])
+
         for i in range(1,len(self.dataHandlers)):
-            for j in range(len(length)):
+            #for j in range(len(length)): ?
+            if self.dataHandlers[i].getTemp() not in temp:
+                    temp.append(self.dataHandlers[i].getTemp())
+                    thandlers.append([])
+                    thandlers[-1].append(self.dataHandlers[i])
+            else:
+                thandlers[temp.index(self.dataHandlers[i].getTemp())].append(self.dataHandlers[i])
 
 
 
-                if self.dataHandlers[i].getTemp() not in temp:
-                        temp.append(self.dataHandlers[i].getTemp())
-                        thandlers.append([])
-                        thandlers[-1].append(self.dataHandlers[i])
-                else:
-                    thandlers[temp.index(self.dataHandlers[i].getTemp())].append(self.dataHandlers[i])
+            if self.dataHandlers[i].getPeriodicAmplitude() not in amplitude:
+                    amplitude.append(self.dataHandlers[i].getPeriodicAmplitude())
+                    ahandlers.append([])
+                    ahandlers[-1].append(self.dataHandlers[i])
+            else:
+                ahandlers[amplitude.index(self.dataHandlers[i].getPeriodicAmplitude())].append(self.dataHandlers[i])
 
 
-
-                if self.dataHandlers[i].getPeriodicAmplitude() not in amplitude:
-                        amplitude.append(self.dataHandlers[i].getPeriodicAmplitude())
-                        ahandlers.append([])
-                        ahandlers[-1].append(self.dataHandlers[i])
-                else:
-                    ahandlers[amplitude.index(self.dataHandlers[i].getPeriodicAmplitude())].append(self.dataHandlers[i])
-
+            if self.dataHandlers[i].getTension() not in tension:
+                tension.append(self.dataHandlers[i].getTension())
+                tnhandlers.append([])
+                tnhandlers[-1].append(self.dataHandlers[i])
+            else:
+                tnhandlers[tension.index(self.dataHandlers[i].getTension())].append(self.dataHandlers[i])
 
 
-                if self.dataHandlers[i].getChainLength() not in length:                
-                    length.append(self.dataHandlers[i].getChainLength())
-                    handlers.append([])
-                    handlers[-1].append(self.dataHandlers[i])
-                else:
-                    handlers[length.index(self.dataHandlers[i].getChainLength())].append(self.dataHandlers[i])
+            if self.dataHandlers[i].getChainLength() not in length:                
+                length.append(self.dataHandlers[i].getChainLength())
+                handlers.append([])
+                handlers[-1].append(self.dataHandlers[i])
+            else:
+                handlers[length.index(self.dataHandlers[i].getChainLength())].append(self.dataHandlers[i])
                     
 
+        return handlers, thandlers, ahandlers, tnhandlers, length, temp, amplitude, tension
 
 
-        return handlers, thandlers, ahandlers, length, temp, amplitude;
     def createColorPallet(self, array):
         num = len(array)
         conv = 1/num
@@ -167,7 +176,11 @@ class GlobalDataPlotter(object):
         for i in range(len(temp)):
             legend.append("Temperature: " + str(temp[i]))
         return legend
-
+    def createLegendTn(self, tension):
+        legend = []
+        for i in range(len(temp)):
+            legend.append("Tension: " + str(tension[i]))
+        return legend
     def createLegendL(self, length):
         legend = []
         for i in range(len(length)):
@@ -518,6 +531,7 @@ class GlobalDataPlotter(object):
                     plt.ylabel("dx/length")
                     lc=[]
                     legendlabel=[]
+                    render = False
                     for k in range(len(stemp)):
                         
                         for l in range(len(stemp[k])):
@@ -536,13 +550,14 @@ class GlobalDataPlotter(object):
                                         color = "red"
                                 
                                 
-                                
+                                render = True
                                 plt.errorbar(x,y,yerr=uy,color=color)
                     patches = []
                     for z in range(len(lc)):
                         patches.append(mpatches.Patch(color=lc[z], label=legendlabel[z]))
                     plt.legend(handles=patches)
-                    export_pdf.savefig()
+                    if(render):
+                        export_pdf.savefig()
                     plt.close()
                     plt.clf()
             
@@ -608,7 +623,53 @@ class GlobalDataPlotter(object):
 
         #Export to pdf
 
+    def GraphEverythingImporant(self):
+        from matplotlib import pyplot as plt
+        slength, stemp, samplitude,stension,  list_l, list_t, list_a, list_tn = self.sortPolymerNumbers()
+        import matplotlib.patches as mpatches
+        pdf = matplotlib.backends.backend_pdf.PdfPages("exportTestB.pdf")
+        list_colors = ["aqua","black","chocolate", "blue", "green","grey","red"]
 
+        
+        
+        
+
+        for tn in (list_tn):
+            for tmp in (list_t):
+                for amp in (list_a):
+                    render = False
+                    fig = plt.figure()
+                    lengths = []
+                    for i in range(len(slength)):
+                        for polymer in slength[i]:
+                            if(polymer.getTemp() == tmp and polymer.getTension() == tn and polymer.getPeriodicAmplitude() == amp):
+
+                                color = list_l.index(polymer.getChainLength())
+                                x = polymer.getForceRange()
+                                y, uy = polymer.getOutput()
+                                plt.plot(x,y,color=list_colors[color])
+                                if polymer.getChainLength in lengths:
+                                    lengths.append(polymer.getChainLength())
+                                render = True
+                        
+                    title = "dlength, Temperature:" + str(tmp) + ", Amplitude:" + str(abs(round(amp,3))) + ", $F_{y}$:" + str(tn)
+                    plt.title(title)
+                    plt.ylabel("dx/length")
+                    plt.xlabel("sheerforce/tension")
+                    labels = self.createLegendL(list_l)
+                    patches = []
+                    for i in range(len(labels)):
+                        patches.append(mpatches.Patch(color=list_colors[i], label=labels[i]))
+                    plt.legend(handles=patches)
+                    if(render):
+                        pdf.savefig(fig)
+                    plt.close()
+                         
+
+        pdf.close()
+
+
+        #graph of variable lengths, c temp, c tension, c a
 
 
 
@@ -618,4 +679,4 @@ class GlobalDataPlotter(object):
 plotter = GlobalDataPlotter()
 # plotter.PlotTiltvsForce(Tension=20)
 # plotter.compareBases_CL(Tension = 20,Amplitude = 0.3/0.1 * 1,kt=1)
-plotter.GraphEverythingToOrganizedPDF()
+plotter.GraphEverythingImporant()

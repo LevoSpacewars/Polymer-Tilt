@@ -55,6 +55,7 @@ private:
     vector<float> udy;
     vector<float> length;
     vector<float> ulength;
+    vector<float> dxsqrd;
 
     vector<float> sheerTension;
     

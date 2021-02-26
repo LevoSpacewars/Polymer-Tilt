@@ -304,6 +304,8 @@ int Compiler::compileData(string *filename, float interval)
         cout<<"calculating avg pos y"<<endl;
         float * avg_y = calcAveragePosition(&pos_y, n_polymers, l_polymer, adj_run);
 
+        
+        float * avg_dx2 = calcAverageDxsqr(&pos_x, n_polymers, l_polymer, adj_run);
         cout<<"writePorfileoutput"<<endl;
         writePolymerSystem(&avg_x, &avg_y, n_polymers, l_polymer,current_path);
 
@@ -1020,6 +1022,51 @@ float* Compiler::calcAverageLength(float ** avg_unc_x, float ** avg_unc_y, int n
     return system_length;
 }
 
+float* Compiler::calcAverageDxsqr(float ** data, int n_polymers, int l_polymer,int sampleLength)
+{
+    float* r_data = *data;
+    float *avg_unc = new float[(n_polymers*l_polymer)]; // array where [0,N/2) is average positional data, and [N/2,N) the uncertainty on that
+    // this shouldn't be needed anymore since I am now working with small N values. However, I am not sure how objects and memory work, so I am going to keep this clean
+    
+    int offset = 0;
+    int index = 0;
+    int pindex = 0;
+    int unc_index = n_polymers*l_polymer;
+    
+    //quick test
+
+    for (int i = 0; i < 2*n_polymers*l_polymer;i++)
+    {
+        avg_unc[i] = 0;
+    }
+
+    
+
+    for (int polymer = 0; polymer < n_polymers; polymer++)
+    {
+        for(int particle  = 0; particle < l_polymer; particle++)
+        {
+            float sum = 0;
+            float square = 0;
+
+            for (int t_step = 1; t_step < sampleLength; t_step++)
+            {
+                offset = polymer * l_polymer + particle;
+                index = t_step * l_polymer * n_polymers + offset;
+                pindex = (t_step-1) * l_polymer * n_polymers + offset;// build off of this here
+                sum += pow(r_data[index] - r_data[pindex],2);
+            }
+
+            float avg = sum / sampleLength;
+            avg_unc[offset] = avg;
+        }
+    }
+
+
+    
+
+    return avg_unc;
+}
 
 float* Compiler::calcSystemOutput(float** sysdx, float ** syslength, float sheerTension)
 {
