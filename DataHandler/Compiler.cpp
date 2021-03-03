@@ -290,7 +290,7 @@ int Compiler::compileData(string *filename, float interval)
         param.width = 2*this->profile.lines;
         param.x = -this->profile.lines/2;
         param.y = 0;
-        //writeHeatMap(&pos_x,&pos_y, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
+        writeHeatMap(&pos_x,&pos_y, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
         
 
         //cout<<"tracking particles 0,100,200"<<endl;
@@ -305,7 +305,7 @@ int Compiler::compileData(string *filename, float interval)
         float * avg_y = calcAveragePosition(&pos_y, n_polymers, l_polymer, adj_run);
 
         
-        float * avg_dx2 = calcAverageDxsqr(&pos_x, n_polymers, l_polymer, adj_run);
+        //float * avg_dx2 = calcAverageDxsqr(&pos_x, n_polymers, l_polymer, adj_run);
         cout<<"writePorfileoutput"<<endl;
         writePolymerSystem(&avg_x, &avg_y, n_polymers, l_polymer,current_path);
 
@@ -574,10 +574,11 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
     cout<<"writing raw"<<endl;
     ofstream writeFile;
     ofstream comFile;
+    ofstream denFile;
     float conv = this->profile.boxdimx/p_n;
     writeFile.open(this->current_path + "/DensityData_raw:" + to_string(force_value) + ".txt",std::ios_base::trunc);
     comFile.open(this->current_path + "/COM:" + to_string(force_value) + ".txt",std::ios_base::trunc);
-
+    denFile.open(this->current_path + "/DensityMap_raw:" + to_string(force_value) + ".txt",std::ios_base::trunc);
     writeFile << "parameters (p_n,p_l,force,Theta):" + to_string(p_n) + "," + to_string(p_length) + "," +to_string(force_value) + "," + to_string(0) <<endl;
     writeFile <<"x,y"<<endl;
     ofstream debugFile;
@@ -616,7 +617,8 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
                 {
                     debugFile << "T:" + to_string(k) + " P_n:" + to_string(i) + " " << x[j+offset] << " " + to_string(calc)<<endl;
                 }
-                 writeFile<< calc<< "," << y[j+offset] <<endl;
+                denFile << ((x[j+offset]) - avg) << "," << y[j+offset]<<endl;
+                writeFile<< calc<< "," << y[j+offset] <<endl;
             }
             
 

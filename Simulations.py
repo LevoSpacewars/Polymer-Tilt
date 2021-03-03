@@ -241,13 +241,14 @@ class PolymerSimulation():
         self.parameter = None
         random.seed()
 
-    def init(self, parameter=None,initializer='--mode=gpu',loadSave=None,dirName=None):
+    def init(self, parameter=None,initializer='--mode=gpu',loadSave=None,dirName=None,probe = False):
         hoomd.context.initialize(initializer)
         self.parameter = parameter
         if loadSave is None:
             random.seed()
 
-            self.setupFileSystem()
+            if probe !=False:
+                self.setupFileSystem()
             #1. create new directory for this run
 
             self.populateSystem()
@@ -258,22 +259,22 @@ class PolymerSimulation():
 
         else:
             hoomd.init.read_snapshot(hoomd.data.gsd_snapshot(loadSave)) # only used when I am loading a save state
-            self.setupFileSystem()
+            if probe !=False:
+                self.setupFileSystem()
             self.initializeForces()
             self.initializeIntegrator()
 
-    def probe(self, run_id,sheer_value,path): #unused
-        self.setupFileSystem()
-        name = str(run_id) + "_sheer_ " + str(sheer_value)+".gsd"
-        hoomd.dump.gsd(filename=name, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
-        
+    def probe(self, run_id,sheer_value,path,server = False): #unused
+        name = str(run_id) + "_sheer_" + str(sheer_value)
+        self.setupFileSystem(name=name)
+        nameg = str(run_id) + "_sheer_" + str(sheer_value)+".gsd"
+        hoomd.dump.gsd(filename=self.DirectoryName + "/" +nameg, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
+        self.simulationReadMeDump()
 
         
         self.tensionForce.set_force(fvec=(sheer_value,self.parameter.getPullForce(),0.0))
         self.sheerForce.set_force(fvec=(-sheer_value,0,0))
         hoomd.run(self.parameter.getRunLength())
-
-        os.system("mv " + name + " " + path)
 
         return path
 
@@ -385,14 +386,18 @@ class PolymerSimulation():
             self.bs.set_gamma('C', gamma=self.parameter.getGamma())
 
 
-    def setupFileSystem(self):
+    def setupFileSystem(self,name=""):
 
         #  constructs a directory file based on the computer time, for the simulation being run.
 
         from datetime import datetime
         time = datetime.now().strftime('%H-%M-%S')
 
-        if self.parameter.getNumberChains() is not 1:
+        if name != "":
+            self.DirectoryName = name
+            os.system("mkdir " + name)
+
+        elif self.parameter.getNumberChains() is not 1:
             length = self.parameter.getLength();
             T      = self.parameter.getKBT();
             A      = self.parameter.getPeriodicAmplitude();

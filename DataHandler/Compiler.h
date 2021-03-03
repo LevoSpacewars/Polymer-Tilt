@@ -58,7 +58,7 @@ private:
     vector<float> dxsqrd;
 
     vector<float> sheerTension;
-    
+    float* calcAverageDxsqr(float ** data, int n_polymers, int l_polymer,int sampleLength);
     bool writePolymerSystem(float** xa, float ** ya, int p_n, int p_length,string path);
     int compileData(string* fname,float interval);
     bool truncateFiles();
