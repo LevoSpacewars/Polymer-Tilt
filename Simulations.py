@@ -268,7 +268,7 @@ class PolymerSimulation():
         name = str(run_id) + "_sheer_" + str(sheer_value)
         self.setupFileSystem(name=name)
         nameg = str(run_id) + "_sheer_" + str(sheer_value)+".gsd"
-        hoomd.dump.gsd(filename=self.DirectoryName + "/" +nameg, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
+        hoomd.dump.gsd(filename=self.DirectoryName + "/" +"trajectory.gsd", period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
         self.simulationReadMeDump(singular = True,sheer_value=sheer_value)
 
         
