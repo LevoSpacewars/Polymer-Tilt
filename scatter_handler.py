@@ -3,7 +3,7 @@ import sys
 nameid = sys.argv[1]
 path = "./"
 if (len(sys.argv) > 2):
-    path = sys.argv[3]
+    path = sys.argv[2]
 
 # first check for if the directly nameid exists, so that we can delete it for recompilation
 for objects in os.listdir(path):

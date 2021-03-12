@@ -307,7 +307,7 @@ int Compiler::compileData(string *filename, float interval)
         
         //float * avg_dx2 = calcAverageDxsqr(&pos_x, n_polymers, l_polymer, adj_run);
         cout<<"writePorfileoutput"<<endl;
-        //writeProfileOutput(&pos_xr, &pos_yr, n_polymers, l_polymer,0,current_path,adj_run/10);
+        writeProfileOutput(&pos_xr, &pos_yr, n_polymers, l_polymer,0,current_path,adj_run);
 
         cout<<"exportDensityFunction_avg"<<endl;
         exportDensityFunction_raw(&pos_x, &pos_y, n_polymers, l_polymer, adj_run,theta,current_path);

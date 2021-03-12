@@ -376,7 +376,7 @@ class PolymerSimulation():
             self.bs.set_gamma('C', gamma=self.parameter.getGamma())
         else:
             if(self.parameter.getNumberChains() == 1): # for a single polymer all the particles except the base are simulated. 
-                self.bs = hoomd.md.integrate.langevin(group = self.most, kT= hoomd.variant.linear_interp(points = TRamp), seed=random.randint(0,99999),noiseless_r=True);
+                self.bs = hoomd.md.integrate.langevin(group = self.all, kT= hoomd.variant.linear_interp(points = TRamp), seed=random.randint(0,99999),noiseless_r=True);
             else: #defualt
                 self.bs = hoomd.md.integrate.langevin(group = self.all, kT= hoomd.variant.linear_interp(points = TRamp), seed=random.randint(0,99999),noiseless_r=True);
 
@@ -454,10 +454,12 @@ class PolymerSimulation():
             periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=lines+added)
             periodic.force_coeff.set('B', A=amplitude, i=0, w=1, p=lines+added)
             periodic.force_coeff.set('C', A=amplitude, i=0, w=1, p=lines+added)
+            print("multipolymer settings")
         else:
             periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=width)
             periodic.force_coeff.set('B', A=amplitude, i=0, w=1, p=width)
             periodic.force_coeff.set('C', A=amplitude, i=0, w=1, p=width)
+            print("single polymer ssetting")
             #periodic.force_coeff.set('A', A=-10000000.0, i=0, w=1, p=10)
 
 
