@@ -266,7 +266,7 @@ class PolymerSimulation():
 
     def probe(self, run_id,sheer_value,path,server = False): #unused
         name = str(run_id) + "_sheer_" + str(sheer_value)
-        self.setupFileSystem(name=name,sheer_value)
+        self.setupFileSystem(name=name,singular = True,sheer_value=sheer_value)
         nameg = str(run_id) + "_sheer_" + str(sheer_value)+".gsd"
         hoomd.dump.gsd(filename=self.DirectoryName + "/" +nameg, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
         self.simulationReadMeDump(singular = True)
@@ -571,7 +571,7 @@ class PolymerSimulation():
 
         hoomd.init.read_snapshot(snapshot)
 
-    def simulationReadMeDump(self,name="", dir="", singular = False, sheer_value):
+    def simulationReadMeDump(self,name="", dir="", singular = False, sheer_value = 0):
         if singular == True:
             self.parameter.setSheerForceRange(sheer_value,sheer_value + 1)
             self.parameter.setDf(1)
