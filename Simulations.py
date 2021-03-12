@@ -266,10 +266,10 @@ class PolymerSimulation():
 
     def probe(self, run_id,sheer_value,path,server = False): #unused
         name = str(run_id) + "_sheer_" + str(sheer_value)
-        self.setupFileSystem(name=name,singular = True,sheer_value=sheer_value)
+        self.setupFileSystem(name=name)
         nameg = str(run_id) + "_sheer_" + str(sheer_value)+".gsd"
         hoomd.dump.gsd(filename=self.DirectoryName + "/" +nameg, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
-        self.simulationReadMeDump(singular = True)
+        self.simulationReadMeDump(singular = True,sheer_value=sheer_value)
 
         
         self.tensionForce.set_force(fvec=(sheer_value,self.parameter.getPullForce(),0.0))
