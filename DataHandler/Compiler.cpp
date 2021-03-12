@@ -279,8 +279,8 @@ int Compiler::compileData(string *filename, float interval)
 
         
         int adj_run = (int)((1-interval) * runLength);
-        this->writeData("position_uw:" + to_string(theta),&pos_x,&pos_y,memblock,l_polymer*n_polymers);//debug only
-        this->writeData("position_nw:" + to_string(theta),&pos_xr,&pos_yr,memblock,l_polymer*n_polymers);
+        //this->writeData("position_uw:" + to_string(theta),&pos_x,&pos_y,memblock,l_polymer*n_polymers);//debug only
+        //this->writeData("position_nw:" + to_string(theta),&pos_xr,&pos_yr,memblock,l_polymer*n_polymers);
 
 
         HeatMapParameters param;
@@ -290,7 +290,7 @@ int Compiler::compileData(string *filename, float interval)
         param.width = 2*this->profile.lines;
         param.x = -this->profile.lines/2;
         param.y = 0;
-        writeHeatMap(&pos_x,&pos_y, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
+        //writeHeatMap(&pos_x,&pos_y, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
         
 
         //cout<<"tracking particles 0,100,200"<<endl;
@@ -307,7 +307,7 @@ int Compiler::compileData(string *filename, float interval)
         
         //float * avg_dx2 = calcAverageDxsqr(&pos_x, n_polymers, l_polymer, adj_run);
         cout<<"writePorfileoutput"<<endl;
-        writePolymerSystem(&avg_x, &avg_y, n_polymers, l_polymer,current_path);
+        //writeProfileOutput(&pos_xr, &pos_yr, n_polymers, l_polymer,0,current_path,adj_run/10);
 
         cout<<"exportDensityFunction_avg"<<endl;
         exportDensityFunction_raw(&pos_x, &pos_y, n_polymers, l_polymer, adj_run,theta,current_path);
@@ -632,29 +632,22 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
     comFile.close();
     debugFile.close();
     writeFile.close();
-
-    
+    denFile.close();
     return true;
 }
 
-bool Compiler::writeProfileOutput(float** xa, float ** ya, int p_n, int p_length,float force_value, string path) //memory safe
+bool Compiler::writeProfileOutput(float** xa, float ** ya, int p_n, int p_length,float force_value, string path, int time) //memory safe
 {
     
     float* x = *xa;
     float* y = *ya;
-    int unc_offset = p_n*p_length;
     ofstream writeFile;
-    writeFile.open(this->current_path + "/profileData.txt",std::ios_base::app);
-    for (int i = 0; i < p_n; i++)
+    int size = time * p_n*p_length;
+    writeFile.open(this->current_path + "/profileData.txt",std::ios_base::trunc);
+    
+    for (int i = 0; i < size; i++)
     {
-        writeFile<< "Polymer," << i<<endl;
-        writeFile<< "ForceValue," << force_value<<endl;
-
-        for(int j = i*p_length; j < (i+1)*p_length; j++)
-        {
-            writeFile<< x[j] << "," << x[j+unc_offset] << "," << y[j] << "," << y[j + unc_offset]<<endl;
-        }
-
+        writeFile << x[i] <<","<< y[i]<<endl;
     }
 
     writeFile.close();

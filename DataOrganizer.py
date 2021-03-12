@@ -159,7 +159,6 @@ class GlobalDataPlotter(object):
 
         return handlers, thandlers, ahandlers, tnhandlers, length, temp, amplitude, tension
 
-
     def createColorPallet(self, array):
         num = len(array)
         conv = 1/num

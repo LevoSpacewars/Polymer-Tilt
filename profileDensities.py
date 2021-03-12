@@ -7,7 +7,6 @@ import matplotlib.cm as cmx
 from scipy import stats
 import sys
 import os
-import math
 import glob
 import subprocess
 import matplotlib.backends.backend_pdf
@@ -197,8 +196,6 @@ def makeprofiledist(rawfilepath,dirpath):
     t_l = int(heatmap.shape[0]/(plength * npoly))
     avgx = []
     avgy = []
-    absavgx = []
-    absavgy = []
     uncx = []
 
     map = np.array(heatmap)
@@ -217,7 +214,6 @@ def makeprofiledist(rawfilepath,dirpath):
     for i in range(plength):
         a = 0
         b = 0
-        c = 0
         n = t_l * npoly
         for ii in range(t_l):
             offset = plength * npoly * ii + i
@@ -225,23 +221,11 @@ def makeprofiledist(rawfilepath,dirpath):
                 particle_index = offset + iii*plength
                 a += datauw[particle_index][0]
                 b += datauw[particle_index][1]
-                c = datauw[particle_index][0]**2
-        
-        avgx.append((a/n))
-        avgy.append((b/n))
-        uncx.append(math.sqrt(c/(n*n) - avgx[-1]**2))
-        absavgx.append(abs(avgx[-1]))
-        absavgy.append(abs(avgy[-1]))
+        avgx.append(abs(a/n))
+        avgy.append(abs(b/n))
 
-
-    plt.plot(absavgy,absavgx)
+    plt.plot(avgy,avgx)
     plt.yscale('log')
-    pdf.savefig(fig)
-    plt.close()
-
-    fig = plt.figure()
-    plt.errorbar(avgx,avgy,xerr=uncx)
-    plt.plot(avgx,avgy,'.')
     pdf.savefig(fig)
     plt.close()
     
@@ -310,8 +294,8 @@ for i in range(len(runDirs)):
     
     for j in range(len(order)):
         print(files_ordered[j])
-        print(files[j])
-        print(files[order[j]])
+    print(files[j])
+    print(files[order[j]])
     print("\n\n")
 
     for j in range(len(files)):

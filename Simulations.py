@@ -266,10 +266,10 @@ class PolymerSimulation():
 
     def probe(self, run_id,sheer_value,path,server = False): #unused
         name = str(run_id) + "_sheer_" + str(sheer_value)
-        self.setupFileSystem(name=name)
+        self.setupFileSystem(name=name,sheer_value)
         nameg = str(run_id) + "_sheer_" + str(sheer_value)+".gsd"
         hoomd.dump.gsd(filename=self.DirectoryName + "/" +nameg, period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
-        self.simulationReadMeDump()
+        self.simulationReadMeDump(singular = True)
 
         
         self.tensionForce.set_force(fvec=(sheer_value,self.parameter.getPullForce(),0.0))
@@ -281,9 +281,8 @@ class PolymerSimulation():
 
     def run(self, server = False): #main run function
 
-        #self.setupFileSystem()
-
-        print( self.DirectoryName)
+        self.setupFileSystem()
+        print(self.DirectoryName)
         
         
         file = hoomd.dump.gsd(filename= self.DirectoryName + "/trajectory.gsd", period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
@@ -459,7 +458,7 @@ class PolymerSimulation():
             periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=width)
             periodic.force_coeff.set('B', A=amplitude, i=0, w=1, p=width)
             periodic.force_coeff.set('C', A=amplitude, i=0, w=1, p=width)
-            periodic.force_coeff.set('A', A=-10000000.0, i=0, w=1, p=10)
+            #periodic.force_coeff.set('A', A=-10000000.0, i=0, w=1, p=10)
 
 
         periodic.force_coeff.set('A', A=-10000000.0, i=1, w=1, p=10) #used to keep anchor on y=0 
@@ -572,7 +571,10 @@ class PolymerSimulation():
 
         hoomd.init.read_snapshot(snapshot)
 
-    def simulationReadMeDump(self,name="", dir=""):
+    def simulationReadMeDump(self,name="", dir="", singular = False, sheer_value):
+        if singular == True:
+            self.parameter.setSheerForceRange(sheer_value,sheer_value + 1)
+            self.parameter.setDf(1)
         self.parameter.writeParameters(name=name,dir=self.DirectoryName)
 
 #################################### only for extracting data ####################################################
