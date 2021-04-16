@@ -47,7 +47,7 @@ sim.init(parameter=parameters,initializer='--mode=gpu')
 
 
 
-filelocation = sim.probe(name,sheer,"",server = False) ##S
+filelocation = sim.probe(name,sheer,"",server = True) ##S
 print(filelocation)
 
 #renderer = Simulations.DataVisualizer(basedirectory=filelocation,interval=0.75)

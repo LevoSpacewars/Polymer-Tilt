@@ -16,6 +16,7 @@ class RunDataHandler(object):
             self.ulength    = allData[3]
             self.output     = allData[4]
             self.uoutput    = allData[5]
+            self.dx2        = allData[6]
             self.forceRange = self.calcForceRange()
         else:
             self.readDataFile(fileName)

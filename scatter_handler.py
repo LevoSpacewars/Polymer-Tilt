@@ -47,7 +47,7 @@ for directory in (dirs):
         x = x + 1
 
 #now that all the data.txts have been extracted, write data.txt into created directory
-keys = ["dx","udx","length","ulength","output","uouput"]
+keys = ["dx","udx","length","ulength","output","uouput","dx2"]
 f = open(path + nameid + "/data.txt",'w')
 lines = []
 for i in range(len(keys)):
