@@ -26,9 +26,9 @@ parameters.setIntegrator("legavin")
 parameters.setRunDirection("forward")
 
 sim = Simulations.PolymerSimulation()
-sim.init(parameter=parameters,initializer='--mode=cpu')
+sim.init(parameter=parameters,initializer='--mode=gpu')
 
-filelocation = sim.run(server = False)
+filelocation = sim.run(server = True)
 print(filelocation)
 
 #renderer = Simulations.DataVisualizer(basedirectory=filelocation,interval=0.75)

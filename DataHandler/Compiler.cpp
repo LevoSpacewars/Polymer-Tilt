@@ -290,7 +290,7 @@ int Compiler::compileData(string *filename, float interval)
         param.width = this->profile.lines;
         param.x = -this->profile.lines/2;
         param.y = 0;
-        writeHeatMap(&pos_x,&pos_y, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
+        //writeHeatMap(&pos_x,&pos_y, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
         
 
         //cout<<"tracking particles 0,100,200"<<endl;
@@ -304,8 +304,9 @@ int Compiler::compileData(string *filename, float interval)
         cout<<"calculating avg pos y"<<endl;
         float * avg_y = calcAveragePosition(&pos_y, n_polymers, l_polymer, adj_run);
 
-        
-        //float * avg_dx2 = calcAverageDxsqr(&pos_x, n_polymers, l_polymer, adj_run);
+        cout<<"calculating the avg_dx^2 " <<endl;
+        float avg_dx2 = calcAverageDxsqr(&pos_x, n_polymers, l_polymer, adj_run);
+
         cout<<"writePorfileoutput"<<endl;
         writeProfileOutput(&pos_xr, &pos_yr, n_polymers, l_polymer,0,current_path,adj_run);
 
@@ -331,6 +332,8 @@ int Compiler::compileData(string *filename, float interval)
 
         this->length.emplace_back(length[0]);
         this->ulength.emplace_back(length[1]);
+
+        this->dx2.emplace_back(avg_dx2);
 
         
 
@@ -887,7 +890,6 @@ void Compiler::unwrapData(float ** data, int n_polymers, int l_polymer,int step)
 }
 
 
-
 float* Compiler::calcAveragePosition(float ** data, int n_polymers, int l_polymer,int sampleLength)//M SAFE
 {
     float* r_data = *data;
@@ -1017,50 +1019,44 @@ float* Compiler::calcAverageLength(float ** avg_unc_x, float ** avg_unc_y, int n
     return system_length;
 }
 
-float* Compiler::calcAverageDxsqr(float ** data, int n_polymers, int l_polymer,int sampleLength)
+float Compiler::calcAverageDxsqr(float ** data, int n_polymers, int l_polymer,int sampleLength)
 {
     float* r_data = *data;
-    float *avg_unc = new float[(n_polymers*l_polymer)]; // array where [0,N/2) is average positional data, and [N/2,N) the uncertainty on that
-    // this shouldn't be needed anymore since I am now working with small N values. However, I am not sure how objects and memory work, so I am going to keep this clean
-    
+       
     int offset = 0;
+    int poffset = 0;
     int index = 0;
     int pindex = 0;
-    int unc_index = n_polymers*l_polymer;
+    int sim_size= n_polymers*l_polymer;
+    float dxsqr = 0;
     
-    //quick test
-
-    for (int i = 0; i < 2*n_polymers*l_polymer;i++)
+    for (int time = 1; time < sampleLength; time++)
     {
-        avg_unc[i] = 0;
-    }
+        offset = time * sim_size;
+        poffset = (time -1) * sim_size; 
+        
+        float tdxsqr = 0;
 
-    
-
-    for (int polymer = 0; polymer < n_polymers; polymer++)
-    {
-        for(int particle  = 0; particle < l_polymer; particle++)
+        for(int particle = 0; particle < sim_size; particle++)
         {
-            float sum = 0;
-            float square = 0;
+            index = offset + particle;
+            pindex = poffset + particle;
 
-            for (int t_step = 1; t_step < sampleLength; t_step++)
-            {
-                offset = polymer * l_polymer + particle;
-                index = t_step * l_polymer * n_polymers + offset;
-                pindex = (t_step-1) * l_polymer * n_polymers + offset;// build off of this here
-                sum += pow(r_data[index] - r_data[pindex],2);
-            }
+            tdxsqr += pow(r_data[index] - r_data[pindex],2.0);
 
-            float avg = sum / sampleLength;
-            avg_unc[offset] = avg;
+            
         }
+        dxsqr += tdxsqr / sim_size;
+
     }
+    cout << dxsqr/sampleLength <<endl;
+
+    return dxsqr/sampleLength;
 
 
     
 
-    return avg_unc;
+    
 }
 
 float* Compiler::calcSystemOutput(float** sysdx, float ** syslength, float sheerTension)
@@ -1074,7 +1070,7 @@ float* Compiler::calcSystemOutput(float** sysdx, float ** syslength, float sheer
 
 
     cout<<length[1]/length[0]<< ","<<dx[1]/dx[0]<<endl;
-    output[1] = output[0] * pow( pow(0, 2) + pow(dx[1] / dx[0], 2), 0.5);
+    output[1] = output[0] * pow( pow(length[1]/length[0], 2) + pow(dx[1] / dx[0], 2), 0.5);
 
     return output;
 }
@@ -1135,6 +1131,12 @@ int Compiler::writeResults(string path)
             writeFile << this->uoutput.at(i) << ",";
         }
         writeFile << this->uoutput.at(this->dx.size()-1)<<endl;
+
+        writeFile << "dx2,";
+        for (int i = 0; i < this->dx.size()-1;i++){
+            writeFile << this->dx2.at(i) << ",";
+        }
+        writeFile << this->dx2.at(this->dx.size()-1)<<endl;
 
        
 

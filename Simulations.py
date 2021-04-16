@@ -49,15 +49,15 @@ def particlePotential(r, rmin, rmax,paricle_radius,max_bond_radius,strength_coef
         potential = - 0.5 * strength_coef * max_bond_radius**2 * math.log( 1- particleDistance**2 / max_bond_radius**2 )
         force =  - ( strength_coef * particleDistance ) / ( 1 - particleDistance**2 / max_bond_radius**2 )
         return (potential,force)
-def particlePotentialHarmonic(r, rmin, rmax,bond_radius,strength_coef):
+def particlePotentialHarmonic(r, rmin, rmax,particle_diameter,strength_coef):
     # r                     : float :   radius between two particles
     # rmin                  : float :   minimum radius
     # rmax                  : float :   maximum radius
-    # paricle_radius        : float :   The radius of each particle (also the equlibrium point)
+    # particle_diameter     : float :   The radius of each particle (also the equlibrium point)
     # strength_coef         : float :   Prefactor meant to increase the effectiveness of the function
 
 
-    particleDistance = r - bond_radius
+    particleDistance = r - particle_diameter
 
     potential = 1/2*(strength_coef * particleDistance**2)
     force     = -strength_coef * particleDistance
@@ -940,6 +940,7 @@ class DataVisualizer():
             plt.legend(["slope:"+str(m)])
             plt.show()
             plt.savefig("forceVstilt.png")
+
 
 
 
