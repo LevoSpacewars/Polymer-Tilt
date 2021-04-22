@@ -8,9 +8,9 @@ A= -0.3/0.1 * 1
 print("\n\n\n\n\n")
 
 parameters.setSheerForceRange(0,2)
-parameters.setDf(1)
+parameters.setDf(3)
 parameters.setLength(200)
-parameters.setNumberChains(1)
+parameters.setNumberChains(10)
 parameters.setPairRadius(0.1)
 parameters.setPairPotentialStrength(10e3)
 parameters.setPairRadiusEqualibrium(0.1)

@@ -444,7 +444,7 @@ class PolymerSimulation():
         nl.reset_exclusions(exclusions = [])
 
         harmonic = hoomd.md.bond.table(width = 100000); #defining the bond potential
-        harmonic.bond_coeff.set('polymer', func = particlePotentialHarmonic,rmin=0, rmax=100,coeff = dict(bond_radius=bond_length, strength_coef=K)); #bond potential
+        harmonic.bond_coeff.set('polymer', func = particlePotentialHarmonic,rmin=0, rmax=100,coeff = dict(particle_diameter=bond_length, strength_coef=K)); #bond potential
 
 
         self.tensionForce = hoomd.md.force.constant(group = self.pulley, fvec=(0.0,0,0.0))  # FORCES INTIALIZED HERE -> CHANGED IN RUN FUNCTION

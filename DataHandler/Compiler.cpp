@@ -281,7 +281,7 @@ int Compiler::compileData(string *filename, float interval)
         int adj_run = (int)((1-interval) * runLength);
         //this->writeData("position_uw:" + to_string(theta),&pos_x,&pos_y,memblock,l_polymer*n_polymers);//debug only
         //this->writeData("position_nw:" + to_string(theta),&pos_xr,&pos_yr,memblock,l_polymer*n_polymers);
-
+ 
 
         HeatMapParameters param;
         param.rezx = 100;
@@ -296,8 +296,7 @@ int Compiler::compileData(string *filename, float interval)
         //cout<<"tracking particles 0,100,200"<<endl;
         //trackParticle(&pos_x,0,adj_run,n_polymers*l_polymer,theta);
         //trackParticle(&pos_x,100,adj_run,n_polymers*l_polymer,theta);
-        //trackParticle(&pos_x,200,adj_run,n_polymers*l_polymer,theta);
-
+        //trackParticle(&pos_x,200,adj_run,n_polymers*l_polymer,theta)
         cout<<"calculatig average position x"<<endl;
         float * avg_x = calcAveragePosition(&pos_x, n_polymers, l_polymer, adj_run);
 
@@ -1046,7 +1045,7 @@ float Compiler::calcAverageDxsqr(float ** data, int n_polymers, int l_polymer,in
 
             
         }
-        dxsqr += tdxsqr / sim_size;
+        dxsqr += pow(tdxsqr,0.5) / sim_size;
 
     }
     cout << dxsqr/sampleLength <<endl;

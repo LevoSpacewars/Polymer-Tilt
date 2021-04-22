@@ -6,8 +6,34 @@ import gsd.hoomd
 import math
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.backends.backend_pdf
+
+def X (a,kbt,A,T,theta):
+    theta = math.atan(theta)
+    print((A/0.2)*math.tanh(1/(a*10*2*math.pi)))
+    print(A)
+    
+    
+    F = math.sqrt( pow(T,2.0) + pow(T * math.tan(theta),2.0))
+    B = 1/(a*10*2*math.pi)
+    am = A * 1/(a*10*2*math.pi)
+    
+    V = (am)/0.2
+    
+    
+    output = F*pow(a,2) * pow(1/kbt,2) * V / pow(math.pi,2)
+    return output
+
+def Y (a,kbt,T,theta,utheta):
+    theta = math.atan(theta)
+    utheta = math.atan(utheta)
+    F = math.sqrt( T**2 + pow(T * math.tan(theta),2))
+    output =F*a*theta * (1/kbt) * 1/math.pi
+    uoutput = utheta/theta * output
+    return (output, uoutput)
+
+
 class RunDataHandler(object):
-    def __init__(self, fileName = "",allData=[],parameters = None):
+    def __init__(self, fileName = "",allData=None,parameters = None):
         self.parameters = parameters
         if fileName is "":
             self.dx         = allData[0]
@@ -38,9 +64,11 @@ class RunDataHandler(object):
             forcerange.append(i/self.parameters.getDf() * (self.parameters.getSheerForceRange()[1] - self.parameters.getSheerForceRange()[0]) + self.parameters.getSheerForceRange()[0])
         return forcerange
     def readDataFile(self,fileName):
+        self.fileName = fileName
         file = open(fileName, 'r')
         print(file)
         lines = file.readlines()
+        print(fileName)
         temp = []
         for i in range(len(lines)):
             temp.append([])
@@ -55,10 +83,13 @@ class RunDataHandler(object):
         self.ulength    = temp[3]
         self.output     = temp[4]
         self.uoutput    = temp[5]
+        self.dx2        = temp[6]
     def getChainLength(self):
         return self.parameters.getLength()
     def getDx(self):
         return self.dx,self.udx
+    def getDx2(self):
+        return self.dx2
     def getLength(self):
         return self.length,self.ulength
     def getOutput(self):
@@ -670,7 +701,116 @@ class GlobalDataPlotter(object):
 
 
         #graph of variable lengths, c temp, c tension, c a
+    
 
+
+    def compareTattempts(self):
+        import numpy as np
+        from matplotlib import pyplot as plt
+        import matplotlib.patches as mpatches
+        pdf = matplotlib.backends.backend_pdf.PdfPages("method_test.pdf")
+
+        cmap = plt.get_cmap('jet')
+        colors = cmap(np.linspace(0, 1.0, len(self.dataHandlers)))
+        cindex = 0
+        fig = plt.figure(figsize=(15,15))
+        s = "{{0., 0.}, {0.3, 0.149379}, {0.6, 0.295278}, {0.9, 0.435244}, {1.2, 0.568148}, {1.5, 0.693871}, {1.8, 0.812837}, {2.1, 0.925679}, {2.4, 1.03306}, {2.7, 1.13559}, {3., 1.23382}, {3.3, 1.32821}, {3.6, 1.41916}, {3.9, 1.50701}, {4.2, 1.59204}, {4.5, 1.67452}, {4.8, 1.75466}, {5.1, 1.83264}, {5.4, 1.90864}, {5.7, 1.98279}, {6., 2.05523}, {6.3, 2.12607}, {6.6, 2.19541}, {6.9, 2.26335}, {7.2, 2.32996}, {7.5, 2.39533}, {7.8, 2.45952}, {8.1, 2.52259}, {8.4, 2.58461}, {8.7, 2.64562}, {9., 2.70566}, {9.6,2.82306}, {9.9, 2.88049}, {10.2, 2.93711}, {10.5, 2.99297}, {10.8, 3.04809}, {11.1, 3.10251}, {11.4, 3.15624}, {11.7, 3.20932}, {12., 3.26177}, {12.3, 3.31361}, {12.6, 3.36486}, {12.9, 3.41554}}"
+        s = s.replace("{","")
+        s = s.replace("}","")
+        s = s.split(",")
+        rowx = []
+        rowy = []
+        for i in range(0,len(s),2):
+            rowx.append(float(s[i]))
+            rowy.append(float(s[i+1]))
+        plt.plot(rowx,rowy)
+
+
+        for i in (self.dataHandlers):
+            
+            fn = i.fileName
+            print(fn)
+            thetas = np.array(i.getForceRange())
+            dx2 = i.getDx2()
+
+            
+            dx2c = 0
+            for ii in range(1,len(dx2)):
+                if dx2[ii] / dx2[0] > 1.1 and dx2c == 0:
+                    print("dration",dx2[ii] / dx2[0], thetas[ii])
+                    dx2c = thetas[ii]
+            
+            tilt = i.getOutput()[0]
+            tiltc = 0
+            
+            
+            for ii in range(1,len(tilt)):
+                if tilt[ii] / abs(tilt[0]) > 1.8 and tiltc == 0:
+                    print("tration",tilt[ii] / tilt[0], thetas[ii])
+                    tiltc = thetas[ii]
+            
+            # utilt = i.getOutput()[1]
+            # utiltc = 0
+            # for ii in range(1,len(utilt)):
+            #     if utilt[ii] / utilt[0] > 0.01 and utiltc is None:
+            #         utiltc = thetas[ii]
+            a = 1
+            kbt = i.getTemp()
+            A = i.getPeriodicAmplitude()
+            T = i.getTension()
+            utheta = 0.01
+            x = [ X(a, kbt, A, T, tiltc), X(a, kbt, A, T, dx2c) ]
+            y= [ Y(a, kbt, T, tiltc, utheta)[0], Y(a, kbt, T, dx2c, utheta)[0]]
+            uy = [ Y(a, kbt, T, tiltc, utheta)[1], Y(a, kbt, T, dx2c, utheta)[1]]
+            #plt.plot(x,y, color=colors[cindex],label=str(fn))
+            plt.errorbar(x[0],y[0],yerr= uy[0],fmt='.',color=colors[cindex],ecolor="red") # dx^2
+            plt.errorbar(x[1],y[1],yerr= uy[1],fmt='.',color=colors[cindex],ecolor="grey")# tilt
+            #plt.errorbar(x[1],y[1], yerr= uy[1],fmt='.', color= "black")
+            # plt.plot(2,utiltc, '.', color=colors[cindex], label=str(fn))
+            cindex += 1
+        plt.title("threshold critical theta values")
+        
+        textstr = "matching colors = Same Run \n red error bar= dxCOM"
+        plt.legend(["Colors"])
+        pdf.savefig(fig)
+
+           
+        for i in self.dataHandlers:
+            
+            fig, axs= plt.subplots(1,2)
+            
+            thetas = i.getForceRange()
+            dx2 = i.getDx2()
+            tilt = i.getOutput()[0]
+            plt.cla()
+
+            plt.title(i.fileName)
+            axs[0].plot(thetas,dx2)
+            axs[1].plot(thetas, tilt)
+            axs[0].legend(["com^2"])
+            axs[1].legend(['tilt'])
+            
+            pdf.savefig(fig)
+            plt.close(fig=fig)
+
+        pdf.close()
+
+
+
+
+
+
+
+        
+
+
+
+
+
+            
+            
+            
+                    
 
 
 # compile = GlobalDataManager()
@@ -680,3 +820,4 @@ plotter = GlobalDataPlotter()
 # plotter.PlotTiltvsForce(Tension=20)
 # plotter.compareBases_CL(Tension = 20,Amplitude = 0.3/0.1 * 1,kt=1)
 plotter.GraphEverythingImporant()
+plotter.compareTattempts()
