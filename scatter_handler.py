@@ -38,6 +38,7 @@ for i in values:
 
 #mkdir and extact data in order of all the sheers
 os.system("mkdir " + path + nameid)
+os.system("cp " + path + dirs[0] + "/_simulation_parameters.txt " + path + nameid)
 data = [[],[],[],[],[],[]]
 for directory in (dirs):
     x = 0
