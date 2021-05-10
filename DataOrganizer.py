@@ -6,6 +6,9 @@ import gsd.hoomd
 import math
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.backends.backend_pdf
+import numpy as np
+from matplotlib import pyplot as plt
+import matplotlib.patches as mpatches
 
 def X (a,kbt,A,T,theta):
     theta = math.atan(theta)
@@ -725,7 +728,7 @@ class GlobalDataPlotter(object):
             rowy.append(float(s[i+1]))
         plt.plot(rowx,rowy)
 
-
+        
         for i in (self.dataHandlers):
             
             fn = i.fileName
@@ -745,7 +748,7 @@ class GlobalDataPlotter(object):
             
             
             for ii in range(1,len(tilt)):
-                if tilt[ii] / abs(tilt[0]) > 1.8 and tiltc == 0:
+                if tilt[ii] / abs(tilt[0]) > 10 and tiltc == 0:
                     print("tration",tilt[ii] / tilt[0], thetas[ii])
                     tiltc = thetas[ii]
             
@@ -758,42 +761,200 @@ class GlobalDataPlotter(object):
             kbt = i.getTemp()
             A = i.getPeriodicAmplitude()
             T = i.getTension()
-            utheta = 0.01
+            utheta = i.getForceRange()[1] - i.getForceRange()[0]
             x = [ X(a, kbt, A, T, tiltc), X(a, kbt, A, T, dx2c) ]
             y= [ Y(a, kbt, T, tiltc, utheta)[0], Y(a, kbt, T, dx2c, utheta)[0]]
             uy = [ Y(a, kbt, T, tiltc, utheta)[1], Y(a, kbt, T, dx2c, utheta)[1]]
             #plt.plot(x,y, color=colors[cindex],label=str(fn))
-            plt.errorbar(x[0],y[0],yerr= uy[0],fmt='.',color=colors[cindex],ecolor="red") # dx^2
-            plt.errorbar(x[1],y[1],yerr= uy[1],fmt='.',color=colors[cindex],ecolor="grey")# tilt
+            plt.plot(rowx,rowy)
+            plt.errorbar(x[1],y[1],yerr= uy[1],fmt='.',color=colors[cindex],ecolor="red") # dx^2
+            plt.errorbar(x[0],y[0],yerr= uy[0],fmt='.',color=colors[cindex],ecolor="grey")# tilt
+            
             #plt.errorbar(x[1],y[1], yerr= uy[1],fmt='.', color= "black")
             # plt.plot(2,utiltc, '.', color=colors[cindex], label=str(fn))
             cindex += 1
+       
+       
         plt.title("threshold critical theta values")
         
         textstr = "matching colors = Same Run \n red error bar= dxCOM"
-        plt.legend(["Colors"])
+        plt.legend(["Predicted", "Measured com^2", "measured Tilt"])
         pdf.savefig(fig)
+        plt.cla()
 
-           
+        sloperangedict = {} #contains for sloperange[i] slopeinfo[i] = (theta, tilt), (...), (....)
+
         for i in self.dataHandlers:
             
-            fig, axs= plt.subplots(1,2)
+            fig, axs= plt.subplots(2,2)
             
             thetas = i.getForceRange()
             dx2 = i.getDx2()
             tilt = i.getOutput()[0]
+            tx = 0
+            ty = 0
+            dx = 0
+            dy = 0
+            tiltc = 0
+            dxc = 0
+            sloperange = np.array(range(1,6))/10
+            for k in range(1,len(tilt)):
+                
+                if tilt[k] / abs(tilt[0]) > 10 and tiltc == 0:
+                    ty = (tilt[k])
+                    tx = (thetas[k])
+                    tiltc = 1
+                if dx2[k] / abs(dx2[0]) > 1.1 and dxc == 0:
+                    dy = (dx2[k])
+                    dx = (thetas[k])
+                    dxc = 1
+            
+            linetilt = [] #list of slope details (slope, theta, tilt)
+            linedx = []
+
+            for slope in sloperange:
+
+                a = 1
+                kbt = i.getTemp()
+                A = i.getPeriodicAmplitude()
+                T = i.getTension()
+                utheta = i.getForceRange()[1] - i.getForceRange()[0]
+                
+
+
+                linetilt.append(self.getIntersection(thetas, tilt, slope))
+                if(slope not in sloperangedict):
+                    sloperangedict[slope] = []
+                if linetilt[-1] is not None:
+                    tiltc = linetilt[-1][1]
+                    x = X(a, kbt, A, T, tiltc)
+                    y= Y(a, kbt, T, tiltc, utheta)[0]
+                    uy = Y(a, kbt, T, tiltc, utheta)[1]
+                    sloperangedict[slope].append((x,y,uy))
+
+                linedx.append(self.getIntersection(thetas,dx2,slope))
+            
+            done = False
+            while not done:
+                done = True
+                if None  in linetilt:
+                    linetilt.remove(None)
+                    done *= False
+                
+                if None  in linedx:
+                    linedx.remove(None)
+                    done *= False
+            
+        
+                    
+            
+
             plt.cla()
 
-            plt.title(i.fileName)
-            axs[0].plot(thetas,dx2)
-            axs[1].plot(thetas, tilt)
-            axs[0].legend(["com^2"])
-            axs[1].legend(['tilt'])
+            #plt.title(i.fileName)
+            axs[0][0].plot(thetas,dx2,'o')
+            axs[0][0].plot(dx ,dy ,'.')
+            axs[0][0].legend(["com^2"])
+            print(linetilt)
+            for i in linedx:
+                axs[1][0].plot(i[1],i[2], '.', label=f"slope: {i[0]}")
+                print(i[0],i[1],i[2])
+            #axs[1][0].plot(tx,ty,'.',label=f"Threshold critical point")
+            
+            axs[0][1].plot(thetas, tilt,'.')
+            axs[0][1].plot(thetas, tilt)
+            axs[0][1].plot(tx ,ty ,'.')
+            axs[0][1].legend(['tilt'])
+            for i in linetilt:
+                axs[1][1].plot(i[1],i[2], '.', label=f"slope: {i[0]}")
+            for i in linetilt:
+                line = self.genLine(i[0],thetas[-1])
+                axs[0][1].plot(line[0],line[1])
+
+                
+            axs[1][1].legend()
+            #axs[1][1].plot(dx,dy,'.',label=f"Threshold critical point")
+
+
             
             pdf.savefig(fig)
             plt.close(fig=fig)
 
+
+
+        # now I want to gen a spectra of values for different interesction slopes
+
+        keys = sloperangedict.keys()
+        for key in keys:
+            figure = plt.figure(figsize=(10,10))
+            plt.title(f"slope of intersection: {key} ")
+            plt.plot(rowx,rowy)
+            for point in sloperangedict[key]:
+                plt.errorbar(point[0],point[1], yerr=point[2])
+            
+            pdf.savefig(figure)
+            plt.close(figure)
+
+
+        cmap = plt.get_cmap('jet')
+        colors = cmap(np.linspace(0, 1.0, 5))
+
+        figure = plt.figure(figsize=(10,10))
+        plt.plot(rowx,rowy)
+        index = 0
+        for key in keys:
+            for point in sloperangedict[key]:
+                plt.errorbar(point[0],point[1],fmt='.' ,yerr=point[2],color=colors[index])
+            index +=1
+            
+        pdf.savefig(figure)
+        plt.close(figure)
+
+
         pdf.close()
+
+
+    def getIntersection(self, xd,yd, slope):
+
+        thetas = xd
+        tilt = yd
+        l2 = [(0,0),(0.2,slope*0.2)]
+        for p in range(3,len(thetas)):
+
+            p2 = tilt[p]
+            if p2 > slope * thetas[p]:
+                return (slope, thetas[p], tilt[p])
+                
+
+        return None
+
+    def genLine(self, slope, end):
+        return [[0,end],[0,slope*end]]
+
+
+   
+
+
+    def line_intersection(self,line1, line2):
+        xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])
+        ydiff = (line1[0][1] - line1[1][1], line2[0][1] - line2[1][1])
+
+        def det(a, b):
+            return a[0] * b[1] - a[1] * b[0]
+        tn = True
+        div = det(xdiff, ydiff)
+        if div == 0:
+            tn = False
+
+        d = (det(*line1), det(*line2))
+        x = det(d, xdiff) / div
+        y = det(d, ydiff) / div
+        return (tn, x, y)
+
+    
+
+
+        
 
 
 

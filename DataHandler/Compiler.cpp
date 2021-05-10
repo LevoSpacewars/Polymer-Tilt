@@ -972,8 +972,7 @@ float* Compiler::calcAverageDx(float ** avg_unc_x, int n_polymer, int l_polymer)
     
     system_dx[0] = sum/n_polymer;
     // cout<<sum<<endl;
-    float unc = square - sum * sum / n_polymer;
-    unc = unc / n_polymer;
+    float unc = square/n_polymer - pow(system_dx[0],2);
     unc = pow(unc, 0.5);
     system_dx[1] = unc;
 
@@ -1067,8 +1066,8 @@ float* Compiler::calcSystemOutput(float** sysdx, float ** syslength, float sheer
 
     output[0] = dx[0]/length[0];
 
-
-    cout<<length[1]/length[0]<< ","<<dx[1]/dx[0]<<endl;
+ 
+    cout<< output[0] <<length[1]/length[0]<< ","<<dx[1]/dx[0]<<endl;
     output[1] = output[0] * pow( pow(length[1]/length[0], 2) + pow(dx[1] / dx[0], 2), 0.5);
 
     return output;
@@ -1199,8 +1198,11 @@ vector<string> * Compiler::getSimulationDirectories(string path)
     vector<string> * dirs = new vector<string>();
     for (auto&p: fs::directory_iterator(path))
     {
-        if(p.is_directory() && contains(p.path(),".gsd"))
+        if(p.is_directory() && contains(p.path(),".gsd")){
+
             dirs->emplace_back(p.path().string());
+            cout<<"found path"<<endl;
+        }
             
     
 
