@@ -84,7 +84,7 @@ def changeDF(filepath,df):
     lines = file.readlines()
     for i in range(len(lines)):
         if 'df' in lines[i]:
-            lines[i] = lines[i].split('=')[0] + "=" + str(len(df))
+            lines[i] = lines[i].split('=')[0] + "=" + str(df)
             break
     file.close()
 
