@@ -122,9 +122,9 @@ dirdict = sortDictArrays(dirdict)
 if nameid is None:
     for key in dirdict:
         data = getData(path, key, dirdict)
+        dirname = makeWriteDirectory(path + "/" + compdir,key)
         dirpath = path + compdir + "/" + dirname
         removeWriteDirectory(path + "/" + compdir ,key)
-        dirname = makeWriteDirectory(path + "/" + compdir,key)
         os.system("cp " + path + str(dirdict[key][0]) + "/_simulation_parameters.txt " + dirpath)
         changeDF(dirpath + "/_simulation_parameters.txt", len(dirdict[key]))
         writeData(dirpath, data)
