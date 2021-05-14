@@ -73,7 +73,7 @@ def writeData(dirpath, data):
     for i in range(len(data)):
         line = str(keys[i])
         for element in data[i]:
-            line += str(element)
+            line += "," + str(element)
         line +="\n"
         file.write(line)
     file.close()
@@ -84,7 +84,7 @@ def changeDF(filepath,df):
     lines = file.readlines()
     for i in range(len(lines)):
         if 'df' in lines[i]:
-            lines[i] = lines[i].split('=')[0] + "=" + str(df)
+            lines[i] = lines[i].split('=')[0] + "=" + str(df) + "\n"
             break
     file.close()
 
@@ -115,7 +115,6 @@ raw_dirs = getDirs(path)
 #now construct a dict based on name
 
 dirdict = getDirectoryDict(nameid)
-
 dirdict = sortDictArrays(dirdict)
 
 
