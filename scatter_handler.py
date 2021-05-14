@@ -59,6 +59,7 @@ def getData(path, key, input):
         file = open(fn,'r')
         index = 0
         for line in file.readlines():
+
             file_element = float(line.split(',')[1])
             data[index].append(file_element)
             index +=1
@@ -67,7 +68,7 @@ def getData(path, key, input):
 
 def writeData(dirpath, data):
     keys = ["dx","udx","length","ulength","output","uouput","dx2"]
-    file = open(f"{writepath}/data.txt",'w')
+    file = open(dirpath + "/data.txt",'w')
     for i in range(len(data)):
         line = f"{keys[i]}"
         for element in data[i]:
