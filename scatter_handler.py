@@ -6,7 +6,7 @@ import sys
 
 def getDirectoryDict(directories):
     runidp = {}
-    while(raw_dirs is not []):
+    while(len(raw_dirs) != 0):
         name = raw_dirs.pop()
         key = name.split('_')[0]
         if key not in runidp:
@@ -17,7 +17,7 @@ def getDirectoryDict(directories):
 
 def sortDictArrays(input):
     for key in input.keys():
-        values = list(float(item.split("_")[-1]) for item in runidp[key])
+        values = list(float(item.split("_")[-1]) for item in input[key])
         values.sort()
         values = list(key + "_sheer_" + str(item) for item in values)
     return input
