@@ -63,6 +63,7 @@ def getData(path, key, input):
             file_element = float(line.split(',')[1])
             data[index].append(file_element)
             index +=1
+        file.close()
     return data
 
 
@@ -75,6 +76,7 @@ def writeData(dirpath, data):
             line += str(element)
         line +="\n"
         file.write(line)
+    file.close()
 
 
 def changeDF(filepath,df):
