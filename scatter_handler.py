@@ -70,9 +70,9 @@ def writeData(dirpath, data):
     keys = ["dx","udx","length","ulength","output","uouput","dx2"]
     file = open(dirpath + "/data.txt",'w')
     for i in range(len(data)):
-        line = f"{keys[i]}"
+        line = str(keys[i])
         for element in data[i]:
-            line += f",{element}"
+            line += str(element)
         line +="\n"
         file.write(line)
 
