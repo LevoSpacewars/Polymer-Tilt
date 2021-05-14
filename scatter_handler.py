@@ -123,9 +123,9 @@ if nameid is None:
     for key in dirdict:
         data = getData(path, key, dirdict)
         dirpath = path + comdir + "/" + dirname
-        removeWriteDirectory(f"{path}/{comdir}/",key)
-        dirname = makeWriteDirectory(f"{path}/{comdir}/",key)
-        os.system(f"cp {path}{dirdict[key][0]}/_simulation_parameters.txt {dirpath}")
-        changeDF(f"{dirpath}/_simulation_parameters.txt", len(dirdict[key]))
+        removeWriteDirectory(path + "/" + comdir ,key)
+        dirname = makeWriteDirectory(path + "/" + comdir,key)
+        os.system("cp " + path + str(dirdict[key][0]) + "/_simulation_parameters.txt " + dirpath)
+        changeDF(dirpath + "/_simulation_parameters.txt", len(dirdict[key]))
         writeData(dirpath, data)
 
