@@ -974,7 +974,7 @@ float* Compiler::calcAverageDx(float ** avg_unc_x, int n_polymer, int l_polymer)
     // cout<<sum<<endl;
     float unc = square/n_polymer - pow(system_dx[0],2);
     unc = pow(unc, 0.5);
-    system_dx[1] = unc;
+    system_dx[1] = unc/system_dx[0];
 
 
     return system_dx;
@@ -1009,10 +1009,9 @@ float* Compiler::calcAverageLength(float ** avg_unc_x, float ** avg_unc_y, int n
     }
 
     system_length[0] = sum/n_polymer;
-    float unc = square - sum * sum / n_polymer;
-    unc = unc / n_polymer;
+    float unc = square/n_polymer - sum * sum;
     unc = pow(unc, 0.5);
-    system_length[1] = unc;
+    system_length[1] = unc/system_length[0];
 
     return system_length;
 }
@@ -1067,8 +1066,7 @@ float* Compiler::calcSystemOutput(float** sysdx, float ** syslength, float sheer
     output[0] = dx[0]/length[0];
 
  
-    cout<< output[0] <<length[1]/length[0]<< ","<<dx[1]/dx[0]<<endl;
-    output[1] = output[0] * pow( pow(length[1]/length[0], 2) + pow(dx[1] / dx[0], 2), 0.5);
+    output[1] =pow( pow(length[1], 2) + pow(dx[1], 2), 0.5);
 
     return output;
 }

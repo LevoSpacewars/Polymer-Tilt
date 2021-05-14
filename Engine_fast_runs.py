@@ -4,7 +4,7 @@ import sys
 parameters = Simulations.PolymerSimulationParameters()
 
 print("\n\n\n\n\n")
-#sys.args = [length, kbt, amplitude, tension, #polymers, runtime, samplerate, sheer, ID]
+#sys.args = [length, kbt, amplitude, tension, #polymers, runtime, samplerate, sheer, endsheer, ID]
 
 
 
@@ -16,7 +16,8 @@ chainnum = int(sys.argv[5])
 time_total = int(sys.argv[6])
 sample_rate = int(sys.argv[7])
 sheer = float(sys.argv[8])
-name = sys.argv[9]
+endsheer = float(sys.argv[9])
+name = sys.argv[10]
 
 dt = 0.001
 runl = time_total

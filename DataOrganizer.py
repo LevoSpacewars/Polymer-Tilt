@@ -31,7 +31,7 @@ def Y (a,kbt,T,theta,utheta):
     utheta = math.atan(utheta)
     F = math.sqrt( T**2 + pow(T * math.tan(theta),2))
     output =F*a*theta * (1/kbt) * 1/math.pi
-    uoutput = utheta/theta * output
+    uoutput = F*a*utheta * (1/kbt) * 1/math.pi
     return (output, uoutput)
 
 
@@ -681,10 +681,13 @@ class GlobalDataPlotter(object):
                                 color = list_l.index(polymer.getChainLength())
                                 x = polymer.getForceRange()
                                 y, uy = polymer.getOutput()
-                                plt.plot(x,y,color=list_colors[color])
+                                #  print(len(x),len(y))
+                                plt.errorbar(x,y,yerr=uy,color=list_colors[color])
                                 if polymer.getChainLength in lengths:
                                     lengths.append(polymer.getChainLength())
                                 render = True
+
+                                
                         
                     title = "dlength, Temperature:" + str(tmp) + ", Amplitude:" + str(abs(round(amp,3))) + ", $F_{y}$:" + str(tn)
                     plt.title(title)
@@ -791,6 +794,7 @@ class GlobalDataPlotter(object):
             thetas = i.getForceRange()
             dx2 = i.getDx2()
             tilt = i.getOutput()[0]
+            utilt = i.getOutput()[1]
             tx = 0
             ty = 0
             dx = 0
@@ -860,8 +864,8 @@ class GlobalDataPlotter(object):
                 axs[1][0].plot(i[1],i[2], '.', label=f"slope: {i[0]}")
                 print(i[0],i[1],i[2])
             #axs[1][0].plot(tx,ty,'.',label=f"Threshold critical point")
-            
-            axs[0][1].plot(thetas, tilt,'.')
+            #print(len(thetas),len(tilt))
+            axs[0][1].errorbar(thetas, tilt, yerr= utilt,fmt='.')
             axs[0][1].plot(thetas, tilt)
             axs[0][1].plot(tx ,ty ,'.')
             axs[0][1].legend(['tilt'])
@@ -909,6 +913,16 @@ class GlobalDataPlotter(object):
             
         pdf.savefig(figure)
         plt.close(figure)
+
+        for i in self.dataHandlers:
+            fig = plt.figure()
+            u = i.getOutput()[1]
+            x = i.getForceRange()
+            plt.cla()
+            plt.bar(x,u,width=0.002)
+            plt.title(i.fileName)
+            pdf.savefig(fig)
+            plt.close()
 
 
         pdf.close()

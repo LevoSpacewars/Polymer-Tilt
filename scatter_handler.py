@@ -1,59 +1,126 @@
 import os
 import sys
-nameid = sys.argv[1]
+
+
+
+
+def getDirectoryDict(directories):
+    runidp = {}
+    while(raw_dirs is not []):
+        name = raw_dirs.pop()
+        key = name.split('_')[0]
+        if key not in runidp:
+            runidp[key] = []
+        runidp[key].append(name)
+    return runidp
+
+
+def sortDictArrays(input):
+    for key in input.keys():
+        values = list(float(item.split("_")[-1]) for item in runidp[key])
+        values.sort()
+        values = list(key + "_sheer_" + str(item) for item in values)
+    return input
+
+
+def getDirs(path):
+    raw_dirs = []
+
+
+    for filename in os.listdir(path):
+        print(filename)
+        if '_' in filename:
+            print("Name-ID exists")
+            print("adding " + filename + " to list")
+            raw_dirs.append(filename)
+
+    print(raw_dirs)
+    return raw_dirs
+
+
+def removeWriteDirectory(path, writeDirectoryName):
+    for objects in os.listdir(path):
+        if objects == writeDirectoryName:
+            print("Name-ID exists")
+            print("deleting contents of " + writeDirectoryName)
+            os.system("rm -r " + writeDirectoryName)
+
+
+def makeWriteDirectory(path,nameid):
+    os.system("mkdir " + path + nameid)
+    return nameid
+
+
+def getData(path, key, input):
+    data = [[]]*7
+
+    for element in input[key]:
+        file = open(f"{path}{element}/data.txt")
+        index = 0
+        for line in file.readlines():
+            file_element = float(line.split(',')[1])
+            data[index].append(file_element)
+    return data
+
+
+def writeData(dirpath, data):
+    keys = ["dx","udx","length","ulength","output","uouput","dx2"]
+    file = open(f"{writepath}/data.txt",'w')
+    for i in range(len(data)):
+        line = f"{keys[i]}"
+        for element in data[i]):
+            line += f",{element}"
+        line +="\n"
+        file.write(line)
+
+
+def changeDF(filepath,df):
+    file = open(filepath, 'r')
+    lines = file.readlines()
+    for i in range(len(lines)):
+        if 'df' in lines[i]:
+            lines[i] = lines[i].split('=')[0] + "=" + str(len(df))
+            break
+    file.close()
+
+    file = open(filepath, 'w')
+    file.writelines(lines)
+    file.close()
+
+
+compdir = "compiledRuns"
+nameid = None
 path = "./"
-if (len(sys.argv) > 2):
-    path = sys.argv[2]
+if (len(sys.argv) > 1):
+    nameid = sys.argv[1]
+    if len(sys.argv) > 2:
+        path = sys.argv[2]
 
 # first check for if the directly nameid exists, so that we can delete it for recompilation
-for objects in os.listdir(path):
-    if objects == nameid:
-        print("Name-ID exists")
-        print("deleting contents of " + nameid)
-        os.system("rm -r " + nameid)
+if nameid is None:
+    removeWriteDirectory(path,compdir)
+    makeWriteDirectory(path,compdir)
+else:
+    removeWriteDirectory(path,nameid)
+    makeWriteDirectory(path,nameid)
 
 #know make a list of all directories with the nameid within the title
-runidp = []
-for objects in os.listdir(path):
-    if nameid in objects:
-        print("Name-ID exists")
-        print("adding " + objects + " to list")
-        runidp.append(path + objects)
-print(runidp)
+raw_dirs = getDirs(path)
+
+#now construct a dict based on name
+
+dirdict = getDirectoryDict(nameid)
+
+dirdict = sortDictArrays(dirdict)
 
 
-# now let's order the sheer values, so we can then just append the values from the data.txt together
-values = list(float(item.split("_")[-1]) for item in runidp) 
-values.sort() 
-values = list("_" + str(item) for item in values)
-print(values)
-# compare the order
-dirs = []
-
-#sort runidp
-for i in values:
-    dirs.append(list(filter(lambda x : i in x, iter(runidp)))[0])
-
-
-
-#mkdir and extact data in order of all the sheers
-os.system("mkdir " + path + nameid)
-os.system("cp " + path + dirs[0] + "/_simulation_parameters.txt " + path + nameid)
-data = [[],[],[],[],[],[]]
-for directory in (dirs):
-    x = 0
-    f = open(directory + "/data.txt", "r")
-    for line in f.readlines():
-        data[x].append(float(line.split(",")[1]))
-        x = x + 1
-
-#now that all the data.txts have been extracted, write data.txt into created directory
-keys = ["dx","udx","length","ulength","output","uouput","dx2"]
-f = open(path + nameid + "/data.txt",'w')
-lines = []
-for i in range(len(keys)):
-    lines.append(keys[i] + "," + str(data[i]).strip("[").strip("]").replace(" ", "") + "\n")
-
-f.writelines(lines)
-f.close()
+if nameid is None:
+    for key in dirdict:
+        data = getData(path, key, dirdict)
+        dirpath = f"{path}{comdir}/{dirname}"
+        removeWriteDirectory(f"{path}/{comdir}/",key)
+        dirname = makeWriteDirectory(f"{path}/{comdir}/",key)
+        os.system(f"cp {path}{dirdict[key][0]}/_simulation_parameters.txt {dirpath}")
+        changeDF(f"{dirpath}/_simulation_parameters.txt", len(dirdict[key]))
+        writeData(dirpath, data)
 

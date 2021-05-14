@@ -27,10 +27,10 @@ for j in range(int(dic["DF"])):
     sargs = ""
     for i in range(7):
         sargs += " " + dic[i]
-    sargs += " " + str(sheers[j]) + " " + dic["ID"]
+    sargs += " " + str(sheers[j]) + " " + tend + " " + dic["ID"]
 
     argsouput.append(sargs)
-assert(len(argsouput) == 9)
+    
 #here we need to create the individual batch files that are going to call the Engine_fast_runs.py [args]
 
 settings = "#!/bin/bash \n#SBATCH --job-name=Poltmer_Run_scattered     ### Job Name \n#SBATCH --partition=gpu	  ### Quality of Service (like a queue in PBS) \n#SBATCH --time=0-10:00:00     ### Wall clock time limit in Days-HH:MM:SS \n#SBATCH --nodes=1             ### Node count required for the job \n#SBATCH --ntasks-per-node=1   ### Nuber of tasks to be launched per Node \n#SBATCH --gres=gpu:1          ### General REServation of gpu:number of gpus \n#SBATCH --account=softmatter    ### Account used for job submission \n"
