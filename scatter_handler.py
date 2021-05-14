@@ -55,7 +55,7 @@ def getData(path, key, input):
     data = [[]]*7
 
     for element in input[key]:
-        fn = f"{path}{element}/data.txt"
+        fn = str(path) + str(element) + "/data.txt"
         file = open(fn,'r')
         index = 0
         for line in file.readlines():
