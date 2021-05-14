@@ -47,7 +47,7 @@ def removeWriteDirectory(path, writeDirectoryName):
 
 
 def makeWriteDirectory(path,nameid):
-    os.system("mkdir " + path + nameid)
+    os.system("mkdir " + path +"/" + nameid)
     return nameid
 
 
@@ -123,7 +123,7 @@ if nameid is None:
     for key in dirdict:
         data = getData(path, key, dirdict)
         removeWriteDirectory(path + "/" + compdir ,key)
-        dirname = makeWriteDirectory(path + "/" + compdir,key)
+        dirname = makeWriteDirectory(path + compdir,key)
         dirpath = path + compdir + "/" + dirname
        
         os.system("cp " + path + str(dirdict[key][0]) + "/_simulation_parameters.txt " + dirpath)
