@@ -60,6 +60,7 @@ def getData(path, key, input):
         for line in file.readlines():
             file_element = float(line.split(',')[1])
             data[index].append(file_element)
+            index +=1
     return data
 
 
