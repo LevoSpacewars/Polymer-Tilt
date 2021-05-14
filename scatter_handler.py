@@ -68,7 +68,7 @@ def writeData(dirpath, data):
     file = open(f"{writepath}/data.txt",'w')
     for i in range(len(data)):
         line = f"{keys[i]}"
-        for element in data[i]):
+        for element in data[i]:
             line += f",{element}"
         line +="\n"
         file.write(line)
