@@ -54,7 +54,7 @@ def makeWriteDirectory(path,nameid):
 
 
 def getData(path, input, key):
-    output = [[]]*7
+    output = [[],[],[],[],[],[],[]]
 
     for element in input[key]:
         fn = str(path) + str(element) + "/data.txt"
