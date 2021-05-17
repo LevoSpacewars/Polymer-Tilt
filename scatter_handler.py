@@ -20,6 +20,7 @@ def sortDictArrays(input):
         values = list(float(item.split("_")[-1]) for item in input[key])
         values.sort()
         values = list(key + "_sheer_" + str(item) for item in values)
+        input[key] = values
     return input
 
 
