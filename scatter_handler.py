@@ -109,12 +109,12 @@ def changeRange(filepath, init_sheer, final_sheer):
     file.writelines(lines)
     file.close()
 
-def getSheerRange(sorted_dict):
+def getSheerRange(sorted_dict,key):
     min = -1
     max = -1
-    keys = sorted_dict.keys()
-    min = keys[0].split('_')[0]
-    max = keys[-1].split('_')[-1]
+    items = sorted_dict[key]
+    min = float(items[0].split('_')[-1])
+    max = float(items[-1].split('_')[-1])
     return min, max
 
 compdir = "compiledRuns"
@@ -150,7 +150,7 @@ if nameid is None:
         dirpath = path + compdir + "/" + dirname
        
         os.system("cp " + path + str(dirdict[key][0]) + "/_simulation_parameters.txt " + dirpath)
-        smin, smax = getSheerRange(dirdict)
+        smin, smax = getSheerRange(dirdict, key)
         changeDF(dirpath + "/_simulation_parameters.txt", len(dirdict[key]))
         changeRange(dirpath + "/_simulation_parameters.txt", smin, smax)
         writeData(dirpath, data)
