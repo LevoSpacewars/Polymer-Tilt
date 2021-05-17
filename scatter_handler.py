@@ -54,7 +54,7 @@ def makeWriteDirectory(path,nameid):
 
 
 def getData(path, input, key):
-    data = [[]]*7
+    output = [[]]*7
 
     for element in input[key]:
         fn = str(path) + str(element) + "/data.txt"
@@ -63,13 +63,12 @@ def getData(path, input, key):
         
         t = 0
         lines = file.readlines()
-        for line in lines:
-            file_element = float(line.split(',')[-1])
-            data[t].append(file_element)
-            t = t + 1
+        for line_index in range(len(lines)):
+            file_element = float(lines[line_index].split(',')[-1])
+            output[line_index].append(file_element)
         file.close()
     
-    print(data[0])
+    print(output[0])
     exit()
     return data
 
