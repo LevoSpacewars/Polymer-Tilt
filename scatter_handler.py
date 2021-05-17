@@ -60,15 +60,16 @@ def getData(path, input, key):
         fn = str(path) + str(element) + "/data.txt"
         print(fn)
         file = open(fn,'r')
-        index = 0
-        for line in file.readlines():
+        
+        t = 0
+        lines = file.readlines()
+        for line in lines:
             file_element = float(line.split(',')[-1])
-            print(file_element)
-            data[index].append(file_element)
-            index +=1
+            data[t].append(file_element)
+            t = t + 1
         file.close()
     
-    print(data)
+    print(data[0])
     exit()
     return data
 
