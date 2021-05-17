@@ -53,7 +53,7 @@ def makeWriteDirectory(path,nameid):
     return nameid
 
 
-def getData(path, key, input):
+def getData(path, input, key):
     data = [[]]*7
 
     for element in input[key]:
@@ -62,10 +62,11 @@ def getData(path, key, input):
         index = 0
         for line in file.readlines():
 
-            file_element = float(line.split(',')[1])
+            file_element = float(line.split(',')[-1])
             data[index].append(file_element)
             index +=1
         file.close()
+    print(data)
     return data
 
 
@@ -122,7 +123,7 @@ dirdict = sortDictArrays(dirdict)
 
 if nameid is None:
     for key in dirdict:
-        data = getData(path, key, dirdict)
+        data = getData(path, dirdict, key)
         removeWriteDirectory(path + "/" + compdir ,key)
         dirname = makeWriteDirectory(path + compdir,key)
         dirpath = path + compdir + "/" + dirname
