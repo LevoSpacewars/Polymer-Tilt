@@ -68,7 +68,7 @@ def getData(path, input, key):
             output[line_index].append(file_element)
         file.close()
 
-    return data
+    return output
 
 
 def writeData(dirpath, data):
@@ -96,6 +96,26 @@ def changeDF(filepath,df):
     file.writelines(lines)
     file.close()
 
+def changeRange(filepath, init_sheer, final_sheer):
+    file = open(filepath, 'r')
+    lines = file.readlines()
+    for i in range(len(lines)):
+        if 'sheerForceRange' in lines[i]:
+            lines[i] = lines[i].split('=')[0] + "=" + str(init_sheer) + "," + str(final_sheer) + "\n"
+            break
+    file.close()
+
+    file = open(filepath, 'w')
+    file.writelines(lines)
+    file.close()
+
+def getSheerRange(sorted_dict):
+    min = -1
+    max = -1
+    keys = sorted_dict.keys()
+    min = keys[0].split('_')[0]
+    max = keys[-1].split('_')[-1]
+    return min, max
 
 compdir = "compiledRuns"
 nameid = None
@@ -130,6 +150,8 @@ if nameid is None:
         dirpath = path + compdir + "/" + dirname
        
         os.system("cp " + path + str(dirdict[key][0]) + "/_simulation_parameters.txt " + dirpath)
+        smin, smax = getSheerRange(dirdict)
         changeDF(dirpath + "/_simulation_parameters.txt", len(dirdict[key]))
+        changeRange(dirpath + "/_simulation_parameters.txt", smin, smax)
         writeData(dirpath, data)
 
