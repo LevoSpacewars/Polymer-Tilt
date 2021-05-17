@@ -12,6 +12,8 @@ def getDirectoryDict(directories):
         if key not in runidp:
             runidp[key] = []
         runidp[key].append(name)
+    print(runidp)
+    print("/")
     return runidp
 
 
@@ -21,6 +23,7 @@ def sortDictArrays(input):
         values.sort()
         values = list(key + "_sheer_" + str(item) for item in values)
         input[key] = values
+    print(input)
     return input
 
 
@@ -34,8 +37,6 @@ def getDirs(path):
             print("Name-ID exists")
             print("adding " + filename + " to list")
             raw_dirs.append(filename)
-
-    print(raw_dirs)
     return raw_dirs
 
 
