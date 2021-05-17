@@ -58,14 +58,17 @@ def getData(path, input, key):
 
     for element in input[key]:
         fn = str(path) + str(element) + "/data.txt"
+        print(fn)
         file = open(fn,'r')
         index = 0
+        print(file.readlines())
         for line in file.readlines():
 
             file_element = float(line.split(',')[-1])
             data[index].append(file_element)
             index +=1
         file.close()
+    exit()
     print(data)
     return data
 
