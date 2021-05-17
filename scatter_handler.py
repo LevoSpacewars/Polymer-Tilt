@@ -61,7 +61,6 @@ def getData(path, input, key):
         print(fn)
         file = open(fn,'r')
         index = 0
-        print(file.readlines())
         for line in file.readlines():
             file_element = float(line.split(',')[-1])
             print(file_element)
