@@ -64,12 +64,13 @@ def getData(path, input, key):
         print(file.readlines())
         for line in file.readlines():
 
-            file_element = float(line.split(',')[-1])
+            file_element = float(line.split(',')[-1].strip('\n'))
             data[index].append(file_element)
             index +=1
         file.close()
-    exit()
+    
     print(data)
+    exit()
     return data
 
 
