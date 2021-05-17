@@ -61,15 +61,13 @@ def getData(path, input, key):
         print(fn)
         file = open(fn,'r')
         
-        t = 0
+
         lines = file.readlines()
         for line_index in range(len(lines)):
             file_element = float(lines[line_index].split(',')[-1])
             output[line_index].append(file_element)
         file.close()
-    
-    print(output[0])
-    exit()
+
     return data
 
 
