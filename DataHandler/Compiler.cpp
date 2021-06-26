@@ -290,7 +290,7 @@ int Compiler::compileData(string *filename, float interval)
         param.width = this->profile.lines;
         param.x = -this->profile.lines/2;
         param.y = 0;
-        //writeHeatMap(&pos_x,&pos_y, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
+        writeHeatMap(&pos_x,&pos_y, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
         
 
         //cout<<"tracking particles 0,100,200"<<endl;
@@ -772,7 +772,7 @@ bool Compiler::writeHeatMap(float** xs, float** ys, int time_steps, int nParticl
                 cout<<"sort didn't work"<<endl;
                 cout<<x[offset + j]<<","<<y[offset+j]<<endl;
                 cout<<donea<<","<<doneb<<endl;
-                exit(1);
+                
             }
             int h_index = param.rezx* (b) + a;
             heatmap[h_index] +=1;
@@ -887,7 +887,6 @@ void Compiler::unwrapData(float ** data, int n_polymers, int l_polymer,int step)
 
 
 }
-
 
 float* Compiler::calcAveragePosition(float ** data, int n_polymers, int l_polymer,int sampleLength)//M SAFE
 {

@@ -1,10 +1,15 @@
+from matplotlib.pyplot import legend
 import Simulations
 import math
+import random as r
 import sys
+from disorder import get_amount_nodes
 parameters = Simulations.PolymerSimulationParameters()
 
 print("\n\n\n\n\n")
-#sys.args = [length, kbt, amplitude, tension, #polymers, runtime, samplerate, sheer, endsheer, ID]
+inputs = {"length": None, "kbt": None, "amplitude": None, "tension": None, "npolymers": None, "runtime": None, "samplerate": None, "sheer": None, "endsheer": None, "random_seed": None, "disorder_ratio": None, ID: None}
+
+# TODO: need to implement the disorder level to set the contraints along the min and max amplitude
 
 
 
@@ -17,7 +22,16 @@ time_total = int(sys.argv[6])
 sample_rate = int(sys.argv[7])
 sheer = float(sys.argv[8])
 endsheer = float(sys.argv[9])
-name = sys.argv[10]
+id = sys.argv[10]
+random_seed = 0
+amount_nodes = 0
+if (len(sys.argv) > 11):
+    random_seed = int(sys.argv[11])
+    amount_nodes = int(sys.argv[12])
+
+
+
+    
 
 dt = 0.001
 runl = time_total
@@ -43,9 +57,10 @@ parameters.setRunLength(runl)
 parameters.setIntegrator("legavin")
 parameters.setRunDirection("forward")
 
+amplitude_range = (0.0001* phi0, 0.001 * phi0)
 sim = Simulations.PolymerSimulation()
+sim.set_disorder(random_seed,amplitude_range,amount_nodes,chainnum)
 sim.init(parameter=parameters,initializer='--mode=gpu')
-
 
 
 filelocation = sim.probe(name,sheer,"",server = True) ##S

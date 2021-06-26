@@ -789,8 +789,9 @@ class GlobalDataPlotter(object):
 
         for i in self.dataHandlers:
             
-            fig, axs= plt.subplots(2,2)
-            
+            fig, axs= plt.subplots(2,3)
+            fig.set_figheight(10)
+            fig.set_figwidth(20)
             thetas = i.getForceRange()
             dx2 = i.getDx2()
             tilt = i.getOutput()[0]
@@ -801,6 +802,15 @@ class GlobalDataPlotter(object):
             dy = 0
             tiltc = 0
             dxc = 0
+            un = i.udx.copy()
+            un2 = i.udx.copy()
+            x = i.getForceRange()
+            filename = i.fileName
+
+            for j in range(len(un2)):
+                un[j] = abs(un[j])
+                un2[j] *= i.getOutput()[0][j] * 100
+            
             sloperange = np.array(range(1,6))/10
             for k in range(1,len(tilt)):
                 
@@ -857,6 +867,7 @@ class GlobalDataPlotter(object):
 
             #plt.title(i.fileName)
             axs[0][0].plot(thetas,dx2,'o')
+            axs[0][0].title.set_text(filename)
             axs[0][0].plot(dx ,dy ,'.')
             axs[0][0].legend(["com^2"])
             print(linetilt)
@@ -874,6 +885,16 @@ class GlobalDataPlotter(object):
             for i in linetilt:
                 line = self.genLine(i[0],thetas[-1])
                 axs[0][1].plot(line[0],line[1])
+            
+            
+            
+            
+            
+            axs[0][2].bar(thetas,un, width=0.002)
+            axs[0][2].legend([" fractional, sttdev/measurment"])
+            axs[1][2].bar(thetas,un2, width=0.002)
+            axs[1][2].legend([" percent"])
+            
 
                 
             axs[1][1].legend()
@@ -889,6 +910,8 @@ class GlobalDataPlotter(object):
         # now I want to gen a spectra of values for different interesction slopes
 
         keys = sloperangedict.keys()
+        
+
         for key in keys:
             figure = plt.figure(figsize=(10,10))
             plt.title(f"slope of intersection: {key} ")
@@ -915,17 +938,56 @@ class GlobalDataPlotter(object):
         plt.close(figure)
 
         for i in self.dataHandlers:
-            fig = plt.figure()
-            u = i.getOutput()[1]
+            fig, axs= plt.subplots(2)
+            u = i.udx.copy()
+            u2 = i.udx.copy()
+            for j in range(len(u2)):
+                u2[j] *= i.getOutput()[0][j] * 100
             x = i.getForceRange()
-            plt.cla()
-            plt.bar(x,u,width=0.002)
-            plt.title(i.fileName)
+            
+            axs[0].bar(x,u,width=0.002)
+            axs[0].legend([i.fileName + " fractional, sttdev/measurment"])
+            axs[1].bar(x,u2,width=0.002)
+            axs[1].legend([i.fileName + " percent"])
             pdf.savefig(fig)
             plt.close()
 
 
         pdf.close()
+        self.writeIntersectionData()
+
+
+    def writeIntersectionData(self):
+        
+        wfile = open("update_points",'w')
+        info = []
+
+        for i in self.dataHandlers:
+            tilt = i.getOutput()[0]
+            slope = 0.1
+            thetas = i.getForceRange()
+
+            a = 1
+            kbt = i.getTemp()
+            A = i.getPeriodicAmplitude()
+            T = i.getTension()
+            L = i.getChainLength()
+
+            utheta = i.getForceRange()[1] - i.getForceRange()[0]
+            
+
+
+            linetilt = (self.getIntersection(thetas, tilt, slope))
+            if linetilt is not None:
+                info.append((a,kbt,A,T,linetilt[1],utheta,L))
+        
+        for i in info:
+            wfile.write(f"{i[0]}, {i[1]}, {i[2]}, {i[3]}, {i[4]}, {i[5]}, {i[6]}\n")
+        
+        wfile.close()
+
+
+        
 
 
     def getIntersection(self, xd,yd, slope):
@@ -992,7 +1054,8 @@ class GlobalDataPlotter(object):
 # compile.compileNew()
 
 plotter = GlobalDataPlotter()
-# plotter.PlotTiltvsForce(Tension=20)
-# plotter.compareBases_CL(Tension = 20,Amplitude = 0.3/0.1 * 1,kt=1)
-plotter.GraphEverythingImporant()
+plotter.PlotTiltvsForce(Tension=20)
+#plotter.compareBases_CL(Tension = 20,Amplitude = 0.3/0.1 * 1,kt=1)#
+
+#plotter.GraphEverythingImporant()
 plotter.compareTattempts()

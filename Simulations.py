@@ -1,5 +1,6 @@
 
 import os
+from typing import Tuple, List
 import hoomd
 import hoomd.md
 import math
@@ -62,10 +63,51 @@ def particlePotentialHarmonic(r, rmin, rmax,particle_diameter,strength_coef):
     potential = 1/2*(strength_coef * particleDistance**2)
     force     = -strength_coef * particleDistance
     return (potential, force)
+
+class DisorderParameter():
+    def __init__(self, random_seed, amplitude_range,nodes, width) -> None:
+        self.bond_radius = 0.025
+        self.width = width
+        self.seed = random_seed
+        self.amplitude_range = amplitude_range
+        self.nodes = nodes
+        self.disorder:List[Tuple[float, int, float]]  = self.generate_disorder()
+
+    def generate_disorder(self)-> List[Tuple[float, int, float]] :
+        import random as r
+
+        disorder_level = int(self.nodes)
+        seed = self.seed
+        r.seed(seed)
+        inv_lamda = int(1/self.bond_radius)
+        Arange = self.amplitude_range
         
+        p:List[Tuple[float, int, float]] = []  # (amplitude, nodes, phase)
+        
+        for null in range(disorder_level):
+            A = 2 * r.random() * (Arange[1] - Arange[0]) + Arange[0] - (Arange[1] - Arange[0])/2
+            phase = 2 * r.random() * math.pi
+            nodes = r.randint(10, inv_lamda)
+            p.append((A, nodes, phase))
+        return p
+
+    def get_disorder(self):
+        return self.disorder
+    
+    def write_disorder(self,path):
+        wfile = open(path + '/disorder_info.txt','w')
+        wfile.write("Amplitude, nodes, Phase\n")
+        for i in self.disorder:
+            wfile.write(f"{i[0]},{i[1]},{i[2]}\n")
+        wfile.close()
+
+    def import_disorder(self,path):
+        import numpy as np
+        array = List(np.genfromtxt(path + "/disorder_info.txt", delimiter=',',skip_header=1))
+        return array
 
 class PolymerSimulationParameters():
-    def __init__(self,sheerforcerange=[0,0],df=0,length=0,lines=0,rez=0,K=0,l_0=0,l_max=0,pull=0,amplitude=0,gamma=0,kbT=0,dt=0,probePeriod=0,runLength=0,boxdimx=0,boxdimy=0,integraor = "brownian", direction = "forward"):
+    def __init__(self,sheerforcerange=[0,0],df=0,length=0,lines=0,rez=0,K=0,l_0=0,l_max=0,pull=0,amplitude=0,gamma=0,kbT=0,dt=0,probePeriod=0,runLength=0,boxdimx=0,boxdimy=0,integraor = "brownian", direction = "forward", disorder = None):
         self.sheerForceRange=sheerforcerange
         self.df=df
         self.length=int(length)
@@ -124,8 +166,7 @@ class PolymerSimulationParameters():
         self.integrator = x
     def setRunDirection(self,x):
         self.direction  =x
-
-
+    
     def getSheerForceRange(self):
         return self.sheerForceRange
     def getDf(self):
@@ -163,8 +204,7 @@ class PolymerSimulationParameters():
     def getIntegrator(self):
         return self.integrator
     def getRunDirection(self):
-        return self.direction;
-
+        return self.direction
 
     def writeParameters(self,name="",dir=""):
         text = None
@@ -188,7 +228,7 @@ class PolymerSimulationParameters():
         text.write("BoxDimx="    +      str(self.getBoxDimx())               + "\n")
         text.write("BoxDimy="    +      str(self.getBoxDimy())               + "\n")
         text.write("Integrator=" +     str(self.getIntegrator())             + "\n")
-        text.write("Direction=" +       str(self.getRunDirection()))
+        text.write("Direction=" +       str(self.getRunDirection())          + "\n")
         text.close()
     def loadParameters(self,fileLocation):
         file = open(fileLocation,'r');
@@ -231,7 +271,10 @@ class PolymerSimulationParameters():
                 self.setIntegrator(lines[i].split('=')[1])
             elif "Direction=" in obj:
                 self.setRunDirection(lines[i].split('=')[1])
-
+            elif "DisorderLevel" in obj:
+                self.setDisorderLevel(lines[i].split('=')[1])
+            elif "RandomSeed" in obj:
+                self.setRandomSeed(lines[i].split('=')[1])
         file.close()
 
 
@@ -241,7 +284,7 @@ class PolymerSimulation():
         self.parameter = None
         random.seed()
 
-    def init(self, parameter=None,initializer='--mode=gpu',loadSave=None,dirName=None,probe = False):
+    def init(self, parameter: PolymerSimulationParameters =None,initializer='--mode=gpu',loadSave=None,dirName=None,probe = False):
         hoomd.context.initialize(initializer)
         self.parameter = parameter
         if loadSave is None:
@@ -264,9 +307,14 @@ class PolymerSimulation():
             self.initializeForces()
             self.initializeIntegrator()
 
-    def probe(self, run_id,sheer_value,path,server = False): #unused
+    def probe(self, run_id,sheer_value,path,server = False):
         name = str(run_id) + "_sheer_" + str(sheer_value)
         self.setupFileSystem(name=name)
+        self.apply_disorder()
+        self.view_potential()
+        exit()
+
+        #self.view_potential(self.parameter.getNumberChains())
         nameg = str(run_id) + "_sheer_" + str(sheer_value)+".gsd"
         hoomd.dump.gsd(filename=self.DirectoryName + "/" +"trajectory.gsd", period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
         self.simulationReadMeDump(singular = True,sheer_value=sheer_value)
@@ -283,6 +331,8 @@ class PolymerSimulation():
 
         self.setupFileSystem()
         print(self.DirectoryName)
+        
+        #self.view_potential(self.parameter.getNumberChains())
         
         
         file = hoomd.dump.gsd(filename= self.DirectoryName + "/trajectory.gsd", period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
@@ -447,23 +497,85 @@ class PolymerSimulation():
         harmonic.bond_coeff.set('polymer', func = particlePotentialHarmonic,rmin=0, rmax=100,coeff = dict(particle_diameter=bond_length, strength_coef=K)); #bond potential
 
 
-        self.tensionForce = hoomd.md.force.constant(group = self.pulley, fvec=(0.0,0,0.0))  # FORCES INTIALIZED HERE -> CHANGED IN RUN FUNCTION
+        self.tensionForce = hoomd.md.force.constant(group = self.pulley, fvec=(0.0,0.0,0.0))  # FORCES INTIALIZED HERE -> CHANGED IN RUN FUNCTION
         self.sheerForce   = hoomd.md.force.constant(group = self.anchor, fvec=(0.0,0.0,0.0))
-        periodic = hoomd.md.external.periodic() #External potential defined
+         #External potential defined
         if lines is not 1:
-            periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=lines+added)
-            periodic.force_coeff.set('B', A=amplitude, i=0, w=1, p=lines+added)
-            periodic.force_coeff.set('C', A=amplitude, i=0, w=1, p=lines+added)
+            
+            periodic = hoomd.md.external.periodic()
+            periodic.force_coeff.set('A', A=amplitude, i=0, w=0, p=width)
+            periodic.force_coeff.set('B', A=amplitude, i=0, w=0, p=width)
+            periodic.force_coeff.set('C', A=amplitude, i=0, w=0, p=width)
             print("multipolymer settings")
         else:
-            periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=width)
-            periodic.force_coeff.set('B', A=amplitude, i=0, w=1, p=width)
-            periodic.force_coeff.set('C', A=amplitude, i=0, w=1, p=width)
-            print("single polymer ssetting")
+            periodic = hoomd.md.external.periodic()
+            periodic.force_coeff.set('A', A=amplitude, i=0, w=0, p=width)
+            periodic.force_coeff.set('B', A=amplitude, i=0, w=0, p=width)
+            periodic.force_coeff.set('C', A=amplitude, i=0, w=0, p=width)
+            print("single polymer setting")
             #periodic.force_coeff.set('A', A=-10000000.0, i=0, w=1, p=10)
+            
 
 
         periodic.force_coeff.set('A', A=-10000000.0, i=1, w=1, p=10) #used to keep anchor on y=0 
+
+
+    def set_disorder(self, random_seed, amplitude_range,nodes, width):
+        self.disorder = DisorderParameter(random_seed, amplitude_range,nodes,width)
+
+    def apply_disorder(self):
+        dparam = self.disorder.get_disorder()
+        
+        for tup in dparam:
+            f_disorder = hoomd.md.external.periodic()
+            f_disorder.force_coeff.set(self.all, A=tup[0], i=0, w=tup[2], p=tup[1])
+        
+        self.disorder.write_disorder(self.DirectoryName)
+
+    
+    def view_potential(self):
+
+        import math as m
+        width = self.parameter.lines
+        cos_param = self.disorder.get_disorder()
+        #print(cos_param)
+        #cos_param = []
+        cos_param.append((self.parameter.amplitude,width, width, 0))
+        N = 1000
+        import numpy as np
+        from matplotlib import pyplot as plt
+
+        
+        den = width / N
+        potential = np.zeros(N * N).reshape(N,N)
+        for element in cos_param:
+            for y in range(len(potential)):
+                for x in range(len(potential[0])):
+                    p = x * den - width/2
+                    A = element[0]
+                    freq = element[1] / width
+                    phase = element[2]
+                    potential[y][x] += A * m.cos(p * freq * 2 * math.pi + phase)
+
+    
+        sm = 0
+        for i in range(len(cos_param)-1):
+            element = cos_param[i]
+            sm += element[0] * element[0]
+        sm = math.sqrt(sm)
+        fm = abs(sm/ self.parameter.amplitude)
+        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+        
+
+        from matplotlib import pyplot as plt
+        fig, axs = plt.subplots(2)
+        axs[0].imshow(potential)
+        x = np.linspace(-width/2,width/2,len(potential[0]))
+        axs[1].plot(x,potential[0])
+        plt.text(-width/2,max(potential[0]),f"disorderAmplitude/periodicAmplitude= {round(fm,4)}",bbox=props,fontsize=6,verticalalignment='top');
+        plt.savefig(self.DirectoryName + "/potential.png", dpi=300, bbox_inches='tight')
+        plt.close()
+
 
     def definePositions(self):
         lines   = self.parameter.getNumberChains()
