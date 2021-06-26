@@ -312,8 +312,7 @@ class PolymerSimulation():
         self.setupFileSystem(name=name)
         self.apply_disorder()
         self.view_potential()
-        exit()
-
+        
         #self.view_potential(self.parameter.getNumberChains())
         nameg = str(run_id) + "_sheer_" + str(sheer_value)+".gsd"
         hoomd.dump.gsd(filename=self.DirectoryName + "/" +"trajectory.gsd", period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
