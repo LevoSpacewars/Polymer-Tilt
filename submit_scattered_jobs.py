@@ -2,6 +2,7 @@
 #first give name to all the inputs
 #then assign sysargs to a dictionary
 
+
 args = ["length", "kbt", "amplitude", "tension", "npolymers", "runtime", "samplerate", "sheer_start","sheer_end","DF","ID","disorder_level"]
 dic = {}
 import sys

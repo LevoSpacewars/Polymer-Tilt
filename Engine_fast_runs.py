@@ -27,7 +27,7 @@ random_seed = 0
 amount_nodes = 0
 if (len(sys.argv) > 11):
     random_seed = int(sys.argv[11])
-    amount_nodes = int(sys.argv[12])
+    amount_nodes = get_amount_nodes (float(sys.argv[12]))
 
 
 
@@ -63,7 +63,7 @@ sim.set_disorder(random_seed,amplitude_range,amount_nodes,chainnum)
 sim.init(parameter=parameters,initializer='--mode=gpu')
 
 
-filelocation = sim.probe(name,sheer,"",server = True) ##S
+filelocation = sim.probe(id,sheer,"",server = True) ##S
 print(filelocation)
 
 #renderer = Simulations.DataVisualizer(basedirectory=filelocation,interval=0.75)
