@@ -7,7 +7,7 @@ from disorder import get_amount_nodes
 parameters = Simulations.PolymerSimulationParameters()
 
 print("\n\n\n\n\n")
-inputs = {"length": None, "kbt": None, "amplitude": None, "tension": None, "npolymers": None, "runtime": None, "samplerate": None, "sheer": None, "endsheer": None, "random_seed": None, "disorder_ratio": None, ID: None}
+inputs = {"length": None, "kbt": None, "amplitude": None, "tension": None, "npolymers": None, "runtime": None, "samplerate": None, "sheer": None, "endsheer": None, "random_seed": None, "disorder_ratio": None, "ID": None}
 
 # TODO: need to implement the disorder level to set the contraints along the min and max amplitude
 
@@ -31,7 +31,7 @@ if (len(sys.argv) > 11):
 
 
 
-    
+
 
 dt = 0.001
 runl = time_total
