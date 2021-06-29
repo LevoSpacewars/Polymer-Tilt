@@ -461,6 +461,62 @@ class PolymerSimulation():
 
 
     def initializeForces(self): #where particle-particle and bond interactions are defined
+        # added = 0
+        # lines       = self.parameter.getNumberChains()
+        # length      = self.parameter.getLength()
+        # bond_length = self.parameter.getPairRadiusEqualibrium()*2
+        # K           = self.parameter.getPairPotentialStrength()
+        # amplitude   = self.parameter.getPeriodicAmplitude()
+        # pull        = self.parameter.getPullForce()
+        # width       = self.parameter.getBoxDimx()
+        #
+        # #defining group names for particle types
+        # self.all    = hoomd.group.all()
+        # self.anchor = hoomd.group.type(name='anchor', type='A') #anchor is the base particle for each polymer
+        # self.pulley = hoomd.group.type(name='pulley',type='B') # pulley is the top particle for each polymer
+        # self.chain  = hoomd.group.type(name='chain', type='C') # everything else
+        # self.most   = hoomd.group.union(name='most',  a = self.chain, b = self.pulley) #everthing but the anchor group
+        #
+        # nl = hoomd.md.nlist.cell();
+        #
+        #
+        #
+        # table = hoomd.md.pair.table(width=10000, nlist=nl) # describes stiff quadratic potential for particle-particle interactions
+        # table.pair_coeff.set('A', 'A', func=hardContact,rmin=0,rmax=bond_length, coeff=dict(l_0=bond_length, K=K))
+        # table.pair_coeff.set('A', 'B', func=hardContact,rmin=0,rmax=bond_length, coeff=dict(l_0=bond_length, K=K))
+        # table.pair_coeff.set('B', 'B', func=hardContact,rmin=0,rmax=bond_length, coeff=dict(l_0=bond_length, K=K))
+        #
+        # table.pair_coeff.set('B', 'C', func=hardContact,rmin=0,rmax=bond_length, coeff=dict(l_0=bond_length, K=K))
+        # table.pair_coeff.set('A', 'C', func=hardContact,rmin=0,rmax=bond_length, coeff=dict(l_0=bond_length, K=K))
+        # table.pair_coeff.set('C', 'C', func=hardContact,rmin=0,rmax=bond_length, coeff=dict(l_0=bond_length, K=K))
+        #
+        # nl.reset_exclusions(exclusions = [])
+        #
+        # harmonic = hoomd.md.bond.table(width = 100000); #defining the bond potential
+        # harmonic.bond_coeff.set('polymer', func = particlePotentialHarmonic,rmin=0, rmax=100,coeff = dict(particle_diameter=bond_length, strength_coef=K)); #bond potential
+        #
+        #
+        # self.tensionForce = hoomd.md.force.constant(group = self.pulley, fvec=(0.0,0.0,0.0))  # FORCES INTIALIZED HERE -> CHANGED IN RUN FUNCTION
+        # self.sheerForce   = hoomd.md.force.constant(group = self.anchor, fvec=(0.0,0.0,0.0))
+        # periodic = hoomd.md.external.periodic()
+        #  #External potential defined
+        # if lines is not 1:
+        #
+        #
+        #     periodic.force_coeff.set('A', A=amplitude, i=0, w=0, p=width)
+        #     periodic.force_coeff.set('B', A=amplitude, i=0, w=0, p=width)
+        #     periodic.force_coeff.set('C', A=amplitude, i=0, w=0, p=width)
+        #     print("multipolymer settings")
+        # else:
+        #     periodic.force_coeff.set('A', A=amplitude, i=0, w=0, p=width)
+        #     periodic.force_coeff.set('B', A=amplitude, i=0, w=0, p=width)
+        #     periodic.force_coeff.set('C', A=amplitude, i=0, w=0, p=width)
+        #     print("single polymer setting")
+        #     #periodic.force_coeff.set('A', A=-10000000.0, i=0, w=1, p=10)
+        #
+        #
+        #
+        # periodic.force_coeff.set('A', A=-10000000.0, i=1, w=1, p=10) #used to keep anchor on y=0
         added = 0
         lines       = self.parameter.getNumberChains()
         length      = self.parameter.getLength()
@@ -496,28 +552,23 @@ class PolymerSimulation():
         harmonic.bond_coeff.set('polymer', func = particlePotentialHarmonic,rmin=0, rmax=100,coeff = dict(particle_diameter=bond_length, strength_coef=K)); #bond potential
 
 
-        self.tensionForce = hoomd.md.force.constant(group = self.pulley, fvec=(0.0,0.0,0.0))  # FORCES INTIALIZED HERE -> CHANGED IN RUN FUNCTION
+        self.tensionForce = hoomd.md.force.constant(group = self.pulley, fvec=(0.0,0,0.0))  # FORCES INTIALIZED HERE -> CHANGED IN RUN FUNCTION
         self.sheerForce   = hoomd.md.force.constant(group = self.anchor, fvec=(0.0,0.0,0.0))
-        periodic = hoomd.md.external.periodic()
-         #External potential defined
+        periodic = hoomd.md.external.periodic() #External potential defined
         if lines is not 1:
-
-
-            periodic.force_coeff.set('A', A=amplitude, i=0, w=0, p=width)
-            periodic.force_coeff.set('B', A=amplitude, i=0, w=0, p=width)
-            periodic.force_coeff.set('C', A=amplitude, i=0, w=0, p=width)
+            periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=lines+added)
+            periodic.force_coeff.set('B', A=amplitude, i=0, w=1, p=lines+added)
+            periodic.force_coeff.set('C', A=amplitude, i=0, w=1, p=lines+added)
             print("multipolymer settings")
         else:
-            periodic.force_coeff.set('A', A=amplitude, i=0, w=0, p=width)
-            periodic.force_coeff.set('B', A=amplitude, i=0, w=0, p=width)
-            periodic.force_coeff.set('C', A=amplitude, i=0, w=0, p=width)
-            print("single polymer setting")
+            periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=width)
+            periodic.force_coeff.set('B', A=amplitude, i=0, w=1, p=width)
+            periodic.force_coeff.set('C', A=amplitude, i=0, w=1, p=width)
+            print("single polymer ssetting")
             #periodic.force_coeff.set('A', A=-10000000.0, i=0, w=1, p=10)
 
 
-
         periodic.force_coeff.set('A', A=-10000000.0, i=1, w=1, p=10) #used to keep anchor on y=0
-
 
     def set_disorder(self, random_seed, amplitude_range,nodes, width):
         self.disorder = DisorderParameter(random_seed, amplitude_range,nodes,width)
