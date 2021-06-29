@@ -12,7 +12,8 @@ inputs = {"length": None, "kbt": None, "amplitude": None, "tension": None, "npol
 # TODO: need to implement the disorder level to set the contraints along the min and max amplitude
 
 
-
+print(sys.argv)
+exit()
 length = int(sys.argv[1])
 kbt = float(sys.argv[2])
 phi0 = float(sys.argv[3])
