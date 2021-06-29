@@ -81,9 +81,9 @@ class DisorderParameter():
         r.seed(seed)
         inv_lamda = int(1/self.bond_radius)
         Arange = self.amplitude_range
-        
+
         p:List[Tuple[float, int, float]] = []  # (amplitude, nodes, phase)
-        
+
         for null in range(disorder_level):
             A = 2 * r.random() * (Arange[1] - Arange[0]) + Arange[0] - (Arange[1] - Arange[0])/2
             phase = 2 * r.random() * math.pi
@@ -93,7 +93,7 @@ class DisorderParameter():
 
     def get_disorder(self):
         return self.disorder
-    
+
     def write_disorder(self,path):
         wfile = open(path + '/disorder_info.txt','w')
         wfile.write("Amplitude, nodes, Phase\n")
@@ -166,7 +166,7 @@ class PolymerSimulationParameters():
         self.integrator = x
     def setRunDirection(self,x):
         self.direction  =x
-    
+
     def getSheerForceRange(self):
         return self.sheerForceRange
     def getDf(self):
@@ -312,13 +312,13 @@ class PolymerSimulation():
         self.setupFileSystem(name=name)
         self.apply_disorder()
         self.view_potential()
-        
+
         #self.view_potential(self.parameter.getNumberChains())
         nameg = str(run_id) + "_sheer_" + str(sheer_value)+".gsd"
         hoomd.dump.gsd(filename=self.DirectoryName + "/" +"trajectory.gsd", period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
         self.simulationReadMeDump(singular = True,sheer_value=sheer_value)
 
-        
+
         self.tensionForce.set_force(fvec=(sheer_value,self.parameter.getPullForce(),0.0))
         self.sheerForce.set_force(fvec=(-sheer_value,0,0))
         hoomd.run(self.parameter.getRunLength())
@@ -330,19 +330,19 @@ class PolymerSimulation():
 
         self.setupFileSystem()
         print(self.DirectoryName)
-        
+
         #self.view_potential(self.parameter.getNumberChains())
-        
-        
+
+
         file = hoomd.dump.gsd(filename= self.DirectoryName + "/trajectory.gsd", period=self.parameter.getProbePeriod(), group=self.all, overwrite=True)
         hoomd.analyze.log(filename=self.DirectoryName + "/Energy.log",quantities=['potential_energy', 'temperature'],period=self.parameter.getProbePeriod(),overwrite=True);
 
         self.simulationReadMeDump()
 
         for i in range(self.parameter.getDf()):
-            
 
-            
+
+
             sheerforce = (i/self.parameter.getDf())*(self.parameter.getSheerForceRange()[1] - self.parameter.getSheerForceRange()[0]) + self.parameter.getSheerForceRange()[0]
 
             self.tensionForce.set_force(fvec=(sheerforce,self.parameter.getPullForce(),0.0))
@@ -362,10 +362,10 @@ class PolymerSimulation():
         if server == True:
             os.system("/projects/softmatter/apatapof/Polymer-Tilt/DataHandler/Executable " + " /projects/softmatter/apatapof/jobs/" + self.DirectoryName + "/")
             os.system("mv " + self.DirectoryName + " /projects/softmatter/apatapof/runs/" + self.DirectoryName)
-        
 
-        
-            
+
+
+
 
         return self.DirectoryName + "/"
 
@@ -424,7 +424,7 @@ class PolymerSimulation():
             self.bs.set_gamma('B', gamma=self.parameter.getGamma())
             self.bs.set_gamma('C', gamma=self.parameter.getGamma())
         else:
-            if(self.parameter.getNumberChains() == 1): # for a single polymer all the particles except the base are simulated. 
+            if(self.parameter.getNumberChains() == 1): # for a single polymer all the particles except the base are simulated.
                 self.bs = hoomd.md.integrate.langevin(group = self.all, kT= hoomd.variant.linear_interp(points = TRamp), seed=random.randint(0,99999),noiseless_r=True);
             else: #defualt
                 self.bs = hoomd.md.integrate.langevin(group = self.all, kT= hoomd.variant.linear_interp(points = TRamp), seed=random.randint(0,99999),noiseless_r=True);
@@ -500,7 +500,7 @@ class PolymerSimulation():
         self.sheerForce   = hoomd.md.force.constant(group = self.anchor, fvec=(0.0,0.0,0.0))
          #External potential defined
         if lines is not 1:
-            
+
             periodic = hoomd.md.external.periodic()
             periodic.force_coeff.set('A', A=amplitude, i=0, w=0, p=width)
             periodic.force_coeff.set('B', A=amplitude, i=0, w=0, p=width)
@@ -513,10 +513,10 @@ class PolymerSimulation():
             periodic.force_coeff.set('C', A=amplitude, i=0, w=0, p=width)
             print("single polymer setting")
             #periodic.force_coeff.set('A', A=-10000000.0, i=0, w=1, p=10)
-            
 
 
-        periodic.force_coeff.set('A', A=-10000000.0, i=1, w=1, p=10) #used to keep anchor on y=0 
+
+        periodic.force_coeff.set('A', A=-10000000.0, i=1, w=1, p=10) #used to keep anchor on y=0
 
 
     def set_disorder(self, random_seed, amplitude_range,nodes, width):
@@ -524,14 +524,16 @@ class PolymerSimulation():
 
     def apply_disorder(self):
         dparam = self.disorder.get_disorder()
-        
+
         for tup in dparam:
             f_disorder = hoomd.md.external.periodic()
-            f_disorder.force_coeff.set(self.all, A=tup[0], i=0, w=tup[2], p=tup[1])
-        
+            f_disorder.force_coeff.set('A', A=tup[0], i=0, w=tup[2], p=tup[1])
+            f_disorder.force_coeff.set('B', A=tup[0], i=0, w=tup[2], p=tup[1])
+            f_disorder.force_coeff.set('C', A=tup[0], i=0, w=tup[2], p=tup[1])
+
         self.disorder.write_disorder(self.DirectoryName)
 
-    
+
     def view_potential(self):
 
         import math as m
@@ -544,7 +546,7 @@ class PolymerSimulation():
         import numpy as np
         from matplotlib import pyplot as plt
 
-        
+
         den = width / N
         potential = np.zeros(N * N).reshape(N,N)
         for element in cos_param:
@@ -556,7 +558,7 @@ class PolymerSimulation():
                     phase = element[2]
                     potential[y][x] += A * m.cos(p * freq * 2 * math.pi + phase)
 
-    
+
         sm = 0
         for i in range(len(cos_param)-1):
             element = cos_param[i]
@@ -564,7 +566,7 @@ class PolymerSimulation():
         sm = math.sqrt(sm)
         fm = abs(sm/ self.parameter.amplitude)
         props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-        
+
 
         from matplotlib import pyplot as plt
         fig, axs = plt.subplots(2)
@@ -638,7 +640,7 @@ class PolymerSimulation():
             mass.append(1)
         return mass
 
-    def defineDiameter(self): 
+    def defineDiameter(self):
         d = []
         lines   = self.parameter.getNumberChains()
         length  = self.parameter.getLength()
