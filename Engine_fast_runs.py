@@ -13,7 +13,6 @@ inputs = {"length": None, "kbt": None, "amplitude": None, "tension": None, "npol
 
 
 print(sys.argv)
-exit()
 length = int(sys.argv[1])
 kbt = float(sys.argv[2])
 phi0 = float(sys.argv[3])
