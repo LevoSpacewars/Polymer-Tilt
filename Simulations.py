@@ -310,8 +310,8 @@ class PolymerSimulation():
     def probe(self, run_id,sheer_value,path,server = False):
         name = str(run_id) + "_sheer_" + str(sheer_value)
         self.setupFileSystem(name=name)
-        self.apply_disorder()
-        self.view_potential()
+        #self.apply_disorder()
+        #self.view_potential()
 
         #self.view_potential(self.parameter.getNumberChains())
         nameg = str(run_id) + "_sheer_" + str(sheer_value)+".gsd"
