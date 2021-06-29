@@ -498,16 +498,16 @@ class PolymerSimulation():
 
         self.tensionForce = hoomd.md.force.constant(group = self.pulley, fvec=(0.0,0.0,0.0))  # FORCES INTIALIZED HERE -> CHANGED IN RUN FUNCTION
         self.sheerForce   = hoomd.md.force.constant(group = self.anchor, fvec=(0.0,0.0,0.0))
+        periodic = hoomd.md.external.periodic()
          #External potential defined
         if lines is not 1:
 
-            periodic = hoomd.md.external.periodic()
+
             periodic.force_coeff.set('A', A=amplitude, i=0, w=0, p=width)
             periodic.force_coeff.set('B', A=amplitude, i=0, w=0, p=width)
             periodic.force_coeff.set('C', A=amplitude, i=0, w=0, p=width)
             print("multipolymer settings")
         else:
-            periodic = hoomd.md.external.periodic()
             periodic.force_coeff.set('A', A=amplitude, i=0, w=0, p=width)
             periodic.force_coeff.set('B', A=amplitude, i=0, w=0, p=width)
             periodic.force_coeff.set('C', A=amplitude, i=0, w=0, p=width)
