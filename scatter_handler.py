@@ -60,7 +60,7 @@ def getData(path, input, key):
         fn = str(path) + str(element) + "/data.txt"
         print(fn)
         file = open(fn,'r')
-        
+
 
         lines = file.readlines()
         for line_index in range(len(lines)):
@@ -140,18 +140,19 @@ raw_dirs = getDirs(path)
 
 dirdict = getDirectoryDict(nameid)
 dirdict = sortDictArrays(dirdict)
-
+print(dirdict)
 
 if nameid is None:
     for key in dirdict:
         data = getData(path, dirdict, key)
+        print(data)
+        exit()
         removeWriteDirectory(path + "/" + compdir ,key)
         dirname = makeWriteDirectory(path + compdir,key)
         dirpath = path + compdir + "/" + dirname
-       
+
         os.system("cp " + path + str(dirdict[key][0]) + "/_simulation_parameters.txt " + dirpath)
         smin, smax = getSheerRange(dirdict, key)
         changeDF(dirpath + "/_simulation_parameters.txt", len(dirdict[key]))
         changeRange(dirpath + "/_simulation_parameters.txt", smin, smax)
         writeData(dirpath, data)
-

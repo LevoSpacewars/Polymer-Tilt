@@ -323,6 +323,9 @@ class PolymerSimulation():
         self.sheerForce.set_force(fvec=(-sheer_value,0,0))
         hoomd.run(self.parameter.getRunLength())
 
+        if server == True:
+            os.system("mv " + self.DirectoryName + " /projects/softmatter/apatapof/runs/" + self.DirectoryName)
+
         return path
 
 
