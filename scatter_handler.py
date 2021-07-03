@@ -145,8 +145,6 @@ print(dirdict)
 if nameid is None:
     for key in dirdict:
         data = getData(path, dirdict, key)
-        print(data)
-        exit()
         removeWriteDirectory(path + "/" + compdir ,key)
         dirname = makeWriteDirectory(path + compdir,key)
         dirpath = path + compdir + "/" + dirname
