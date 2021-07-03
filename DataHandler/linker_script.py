@@ -41,5 +41,3 @@ call(gpp_linker_string)
 
 
 print(gpp_linker_string)
-
-
