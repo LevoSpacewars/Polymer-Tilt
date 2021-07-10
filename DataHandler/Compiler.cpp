@@ -922,6 +922,7 @@ bool Compiler::writeHeatMap(float ** xdata, float ** ydata, int time_steps, int 
       {
         cout<< "xind or yind is -1" <<endl;
         cout << yind<< "," <<xind<<endl;
+        cout << py << "," << px << endl;
       }
       //cout << yind<< "," <<xind<<endl;
       heatmap[yind][xind] += 1;
