@@ -16,6 +16,14 @@ def getDirectoryDict(directories):
     print("/")
     return runidp
 
+def handleHeatmaps(key, input, destination):
+
+    for element in input[key]:
+        fn = str(path) + str(element) + "/heatmap.txt"
+        filename = "heatmap_" + element.split('_')[-1] + ".txt"
+        os.system('cp ' + fn + ' ' + destination + "/" + filename)
+
+    os.system('cp ' + file_path + "/heatmap.txt " destination_path + "heatmap_" + str(sheer_value) + ".txt")
 
 def sortDictArrays(input):
     for key in input.keys():
@@ -153,4 +161,5 @@ if nameid is None:
         smin, smax = getSheerRange(dirdict, key)
         changeDF(dirpath + "/_simulation_parameters.txt", len(dirdict[key]))
         changeRange(dirpath + "/_simulation_parameters.txt", smin, smax)
+        handleHeatmaps(key, dirdict, dirpath)
         writeData(dirpath, data)
