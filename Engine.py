@@ -3,13 +3,13 @@ import math
 from random import randint
 parameters = Simulations.PolymerSimulationParameters()
 dt = 0.001
-runl = (1*10**7)
-vs =    1*10**4
+runl = (1*10**3)
+vs =    1
 A= -0.3/0.1 * 1
 print("\n\n\n\n\n")
 
 parameters.setSheerForceRange(0,2)
-parameters.setDf(10)
+parameters.setDf(1)
 parameters.setLength(200)
 parameters.setNumberChains(10)
 parameters.setPairRadius(0.1)
@@ -29,8 +29,8 @@ parameters.setRunDirection("forward")
 
 amplitude_range = (0.005* 3, 0.05 * 3)
 sim = Simulations.PolymerSimulation()
-sim.init(parameter=parameters,initializer='--mode=gpu')
-sim.set_disorder(randint(0,199999),amplitude_range,100,10)
+sim.init(parameter=parameters,initializer='--mode=cpu')
+sim.set_disorder(randint(0,199999),amplitude_range,0,10)
 filelocation = sim.probe("disorder_test",0,"" )
 print(filelocation)
 

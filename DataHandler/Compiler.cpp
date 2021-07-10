@@ -210,6 +210,7 @@ int Compiler::compileData(string *filename, float interval)
     for (int i = 0; i< df;i++)
     {
         //Begin by allocating the arrays needed for position data;
+        //For runs larger than 30 Gigs this needs to be modified with tmp files
         int current_run = i;
         float current_force = i * conv + this->profile.sheerForceRange[0];
         float theta = current_force/this->profile.tension;
@@ -290,7 +291,7 @@ int Compiler::compileData(string *filename, float interval)
         param.width = this->profile.lines;
         param.x = -this->profile.lines/2;
         param.y = 0;
-        //writeHeatMap(&pos_x,&pos_y, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
+        writeHeatMap(&pos_xr,&pos_yr, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
 
 
         //cout<<"tracking particles 0,100,200"<<endl;
@@ -306,12 +307,13 @@ int Compiler::compileData(string *filename, float interval)
         cout<<"calculating the avg_dx^2 " <<endl;
         float avg_dx2 = calcAverageDxsqr(&pos_x, n_polymers, l_polymer, adj_run);
 
-        cout<<"writePorfileoutput"<<endl;
+      /*#cout<<"writePorfileoutput"<<endl;
         writeProfileOutput(&pos_xr, &pos_yr, n_polymers, l_polymer,0,current_path,adj_run);
 
         cout<<"exportDensityFunction_avg"<<endl;
         exportDensityFunction_raw(&pos_x, &pos_y, n_polymers, l_polymer, adj_run,theta,current_path);
         exportDensityFunction_avg(&avg_x,&avg_y, n_polymers, l_polymer, theta, current_path);
+        */
         cout<<"calcAverageDx"<<endl;
         float * dx = calcAverageDx(&avg_x,n_polymers,l_polymer);
 
@@ -392,8 +394,8 @@ bool Compiler::truncateFiles()
     writeFile.open(this->current_path + "/data.txt",std::ios_base::trunc);
     writeFile.close();
 
-    writeFile.open(this->current_path + "/heatmaps.txt",std::ios_base::trunc);
-    writeFile.close();
+    // writeFile.open(this->current_path + "/heatmaps.txt",std::ios_base::trunc);
+    // writeFile.close();
 
     writeFile.open(this->current_path + "/profileData.txt",std::ios_base::trunc);
     writeFile.close();
@@ -685,6 +687,7 @@ bool Compiler::writePolymerSystem(float** xa, float ** ya, int p_n, int p_length
     return true;
 }
 
+/*
 bool Compiler::writeHeatMap(float** xs, float** ys, int time_steps, int nParticles, float force_value, bool normalized, HeatMapParameters param, string path) //memory safe
 {
     float *x = *xs;
@@ -818,6 +821,139 @@ bool Compiler::writeHeatMap(float** xs, float** ys, int time_steps, int nParticl
     delete tabley;
     delete tablex;
 
+
+
+}
+*/
+
+bool Compiler::writeHeatMap(float ** xdata, float ** ydata, int time_steps, int nParticles, float force_value, bool normalized, HeatMapParameters param, string path)
+{
+
+  float *x = *xdata;
+  float *y = *ydata;
+
+
+  //initialize spacing arrays
+  float * tablex = new float[param.rezx];
+  float * tabley = new float[param.rezy];
+
+  //initalized output
+  float ** heatmap = new float*[param.rezy];
+  for (int i = 0; i < param.rezy; i++)
+  {
+    heatmap[i] = new float[param.rezx];
+    for (int ii =0; ii < param.rezx; ii++)
+    {
+      heatmap[i][ii] = 0;
+    }
+  }
+
+  // populate tables
+  float convx = param.width / param.rezx;
+  for (int index = 0; index < param.rezx; index++)
+  {
+    tablex[index] = convx * index + param.x;
+  }
+
+  float convy = param.height / param.rezy;
+  for (int index = 0; index < param.rezy; index++)
+  {
+    tabley[index] = convy * index + param.y;
+  }
+
+  std::cout<<"writing HeatMap"<<endl;
+
+
+  // sort into heightmap
+
+  for (int i = 0; i < param.rezy; i++)
+  {
+    for (int ii = 0; ii < param.rezx - 1;ii++)
+    {
+      cout << heatmap[i][ii]<<",";
+    }
+    cout << heatmap[i][param.rezx - 1] << endl;
+  }
+
+
+  for (int step = 0; step < time_steps; step++)
+  {
+
+    int offset = nParticles * step;
+
+    for (int p = 0; p < nParticles; p++)
+    {
+      float px = x[offset + p];
+      float py = y[offset + p];
+      int xind = -1;
+      int yind = -1;
+      // search x
+
+
+      for (int index = 0; index < param.rezx - 1; index++)
+      {
+        if ((px >= tablex[index]) & (px < tablex[index + 1])){
+          xind = index;
+          break;
+        }
+      }
+
+      if (px >= tablex[param.rezx - 1])
+      {
+        xind = param.rezx - 1;
+      }
+
+
+      for (int index = 0; index < param.rezy; index++)
+      {
+        if ((py >= tabley[index]) & (py <= tabley[index + 1])){
+          yind = index;
+          break;
+        }
+      }
+
+      if (py >= tabley[param.rezy - 1])
+      {
+        yind = param.rezy - 1;
+      }
+
+
+      if ((xind == -1) | (yind == -1))
+      {
+        cout<< "xind or yind is -1" <<endl;
+        cout << yind<< "," <<xind<<endl;
+      }
+      //cout << yind<< "," <<xind<<endl;
+      heatmap[yind][xind] += 1;
+
+
+    }
+
+  }
+
+
+
+
+
+  // write to file;
+
+  ofstream nfil;
+  nfil.open(this->current_path + "/heatmap.txt",std::ios_base::trunc);
+  nfil << "parameters (x,y,w,h,rx,ry):" + to_string(param.x) + "," + to_string(param.y) + "," +to_string(param.width) + "," + to_string(param.height) + "," + to_string(param.rezx) + "," + to_string(param.rezy) <<endl;
+
+  for (int i = 0; i < param.rezy;i++)
+  {
+      for(int j = 0; j < param.rezx -1;j++)
+      {
+          nfil<< heatmap[i][j] << ",";
+      }
+      nfil << heatmap[i][param.rezx - 1] <<endl;
+  }
+  nfil.close();
+
+  delete heatmap;
+  delete tabley;
+  delete tablex;
 
 
 }
