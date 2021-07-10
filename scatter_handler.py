@@ -25,7 +25,7 @@ def handleHeatmaps(key, input, destination):
         if os.path.isfile(fn):
             os.system('cp ' + fn + ' ' + destination + "/" + filename)
         else:
-            os.system('cp ' + file_path + "/" + filename + " " + destination)
+            os.system('cp ' + fn + "/" + filename + " " + destination)
 
 def sortDictArrays(input):
     for key in input.keys():
