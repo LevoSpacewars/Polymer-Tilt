@@ -291,7 +291,7 @@ int Compiler::compileData(string *filename, float interval)
         param.width = this->profile.lines;
         param.x = -this->profile.lines/2;
         param.y = 0;
-        writeHeatMap(&pos_xr,&pos_yr, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
+        writeHeatMap(&pos_x,&pos_y, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
 
 
         //cout<<"tracking particles 0,100,200"<<endl;
