@@ -21,11 +21,12 @@ def handleHeatmaps(key, input, destination):
     for element in input[key]:
 
         fn = str(path) + str(element) + "/heatmap.txt"
+        p = str(path) + str(element)
         filename = "heatmap_" + element.split('_')[-1] + ".txt"
-        if os.path.isfile(fn):
-            os.system('cp ' + fn + ' ' + destination + "/" + filename)
-        else:
-            os.system('cp ' + fn + "/" + filename + " " + destination)
+        for file in os.listdir(fn):
+            if "heatmap" in file:
+                sheer = round(float(element.split('_')[-1]),1)
+                os.system(f"cp {p}/{file} {destination}/heatmap_{sheer}.txt")
 
 def sortDictArrays(input):
     for key in input.keys():
