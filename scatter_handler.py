@@ -26,7 +26,7 @@ def handleHeatmaps(key, input, destination):
         for file in os.listdir(fn):
             if "heatmap" in file:
                 sheer = round(float(element.split('_')[-1]),1)
-                os.system(f"cp {p}/{file} {destination}/heatmap_{sheer}.txt")
+                os.system("cp " + p + "/" + file + " " + destination + "/heatmap_" + str(sheer) + ".txt")
 
 def sortDictArrays(input):
     for key in input.keys():
