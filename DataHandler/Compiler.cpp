@@ -938,7 +938,7 @@ bool Compiler::writeHeatMap(float ** xdata, float ** ydata, int time_steps, int 
   // write to file;
 
   ofstream nfil;
-  nfil.open(this->current_path + "/heatmap.txt",std::ios_base::trunc);
+  nfil.open(this->current_path + "/heatmap_" + to_string(force_value) + ".txt", std::ios_base::trunc);
   nfil << "parameters (x,y,w,h,rx,ry):" + to_string(param.x) + "," + to_string(param.y) + "," +to_string(param.width) + "," + to_string(param.height) + "," + to_string(param.rezx) + "," + to_string(param.rezy) <<endl;
 
   for (int i = 0; i < param.rezy;i++)
