@@ -33,11 +33,10 @@ def handleHeatmaps(key, input, destination):
 
         fn = str(path) + str(element) + "/heatmap.txt"
         p = str(path) + str(element)
-        filename = "heatmap_" + element.split('_')[-1] + ".txt"
         for file in os.listdir(p):
             if "heatmap" in file:
                 sheer = round(float(element.split('_')[-1]),1)
-                os.system("cp " + p + "/" + file + " " + destination + "/heatmap_" + str(sheer) + ".txt")
+                os.system("cp " + p + "/" + file + " " + destination)
 
 def sortDictArrays(input):
     for key in input.keys():
@@ -176,5 +175,5 @@ if nameid is None:
         changeDF(dirpath + "/_simulation_parameters.txt", len(dirdict[key]))
         changeRange(dirpath + "/_simulation_parameters.txt", smin, smax)
         renameHeatmaps(key,dirdict)
-        #handleHeatmaps(key, dirdict, dirpath)
+        handleHeatmaps(key, dirdict, dirpath)
         writeData(dirpath, data)
