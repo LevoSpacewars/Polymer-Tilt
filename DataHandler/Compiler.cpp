@@ -917,6 +917,11 @@ bool Compiler::writeHeatMap(float ** xdata, float ** ydata, int time_steps, int 
         yind = param.rezy - 1;
       }
 
+      if (py <= tabley[0])
+      {
+        yind = 0;
+      }
+
 
       if ((xind == -1) | (yind == -1))
       {
