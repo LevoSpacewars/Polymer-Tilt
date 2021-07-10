@@ -917,11 +917,17 @@ bool Compiler::writeHeatMap(float ** xdata, float ** ydata, int time_steps, int 
         yind = param.rezy - 1;
       }
 
+      if (py <= tabley[0])
+      {
+        yind = 0;
+      }
+
 
       if ((xind == -1) | (yind == -1))
       {
         cout<< "xind or yind is -1" <<endl;
         cout << yind<< "," <<xind<<endl;
+        cout << py << "," << px << endl;
       }
       //cout << yind<< "," <<xind<<endl;
       heatmap[yind][xind] += 1;
