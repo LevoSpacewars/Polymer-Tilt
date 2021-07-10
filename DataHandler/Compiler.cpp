@@ -287,7 +287,7 @@ int Compiler::compileData(string *filename, float interval)
         HeatMapParameters param;
         param.rezx = 100;
         param.rezy = 100;
-        param.height = this->profile.length/3;
+        param.height = this->profile.length/5;
         param.width = this->profile.lines;
         param.x = -this->profile.lines/2;
         param.y = 0;
