@@ -681,7 +681,7 @@ class GlobalDataPlotter(object):
                                 color = list_l.index(polymer.getChainLength())
                                 x = polymer.getForceRange()
                                 y, uy = polymer.getOutput()
-                                #  print(len(x),len(y))
+                                print(len(x),len(y))
                                 plt.errorbar(x,y,yerr=uy,color=list_colors[color])
                                 if polymer.getChainLength in lengths:
                                     lengths.append(polymer.getChainLength())
@@ -732,58 +732,7 @@ class GlobalDataPlotter(object):
         plt.plot(rowx,rowy)
 
 
-        for i in (self.dataHandlers):
 
-            fn = i.fileName
-            print(fn)
-            thetas = np.array(i.getForceRange())
-            dx2 = i.getDx2()
-
-
-            dx2c = 0
-            for ii in range(1,len(dx2)):
-                if dx2[ii] / dx2[0] > 1.1 and dx2c == 0:
-                    print("dration",dx2[ii] / dx2[0], thetas[ii])
-                    dx2c = thetas[ii]
-
-            tilt = i.getOutput()[0]
-            tiltc = 0
-
-
-            for ii in range(1,len(tilt)):
-                if tilt[ii] / abs(tilt[0]) > 10 and tiltc == 0:
-                    print("tration",tilt[ii] / tilt[0], thetas[ii])
-                    tiltc = thetas[ii]
-
-            # utilt = i.getOutput()[1]
-            # utiltc = 0
-            # for ii in range(1,len(utilt)):
-            #     if utilt[ii] / utilt[0] > 0.01 and utiltc is None:
-            #         utiltc = thetas[ii]
-            a = 1
-            kbt = i.getTemp()
-            A = i.getPeriodicAmplitude()
-            T = i.getTension()
-            utheta = i.getForceRange()[1] - i.getForceRange()[0]
-            x = [ X(a, kbt, A, T, tiltc), X(a, kbt, A, T, dx2c) ]
-            y= [ Y(a, kbt, T, tiltc, utheta)[0], Y(a, kbt, T, dx2c, utheta)[0]]
-            uy = [ Y(a, kbt, T, tiltc, utheta)[1], Y(a, kbt, T, dx2c, utheta)[1]]
-            #plt.plot(x,y, color=colors[cindex],label=str(fn))
-            plt.plot(rowx,rowy)
-            plt.errorbar(x[1],y[1],yerr= uy[1],fmt='.',color=colors[cindex],ecolor="red") # dx^2
-            plt.errorbar(x[0],y[0],yerr= uy[0],fmt='.',color=colors[cindex],ecolor="grey")# tilt
-
-            #plt.errorbar(x[1],y[1], yerr= uy[1],fmt='.', color= "black")
-            # plt.plot(2,utiltc, '.', color=colors[cindex], label=str(fn))
-            cindex += 1
-
-
-        plt.title("threshold critical theta values")
-
-        textstr = "matching colors = Same Run \n red error bar= dxCOM"
-        plt.legend(["Predicted", "Measured com^2", "measured Tilt"])
-        pdf.savefig(fig)
-        plt.cla()
 
         sloperangedict = {} #contains for sloperange[i] slopeinfo[i] = (theta, tilt), (...), (....)
 
@@ -806,6 +755,7 @@ class GlobalDataPlotter(object):
             un2 = i.udx.copy()
             x = i.getForceRange()
             filename = i.fileName
+            print(filename)
 
             for j in range(len(un2)):
                 un[j] = abs(un[j])
@@ -834,7 +784,7 @@ class GlobalDataPlotter(object):
                 T = i.getTension()
                 utheta = i.getForceRange()[1] - i.getForceRange()[0]
 
-
+                print(len(thetas),len(tilt))
 
                 linetilt.append(self.getIntersection(thetas, tilt, slope))
                 if(slope not in sloperangedict):
@@ -844,7 +794,7 @@ class GlobalDataPlotter(object):
                     x = X(a, kbt, A, T, tiltc)
                     y= Y(a, kbt, T, tiltc, utheta)[0]
                     uy = Y(a, kbt, T, tiltc, utheta)[1]
-                    sloperangedict[slope].append((x,y,uy))
+                    sloperangedict[slope].append((abs(x),y,uy))
 
                 linedx.append(self.getIntersection(thetas,dx2,slope))
 
@@ -931,7 +881,7 @@ class GlobalDataPlotter(object):
         index = 0
         for key in keys:
             for point in sloperangedict[key]:
-                plt.errorbar(point[0],point[1],fmt='.' ,yerr=point[2],color=colors[index])
+                plt.errorbar(abs(point[0]),point[1],fmt='.' ,yerr=point[2],color=colors[index])
             index +=1
 
         pdf.savefig(figure)
@@ -1002,6 +952,7 @@ class GlobalDataPlotter(object):
                 return (slope, thetas[p], tilt[p])
 
 
+
         return None
 
     def genLine(self, slope, end):
@@ -1054,7 +1005,7 @@ class GlobalDataPlotter(object):
 # compile.compileNew()
 
 plotter = GlobalDataPlotter()
-plotter.PlotTiltvsForce(Tension=20)
+#plotter.PlotTiltvsForce(Tension=20)
 #plotter.compareBases_CL(Tension = 20,Amplitude = 0.3/0.1 * 1,kt=1)#
 
 #plotter.GraphEverythingImporant()
