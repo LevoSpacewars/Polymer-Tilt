@@ -14,15 +14,15 @@ def X (a,kbt,A,T,theta):
     theta = math.atan(theta)
     print((A/0.2)*math.tanh(1/(a*10*2*math.pi)))
     print(A)
-    
-    
+
+
     F = math.sqrt( pow(T,2.0) + pow(T * math.tan(theta),2.0))
     B = 1/(a*10*2*math.pi)
     am = A * 1/(a*10*2*math.pi)
-    
+
     V = (am)/0.2
-    
-    
+
+
     output = F*pow(a,2) * pow(1/kbt,2) * V / pow(math.pi,2)
     return output
 
@@ -123,7 +123,7 @@ class GlobalDataPlotter(object):
 
         files = glob.glob('**/data.txt',recursive = True)
         for i in range(len(files)):
-            dir = files[i].split('/')[0]
+            dir = '/'.join(files[i].split('/')[:-1])
             print(dir)
             parameters = Simulations.PolymerSimulationParameters()
             parameters.loadParameters(dir + "/_simulation_parameters.txt")
@@ -146,12 +146,12 @@ class GlobalDataPlotter(object):
         temp.append(self.dataHandlers[0].getTemp())
         amplitude.append(self.dataHandlers[0].getPeriodicAmplitude())
         tension.append(self.dataHandlers[0].getTension())
-        
+
         handlers.append([])
         thandlers.append([])
         ahandlers.append([])
         tnhandlers.append([])
-        
+
         handlers[0].append(self.dataHandlers[0])
         thandlers[0].append(self.dataHandlers[0])
         ahandlers[0].append(self.dataHandlers[0])
@@ -184,13 +184,13 @@ class GlobalDataPlotter(object):
                 tnhandlers[tension.index(self.dataHandlers[i].getTension())].append(self.dataHandlers[i])
 
 
-            if self.dataHandlers[i].getChainLength() not in length:                
+            if self.dataHandlers[i].getChainLength() not in length:
                 length.append(self.dataHandlers[i].getChainLength())
                 handlers.append([])
                 handlers[-1].append(self.dataHandlers[i])
             else:
                 handlers[length.index(self.dataHandlers[i].getChainLength())].append(self.dataHandlers[i])
-                    
+
 
         return handlers, thandlers, ahandlers, tnhandlers, length, temp, amplitude, tension
 
@@ -541,7 +541,7 @@ class GlobalDataPlotter(object):
             axs.legend([self.createLegendT(temp)[colorassignment[i]]])
         plt.show()
 
-    
+
 
     def GraphEverythingToOrganizedPDF(self):
         from matplotlib import pyplot as plt
@@ -556,7 +556,7 @@ class GlobalDataPlotter(object):
             for i in range(len(list_a)):
                 for j in range(len(list_l)):
                     title = "Varied Temperature with Length:" + str(list_l[j]) + ", Amplitude:" + str(list_a[i])
-                    
+
                     ttitles.append(title)
                     fig = (plt.figure(title))
                     tfigures.append(fig)
@@ -567,7 +567,7 @@ class GlobalDataPlotter(object):
                     legendlabel=[]
                     render = False
                     for k in range(len(stemp)):
-                        
+
                         for l in range(len(stemp[k])):
                             if list_a[i] == stemp[k][l].getPeriodicAmplitude() and list_l[j] == stemp[k][l].getChainLength():
                                 x = stemp[k][l].getForceRange()
@@ -582,8 +582,8 @@ class GlobalDataPlotter(object):
                                         lc.append("red")
                                         legendlabel.append("SP: KbT="+str(stemp[k][l].getTemp()))
                                         color = "red"
-                                
-                                
+
+
                                 render = True
                                 plt.errorbar(x,y,yerr=uy,color=color)
                     patches = []
@@ -594,12 +594,12 @@ class GlobalDataPlotter(object):
                         export_pdf.savefig()
                     plt.close()
                     plt.clf()
-            
-                    
 
 
 
-        
+
+
+
             tfigures.append(plt.figure("VariedTemperature_constant_Merged"))
         #By Length
             lfigures = []
@@ -607,7 +607,7 @@ class GlobalDataPlotter(object):
             for i in range(len(list_a)):
                     for j in range(len(list_t)):
                         title = "Varied length with Temperature:" + str(list_t[j]) + ", Amplitude:" + str(list_a[i])
-                        
+
                         ttitles.append(title)
                         fig = (plt.figure(title))
                         tfigures.append(fig)
@@ -620,20 +620,20 @@ class GlobalDataPlotter(object):
                                     x = stemp[k][l].getForceRange()
                                     y,uy = stemp[k][l].getOutput()
                                     color = list_colors[list_l.index(stemp[k][l].getChainLength())]
-                                    
+
                                     plt.errorbar(x,y,yerr=uy,color=color)
                         export_pdf.savefig(figure=fig)
                         plt.close()
                         plt.clf()
         # lfigures.append(plt.figure("VariedLength_constant_Temperature:" + str()))
         # lfigures.append(plt.figure("VariedLength_constant_Merged"))
-        #By Amplitude 
+        #By Amplitude
             lfigures = []
             ltitles = []
             for i in range(len(list_t)):
                     for j in range(len(list_l)):
                         title = "Varied Amplitude with Length:" + str(list_l[j]) + ", Temperature:" + str(list_t[i])
-                        
+
                         ttitles.append(title)
                         fig = (plt.figure(title))
                         tfigures.append(fig)
@@ -646,13 +646,13 @@ class GlobalDataPlotter(object):
                                     x = stemp[k][l].getForceRange()
                                     y,uy = stemp[k][l].getOutput()
                                     color = list_colors[list_t.index(stemp[k][l].getTemp())]
-                                    
+
                                     plt.errorbar(x,y,yerr=uy,color=color)
                         export_pdf.savefig(figure=fig)
                         plt.close()
                         plt.clf()
 
-        
+
         #All Together
 
         #Export to pdf
@@ -664,9 +664,9 @@ class GlobalDataPlotter(object):
         pdf = matplotlib.backends.backend_pdf.PdfPages("exportTestB.pdf")
         list_colors = ["aqua","black","chocolate", "blue", "green","grey","red"]
 
-        
-        
-        
+
+
+
 
         for tn in (list_tn):
             for tmp in (list_t):
@@ -687,8 +687,8 @@ class GlobalDataPlotter(object):
                                     lengths.append(polymer.getChainLength())
                                 render = True
 
-                                
-                        
+
+
                     title = "dlength, Temperature:" + str(tmp) + ", Amplitude:" + str(abs(round(amp,3))) + ", $F_{y}$:" + str(tn)
                     plt.title(title)
                     plt.ylabel("dx/length")
@@ -701,13 +701,13 @@ class GlobalDataPlotter(object):
                     if(render):
                         pdf.savefig(fig)
                     plt.close()
-                         
+
 
         pdf.close()
 
 
         #graph of variable lengths, c temp, c tension, c a
-    
+
 
 
     def compareTattempts(self):
@@ -731,30 +731,30 @@ class GlobalDataPlotter(object):
             rowy.append(float(s[i+1]))
         plt.plot(rowx,rowy)
 
-        
+
         for i in (self.dataHandlers):
-            
+
             fn = i.fileName
             print(fn)
             thetas = np.array(i.getForceRange())
             dx2 = i.getDx2()
 
-            
+
             dx2c = 0
             for ii in range(1,len(dx2)):
                 if dx2[ii] / dx2[0] > 1.1 and dx2c == 0:
                     print("dration",dx2[ii] / dx2[0], thetas[ii])
                     dx2c = thetas[ii]
-            
+
             tilt = i.getOutput()[0]
             tiltc = 0
-            
-            
+
+
             for ii in range(1,len(tilt)):
                 if tilt[ii] / abs(tilt[0]) > 10 and tiltc == 0:
                     print("tration",tilt[ii] / tilt[0], thetas[ii])
                     tiltc = thetas[ii]
-            
+
             # utilt = i.getOutput()[1]
             # utiltc = 0
             # for ii in range(1,len(utilt)):
@@ -772,14 +772,14 @@ class GlobalDataPlotter(object):
             plt.plot(rowx,rowy)
             plt.errorbar(x[1],y[1],yerr= uy[1],fmt='.',color=colors[cindex],ecolor="red") # dx^2
             plt.errorbar(x[0],y[0],yerr= uy[0],fmt='.',color=colors[cindex],ecolor="grey")# tilt
-            
+
             #plt.errorbar(x[1],y[1], yerr= uy[1],fmt='.', color= "black")
             # plt.plot(2,utiltc, '.', color=colors[cindex], label=str(fn))
             cindex += 1
-       
-       
+
+
         plt.title("threshold critical theta values")
-        
+
         textstr = "matching colors = Same Run \n red error bar= dxCOM"
         plt.legend(["Predicted", "Measured com^2", "measured Tilt"])
         pdf.savefig(fig)
@@ -788,7 +788,7 @@ class GlobalDataPlotter(object):
         sloperangedict = {} #contains for sloperange[i] slopeinfo[i] = (theta, tilt), (...), (....)
 
         for i in self.dataHandlers:
-            
+
             fig, axs= plt.subplots(2,3)
             fig.set_figheight(10)
             fig.set_figwidth(20)
@@ -810,10 +810,10 @@ class GlobalDataPlotter(object):
             for j in range(len(un2)):
                 un[j] = abs(un[j])
                 un2[j] *= i.getOutput()[0][j] * 100
-            
+
             sloperange = np.array(range(1,6))/10
             for k in range(1,len(tilt)):
-                
+
                 if tilt[k] / abs(tilt[0]) > 10 and tiltc == 0:
                     ty = (tilt[k])
                     tx = (thetas[k])
@@ -822,7 +822,7 @@ class GlobalDataPlotter(object):
                     dy = (dx2[k])
                     dx = (thetas[k])
                     dxc = 1
-            
+
             linetilt = [] #list of slope details (slope, theta, tilt)
             linedx = []
 
@@ -833,7 +833,7 @@ class GlobalDataPlotter(object):
                 A = i.getPeriodicAmplitude()
                 T = i.getTension()
                 utheta = i.getForceRange()[1] - i.getForceRange()[0]
-                
+
 
 
                 linetilt.append(self.getIntersection(thetas, tilt, slope))
@@ -847,21 +847,21 @@ class GlobalDataPlotter(object):
                     sloperangedict[slope].append((x,y,uy))
 
                 linedx.append(self.getIntersection(thetas,dx2,slope))
-            
+
             done = False
             while not done:
                 done = True
                 if None  in linetilt:
                     linetilt.remove(None)
                     done *= False
-                
+
                 if None  in linedx:
                     linedx.remove(None)
                     done *= False
-            
-        
-                    
-            
+
+
+
+
 
             plt.cla()
 
@@ -885,23 +885,23 @@ class GlobalDataPlotter(object):
             for i in linetilt:
                 line = self.genLine(i[0],thetas[-1])
                 axs[0][1].plot(line[0],line[1])
-            
-            
-            
-            
-            
+
+
+
+
+
             axs[0][2].bar(thetas,un, width=0.002)
             axs[0][2].legend([" fractional, sttdev/measurment"])
             axs[1][2].bar(thetas,un2, width=0.002)
             axs[1][2].legend([" percent"])
-            
 
-                
+
+
             axs[1][1].legend()
             #axs[1][1].plot(dx,dy,'.',label=f"Threshold critical point")
 
 
-            
+
             pdf.savefig(fig)
             plt.close(fig=fig)
 
@@ -910,7 +910,7 @@ class GlobalDataPlotter(object):
         # now I want to gen a spectra of values for different interesction slopes
 
         keys = sloperangedict.keys()
-        
+
 
         for key in keys:
             figure = plt.figure(figsize=(10,10))
@@ -918,7 +918,7 @@ class GlobalDataPlotter(object):
             plt.plot(rowx,rowy)
             for point in sloperangedict[key]:
                 plt.errorbar(point[0],point[1], yerr=point[2])
-            
+
             pdf.savefig(figure)
             plt.close(figure)
 
@@ -933,7 +933,7 @@ class GlobalDataPlotter(object):
             for point in sloperangedict[key]:
                 plt.errorbar(point[0],point[1],fmt='.' ,yerr=point[2],color=colors[index])
             index +=1
-            
+
         pdf.savefig(figure)
         plt.close(figure)
 
@@ -944,7 +944,7 @@ class GlobalDataPlotter(object):
             for j in range(len(u2)):
                 u2[j] *= i.getOutput()[0][j] * 100
             x = i.getForceRange()
-            
+
             axs[0].bar(x,u,width=0.002)
             axs[0].legend([i.fileName + " fractional, sttdev/measurment"])
             axs[1].bar(x,u2,width=0.002)
@@ -958,7 +958,7 @@ class GlobalDataPlotter(object):
 
 
     def writeIntersectionData(self):
-        
+
         wfile = open("update_points",'w')
         info = []
 
@@ -974,20 +974,20 @@ class GlobalDataPlotter(object):
             L = i.getChainLength()
 
             utheta = i.getForceRange()[1] - i.getForceRange()[0]
-            
+
 
 
             linetilt = (self.getIntersection(thetas, tilt, slope))
             if linetilt is not None:
                 info.append((a,kbt,A,T,linetilt[1],utheta,L))
-        
+
         for i in info:
             wfile.write(f"{i[0]}, {i[1]}, {i[2]}, {i[3]}, {i[4]}, {i[5]}, {i[6]}\n")
-        
+
         wfile.close()
 
 
-        
+
 
 
     def getIntersection(self, xd,yd, slope):
@@ -1000,7 +1000,7 @@ class GlobalDataPlotter(object):
             p2 = tilt[p]
             if p2 > slope * thetas[p]:
                 return (slope, thetas[p], tilt[p])
-                
+
 
         return None
 
@@ -1008,7 +1008,7 @@ class GlobalDataPlotter(object):
         return [[0,end],[0,slope*end]]
 
 
-   
+
 
 
     def line_intersection(self,line1, line2):
@@ -1027,10 +1027,6 @@ class GlobalDataPlotter(object):
         y = det(d, ydiff) / div
         return (tn, x, y)
 
-    
-
-
-        
 
 
 
@@ -1038,16 +1034,20 @@ class GlobalDataPlotter(object):
 
 
 
-        
 
 
 
 
 
-            
-            
-            
-                    
+
+
+
+
+
+
+
+
+
 
 
 # compile = GlobalDataManager()

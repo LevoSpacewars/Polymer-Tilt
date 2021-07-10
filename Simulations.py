@@ -11,7 +11,7 @@ import gsd.hoomd
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-from PIL import Image
+#from PIL import Image
 circles = False
 
 
