@@ -19,11 +19,13 @@ def getDirectoryDict(directories):
 def handleHeatmaps(key, input, destination):
 
     for element in input[key]:
+
         fn = str(path) + str(element) + "/heatmap.txt"
         filename = "heatmap_" + element.split('_')[-1] + ".txt"
-        os.system('cp ' + fn + ' ' + destination + "/" + filename)
-
-    os.system('cp ' + file_path + "/heatmap.txt " destination_path + "heatmap_" + str(sheer_value) + ".txt")
+        if os.path.isfile(fn):
+            os.system('cp ' + fn + ' ' + destination + "/" + filename)
+        else:
+            os.system('cp ' + file_path + "/" + filename + " " + destination)
 
 def sortDictArrays(input):
     for key in input.keys():
