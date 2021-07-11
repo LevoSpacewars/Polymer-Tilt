@@ -66,7 +66,7 @@ def particlePotentialHarmonic(r, rmin, rmax,particle_diameter,strength_coef):
 
 class DisorderParameter():
     def __init__(self, random_seed, amplitude_range,nodes, width) -> None:
-        self.bond_radius = 0.025
+        self.bond_radius = 0.05
         self.width = width
         self.seed = random_seed
         self.amplitude_range = amplitude_range
@@ -79,7 +79,7 @@ class DisorderParameter():
         disorder_level = int(self.nodes)
         seed = self.seed
         r.seed(seed)
-        inv_lamda = int(1/self.bond_radius)
+        inv_lamda = int(1/(self.bond_radius))
         Arange = self.amplitude_range
 
         p:List[Tuple[float, int, float]] = []  # (amplitude, nodes, phase)
