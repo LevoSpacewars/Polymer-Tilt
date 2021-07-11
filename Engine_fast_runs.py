@@ -24,10 +24,10 @@ sheer = float(sys.argv[8])
 endsheer = float(sys.argv[9])
 id = sys.argv[10]
 random_seed = 0
-amount_nodes = 0
+disorder_level = 0
 if (len(sys.argv) > 11):
     random_seed = int(sys.argv[11])
-    amount_nodes = get_amount_nodes (float(sys.argv[12]))
+    amount_nodes = get_amount_nodes (int(sys.argv[12]))
 
 
 
@@ -57,9 +57,10 @@ parameters.setRunLength(runl)
 parameters.setIntegrator("legavin")
 parameters.setRunDirection("forward")
 
-amplitude_range = (0.0001* phi0, 0.001 * phi0)
+amplitude_range = (0.005* phi0, 0.05 * phi0)
 sim = Simulations.PolymerSimulation()
 sim.set_disorder(random_seed,amplitude_range,amount_nodes,chainnum)
+print(amount_nodes)
 sim.init(parameter=parameters,initializer='--mode=gpu')
 
 

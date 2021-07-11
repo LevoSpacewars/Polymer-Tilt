@@ -522,8 +522,9 @@ class PolymerSimulation():
 
     def apply_disorder(self):
         dparam = self.disorder.get_disorder()
-
+        print(len(dparam))
         for tup in dparam:
+
             f_disorder = hoomd.md.external.periodic()
             f_disorder.force_coeff.set('A', A=tup[0], i=0, w=tup[2], p=tup[1])
             f_disorder.force_coeff.set('B', A=tup[0], i=0, w=tup[2], p=tup[1])
@@ -533,7 +534,7 @@ class PolymerSimulation():
 
 
     def view_potential(self):
-
+        print("generating potential")
         import math as m
         width = self.parameter.lines
         cos_param = self.disorder.get_disorder()
@@ -548,13 +549,12 @@ class PolymerSimulation():
         den = width / N
         potential = np.zeros(N * N).reshape(N,N)
         for element in cos_param:
-            for y in range(len(potential)):
-                for x in range(len(potential[0])):
-                    p = x * den - width/2
-                    A = element[0]
-                    freq = element[1] / width
-                    phase = element[2]
-                    potential[y][x] += A * m.cos(p * freq * 2 * math.pi + phase)
+            for x in range(len(potential[0])):
+                p = x * den - width/2
+                A = element[0]
+                freq = element[1] / width
+                phase = element[2]
+                potential[0][x] += A * m.cos(p * freq * 2 * math.pi + phase)
 
 
         sm = 0
