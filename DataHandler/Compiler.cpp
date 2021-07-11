@@ -903,6 +903,11 @@ bool Compiler::writeHeatMap(float ** xdata, float ** ydata, int time_steps, int 
         xind = param.rezx - 1;
       }
 
+      if (px <= tablex[0])
+      {
+        xind = 0;
+      }
+
 
       for (int index = 0; index < param.rezy; index++)
       {
