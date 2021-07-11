@@ -27,7 +27,7 @@ random_seed = 0
 disorder_level = 0
 if (len(sys.argv) > 11):
     random_seed = int(sys.argv[11])
-    amount_nodes = get_amount_nodes (int(sys.argv[12]))
+    amount_nodes = get_amount_nodes (float(sys.argv[12]))
 
 
 
