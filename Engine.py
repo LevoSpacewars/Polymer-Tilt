@@ -30,7 +30,7 @@ parameters.setRunDirection("forward")
 amplitude_range = (0.005* 3, 0.05 * 3)
 sim = Simulations.PolymerSimulation()
 sim.init(parameter=parameters,initializer='--mode=cpu')
-sim.set_disorder(randint(0,199999),amplitude_range,0,10)
+sim.set_disorder(randint(0,199999),amplitude_range,10,10)
 filelocation = sim.probe("disorder_test",0,"" )
 print(filelocation)
 
