@@ -25,6 +25,9 @@ def renameHeatmaps(key, input):
                 sheer = round(float(element.split('_')[-1]),1)
                 name = "heatmap_" + str(sheer) + ".txt"
                 os.system("mv " + p + "/" + file + " " + p + "/" + name)
+            if "potential" in file:
+                name = "potential_" + str(sheer) + ".txt"
+                os.system("mv " + p + "/" + file + " " + p + "/" + name)
 
 
 def handleHeatmaps(key, input, destination):
@@ -37,6 +40,9 @@ def handleHeatmaps(key, input, destination):
             if "heatmap" in file:
                 sheer = round(float(element.split('_')[-1]),1)
                 os.system("cp " + p + "/" + file + " " + destination)
+            if "potential" in file:
+                os.system("cp " + p + "/" + file + " " + destination)
+
 
 def sortDictArrays(input):
     for key in input.keys():
