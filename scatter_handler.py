@@ -42,6 +42,8 @@ def handleHeatmaps(key, input, destination):
                 os.system("cp " + p + "/" + file + " " + destination)
             if "potential" in file:
                 os.system("cp " + p + "/" + file + " " + destination)
+            if "disorder_info" in file:
+                os.system("cp " + p + "/" + file + " " + destination)
 
 
 def sortDictArrays(input):
