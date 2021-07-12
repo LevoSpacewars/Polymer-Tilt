@@ -20,13 +20,13 @@ def renameHeatmaps(key, input):
     for element in input[key]:
 
         p = str(path) + str(element)
+        sheer = round(float(element.split('_')[-1]),1)
         for file in os.listdir(p):
             if "heatmap" in file:
-                sheer = round(float(element.split('_')[-1]),1)
                 name = "heatmap_" + str(sheer) + ".txt"
                 os.system("mv " + p + "/" + file + " " + p + "/" + name)
             if "potential" in file:
-                name = "potential_" + str(sheer) + ".txt"
+                name = "potential_" + str(sheer) + ".png"
                 os.system("mv " + p + "/" + file + " " + p + "/" + name)
 
 
