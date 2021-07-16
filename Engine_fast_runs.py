@@ -7,7 +7,7 @@ from disorder import get_amount_nodes
 parameters = Simulations.PolymerSimulationParameters()
 
 print("\n\n\n\n\n")
-inputs = {"length": None, "kbt": None, "amplitude": None, "tension": None, "npolymers": None, "runtime": None, "samplerate": None, "sheer": None, "endsheer": None, "random_seed": None, "disorder_ratio": None, "ID": None}
+inputs = {"length": None, "kbt": None, "amplitude": None, "tension": None, "npolymers": None, "runtime": None, "samplerate": None, "sheer": None, "endsheer": None, "random_seed": None, "disorder_ratio": None, "ModalDisorder":None, "ID": None}
 
 # TODO: need to implement the disorder level to set the contraints along the min and max amplitude
 
@@ -27,7 +27,12 @@ random_seed = 0
 disorder_level = 0
 if (len(sys.argv) > 11):
     random_seed = int(sys.argv[11])
-    amount_nodes = get_amount_nodes (float(sys.argv[12]))
+    if bool(sys.argv[13]):
+        amount_nodes = get_amount_nodes (float(sys.argv[12]))
+        upperAmplitude = 0.05
+    else:
+        upperAmplitude = get_amplitude_mod(float(sys.argv[12],60))
+        amount_nodes = 60
 
 
 
@@ -39,7 +44,7 @@ vs =    sample_rate
 A= phi0
 
 
-parameters.setSheerForceRange(sheer,0)
+parameters.setSheerForceRange(sheer,5)
 parameters.setDf(1)
 parameters.setLength(length)
 parameters.setNumberChains(chainnum)
@@ -57,14 +62,14 @@ parameters.setRunLength(runl)
 parameters.setIntegrator("legavin")
 parameters.setRunDirection("forward")
 
-amplitude_range = (0.005* phi0, 0.05 * phi0)
+amplitude_range = (0.005* phi0, phi0 * upperAmplitude)
 sim = Simulations.PolymerSimulation()
 sim.set_disorder(random_seed,amplitude_range,amount_nodes,chainnum)
 print(amount_nodes)
 sim.init(parameter=parameters,initializer='--mode=gpu')
 
 
-filelocation = sim.probe(id,sheer,"",server = True) ##S
+filelocation = sim.probe(id,sheer,"",server = True)
 print(filelocation)
 
 #renderer = Simulations.DataVisualizer(basedirectory=filelocation,interval=0.75)
