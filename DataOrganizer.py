@@ -20,7 +20,7 @@ def X (a,kbt,A,T,theta):
     B = 1/(a*10*2*math.pi)
     am = A * 1/(a*10*2*math.pi)
 
-    V = (am)/0.2
+    V = abs(am)/0.2
 
 
     output = F*pow(a,2) * pow(1/kbt,2) * V / pow(math.pi,2)

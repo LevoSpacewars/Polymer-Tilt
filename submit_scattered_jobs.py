@@ -1,9 +1,9 @@
-#here we are going to submit parallel jobs with group ID 
+#here we are going to submit parallel jobs with group ID
 #first give name to all the inputs
 #then assign sysargs to a dictionary
 
 
-args = ["length", "kbt", "amplitude", "tension", "npolymers", "runtime", "samplerate", "sheer_start","sheer_end","DF","ID","disorder_level"]
+args = ["length", "kbt", "amplitude", "tension", "npolymers", "runtime", "samplerate", "sheer_start","sheer_end","DF","ID","disorder_level","ModalDisorder"]
 dic = {}
 import sys
 import os
@@ -30,7 +30,7 @@ for j in range(int(dic["DF"])):
     sargs = ""
     for i in range(7):
         sargs += " " + dic[i]
-    sargs += " " + str(sheers[j]) + " " + str(tend) + " " + dic["ID"] + " " + str(rseed) + " " + str(dic['disorder_level'])
+    sargs += " " + str(sheers[j]) + " " + str(tend) + " " + dic["ID"] + " " + str(rseed) + " " + str(dic['disorder_level'] + " " + str(dic['ModalDisorder']))
 
     argsouput.append(sargs)
 print(argsouput)
@@ -48,10 +48,3 @@ for i in range(int(dic["DF"])):
     f.close()
     print("submitting job for: " + filename)
     os.system("sbatch " + filename)
-
-
-
-
-
-
-

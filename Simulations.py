@@ -85,9 +85,9 @@ class DisorderParameter():
         p:List[Tuple[float, int, float]] = []  # (amplitude, nodes, phase)
 
         for null in range(disorder_level):
-            A = 2 * r.random() * (Arange[1] - Arange[0]) + Arange[0] - (Arange[1] - Arange[0])/2
+            A = r.random() * (Arange[1] - Arange[0]) + Arange[0]
             phase = 2 * r.random() * math.pi
-            nodes = r.randint(10, inv_lamda)
+            nodes = r.randint(1, inv_lamda)
             p.append((A, nodes, phase))
         return p
 
@@ -552,9 +552,9 @@ class PolymerSimulation():
             for x in range(len(potential[0])):
                 p = x * den - width/2
                 A = element[0]
-                freq = element[1] / width
+                freq = element[1] / width * 2 * math.pi
                 phase = element[2]
-                potential[0][x] += A * m.cos(p * freq * 2 * math.pi + phase)
+                potential[0][x] += A * m.cos(p * freq  + phase)
 
 
         sm = 0
