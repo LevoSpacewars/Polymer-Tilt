@@ -58,7 +58,7 @@ private:
     vector<float> dx2;
 
     vector<float> sheerTension;
-    
+
     float calcAverageDxsqr(float ** data, int n_polymers, int l_polymer,int sampleLength);
     bool writePolymerSystem(float** xa, float ** ya, int p_n, int p_length,string path);
     int compileData(string* fname,float interval);
@@ -68,10 +68,10 @@ private:
     float* calcAveragePosition(float ** data, int p_n, int p_length,int runLength);
     float* calcAverageDx(float **x, int p_n, int p_length);
     bool exportDensityFunction_avg(float** xa, float ** ya, int p_n, int p_length,float force_value, string path);
-    bool exportDensityFunction_raw(float** x, float ** y, int p_n, int p_length,int time_length,float force_value, string path);
+    bool exportProfileDensity(float** x, float ** y, int p_n, int p_length,int time_length,float force_value, string path);
     float* calcAverageLength(float ** x, float ** y, int p_n, int p_length);
     bool  writeProfileOutput(float** x, float ** y, int p_n, int p_length,float force_value, string path,int time);
-    bool  writeHeatMap(float** x, float ** y, int time_steps, int nParticles,float force_value,bool normalized, HeatMapParameters param, string path);
+    bool  writeHeatMap(float** x, float ** y, int time_steps, int nParticles,float force_value,bool normalized, HeatMapParameters param, string path, string name);
     float * calcSystemOutput(float ** dx, float ** length, float sheer_tension);
     float * calcSheerTension();
     void writeData(string filename, float** xb, float**yb,int size,int blocksize);
