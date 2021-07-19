@@ -287,17 +287,12 @@ int Compiler::compileData(string *filename, float interval)
         HeatMapParameters param;
         param.rezx = 100;
         param.rezy = 100;
-        param.height = this->profile.length/5;
+        param.height = this->profile.length/5; //this can be ignored if we can implement finding the bounds particle positions
         param.width = this->profile.lines;
         param.x = -this->profile.lines/2;
         param.y = 0;
-        writeHeatMap(&pos_xr,&pos_yr, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf");
+        writeHeatMap(&pos_xr,&pos_yr, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf","heatmap");
 
-
-        //cout<<"tracking particles 0,100,200"<<endl;
-        //trackParticle(&pos_x,0,adj_run,n_polymers*l_polymer,theta);
-        //trackParticle(&pos_x,100,adj_run,n_polymers*l_polymer,theta);
-        //trackParticle(&pos_x,200,adj_run,n_polymers*l_polymer,theta)
         cout<<"calculatig average position x"<<endl;
         float * avg_x = calcAveragePosition(&pos_x, n_polymers, l_polymer, adj_run);
 
@@ -307,13 +302,12 @@ int Compiler::compileData(string *filename, float interval)
         cout<<"calculating the avg_dx^2 " <<endl;
         float avg_dx2 = calcAverageDxsqr(&pos_x, n_polymers, l_polymer, adj_run);
 
-      /*#cout<<"writePorfileoutput"<<endl;
+        cout<<"writePorfileoutput"<<endl;
         writeProfileOutput(&pos_xr, &pos_yr, n_polymers, l_polymer,0,current_path,adj_run);
 
         cout<<"exportDensityFunction_avg"<<endl;
-        exportDensityFunction_raw(&pos_x, &pos_y, n_polymers, l_polymer, adj_run,theta,current_path);
-        exportDensityFunction_avg(&avg_x,&avg_y, n_polymers, l_polymer, theta, current_path);
-        */
+        exportProfileDensity(&pos_x, &pos_y, n_polymers, l_polymer, adj_run,theta,current_path);
+
         cout<<"calcAverageDx"<<endl;
         float * dx = calcAverageDx(&avg_x,n_polymers,l_polymer);
 
@@ -384,7 +378,7 @@ void Compiler::writeData(string filename, float** xb, float**yb,int size,int blo
 
 }
 
-bool Compiler::truncateFiles()
+bool Compiler::truncateFiles() // not useful (not needed for anycalcaultions)
 {
     ofstream writeFile;
 
@@ -503,7 +497,7 @@ bool Compiler::exportDensityFunction_avg(float** xa, float ** ya, int p_n, int p
 
     return true;
 }
-bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p_length,int time_length,float force_value, string path)//M SAFE
+bool Compiler::exportProfileDensity(float** xa, float ** ya, int p_n, int p_length,int time_length,float force_value, string path)//M SAFE
 {
 
 
@@ -575,18 +569,10 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
     int unc_offset = p_n*p_length*time_length/2;
 
 
-    cout<<"writing raw"<<endl;
-    ofstream writeFile;
-    ofstream comFile;
-    ofstream denFile;
     float conv = this->profile.boxdimx/p_n;
-    writeFile.open(this->current_path + "/DensityData_raw:" + to_string(force_value) + ".txt",std::ios_base::trunc);
-    comFile.open(this->current_path + "/COM:" + to_string(force_value) + ".txt",std::ios_base::trunc);
-    denFile.open(this->current_path + "/DensityMap_raw:" + to_string(force_value) + ".txt",std::ios_base::trunc);
-    writeFile << "parameters (p_n,p_l,force,Theta):" + to_string(p_n) + "," + to_string(p_length) + "," +to_string(force_value) + "," + to_string(0) <<endl;
-    writeFile <<"x,y"<<endl;
-    ofstream debugFile;
-    debugFile.open(this->current_path + "/DebugDensityData_raw:" + to_string(force_value) + ".txt",std::ios_base::trunc);
+
+    float *profilexpos = new float[p_n * p_length * time_length]; // for making heatmap of probability density
+    float *profileypos = new float[p_n * p_length * time_length];
 
 
     for (int k = 0; k<time_length;k++)
@@ -621,8 +607,11 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
                 {
                     debugFile << "T:" + to_string(k) + " P_n:" + to_string(i) + " " << x[j+offset] << " " + to_string(calc)<<endl;
                 }
-                denFile << ((x[j+offset]) - avg) << "," << y[j+offset]<<endl;
-                writeFile<< calc<< "," << y[j+offset] <<endl;
+
+                profilexpos[j + offset] = ((x[j+offset]) - avg2);
+                profileypos[j + offset] = y[j + offset];
+                //denFile << ((x[j+offset]) - avg) << "," << y[j+offset]<<endl;
+                writeFile<< ((x[j+offset]) - avg2)<< "," << y[j+offset] <<endl;
             }
 
 
@@ -632,11 +621,18 @@ bool Compiler::exportDensityFunction_raw(float** xa, float ** ya, int p_n, int p
     }
 
 
+    HeatMapParameters param;
+    param.rezx = 100;
+    param.rezy = 100;
+    param.height = this->profile.length/5; //this can be ignored if we can implement finding the bounds particle positions
+    param.width = this->profile.lines;
+    param.x = -this->profile.lines/2;
+    param.y = 0;
+    writeHeatMap(&profilexpos,&profileypos, p_n*p_length, time_length, force_value, false, param, "sdf", "ProfileDensity");
 
-    comFile.close();
-    debugFile.close();
-    writeFile.close();
-    denFile.close();
+    delete profilexpos;
+    delete profileypos;
+
     return true;
 }
 
@@ -647,7 +643,7 @@ bool Compiler::writeProfileOutput(float** xa, float ** ya, int p_n, int p_length
     float* y = *ya;
     ofstream writeFile;
     int size = time * p_n*p_length;
-    writeFile.open(this->current_path + "/profileData.txt",std::ios_base::trunc);
+    writeFile.open(this->current_path + "/profileData_" + to_string(force_value) + ".txt",std::ios_base::trunc);
 
     for (int i = 0; i < size; i++)
     {
@@ -687,146 +683,8 @@ bool Compiler::writePolymerSystem(float** xa, float ** ya, int p_n, int p_length
     return true;
 }
 
-/*
-bool Compiler::writeHeatMap(float** xs, float** ys, int time_steps, int nParticles, float force_value, bool normalized, HeatMapParameters param, string path) //memory safe
-{
-    float *x = *xs;
-    float *y = *ys;
 
-
-    //initialize spacing arrays
-    float * tablex = new float[param.rezx];
-    float * tabley = new float[param.rezy];
-
-    //initalized output
-    float * heatmap = new float[param.rezx * param.rezy];
-
-    bool done = false;
-
-    std::cout<<"writing HeatMap"<<endl;
-
-
-
-    int offset = 0;
-
-    float xconv = param.width/param.rezx;
-    float yconv = param.height/param.rezy;
-    for (int i = 0; i < param.rezx*param.rezy; i++) //zero heatmap
-    {
-        heatmap[i]=0;
-    }
-
-    //assign values for spacing on spacing arrays
-    for (int i = 0; i < param.rezx; i++)
-    {
-        tablex[i] = xconv * (i+1) + param.x;
-
-    }
-    cout<<endl;
-
-    for (int i = 0; i < param.rezy; i++)
-    {
-        tabley[i] = yconv * (i+1) + param.y;
-        cout<<tabley[i]<<",";
-    }
-    cout<<endl;
-
-
-
-    //begin sort
-    for (int i = 0; i < time_steps;i++)
-    {
-        offset = nParticles * i;
-        for (int j = 0; j < nParticles; j++)
-        {
-            int a = 0;
-            int b = 0;
-
-
-            bool donea = false;
-            bool doneb = false;
-            for (int k = 0; k < param.rezx;k++)
-            {
-                if (x[offset + j] <= tablex[k])
-                {
-                    a = k;
-                    donea = true;
-                    break;
-                }
-            }
-            for (int k = 0; k < param.rezy;k++)
-            {
-                if (y[offset + j] <= tabley[k])
-                {
-                    b = k;
-                    doneb=true;
-                    break;
-                }
-            }
-
-
-
-
-
-
-
-            if (donea == false | doneb == false)
-            {
-                cout<<"sort didn't work"<<endl;
-                cout<<x[offset + j]<<","<<y[offset+j]<<endl;
-                cout<<donea<<","<<doneb<<endl;
-
-            }
-            int h_index = param.rezx* (b) + a;
-            heatmap[h_index] +=1;
-        }
-
-    }
-
-    //normalize?
-
-    if(normalized)
-    {
-        int N = 0;
-        float largest = 0;
-        for (int i =1; i < param.rezy*param.rezx;i++)
-        {
-
-            largest = (heatmap[i] >= largest) * heatmap[i] + (heatmap[i] < largest) * largest;
-        }
-
-        float weight = 255.0/largest;
-
-        for (int i =1; i < param.rezy*param.rezx;i++)
-        {
-            heatmap[i]= heatmap[i]*weight;
-        }
-    }
-
-    ofstream myfile;
-    myfile.open (this->current_path + "/heatmap"+ to_string(force_value/this->profile.tension) + ".txt",ios::trunc);
-    myfile << "parameters (x,y,w,h,rx,ry):" + to_string(param.x) + "," + to_string(param.y) + "," +to_string(param.width) + "," + to_string(param.height) + "," + to_string(param.rezx) + "," + to_string(param.rezy) <<endl<<"{";
-
-    for (int i = 0; i < param.rezy;i++)
-    {
-        for(int j = 0; j < param.rezx -1;j++)
-        {
-            myfile<< heatmap[i* param.rezx + j] << ",";
-        }
-        myfile<< heatmap[i* param.rezx + param.rezx] <<endl;
-    }
-    myfile.close();
-
-    delete heatmap;
-    delete tabley;
-    delete tablex;
-
-
-
-}
-*/
-
-bool Compiler::writeHeatMap(float ** xdata, float ** ydata, int time_steps, int nParticles, float force_value, bool normalized, HeatMapParameters param, string path)
+bool Compiler::writeHeatMap(float ** xdata, float ** ydata, int time_steps, int nParticles, float force_value, bool normalized, HeatMapParameters param, string path, string fname)
 {
 
   float *x = *xdata;
@@ -949,7 +807,7 @@ bool Compiler::writeHeatMap(float ** xdata, float ** ydata, int time_steps, int 
   // write to file;
 
   ofstream nfil;
-  nfil.open(this->current_path + "/heatmap_" + to_string(force_value) + ".txt", std::ios_base::trunc);
+  nfil.open(this->current_path + "/" + fname + "_" + to_string(force_value) + ".txt", std::ios_base::trunc);
   nfil << "parameters (x,y,w,h,rx,ry):" + to_string(param.x) + "," + to_string(param.y) + "," +to_string(param.width) + "," + to_string(param.height) + "," + to_string(param.rezx) + "," + to_string(param.rezy) <<endl;
 
   for (int i = 0; i < param.rezy;i++)
