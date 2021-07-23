@@ -16,7 +16,7 @@ def getDirectoryDict(directories):
     print("/")
     return runidp
 
-def renameHeatmaps(key, input):
+def renameFiles(key, input):
     for element in input[key]:
 
         p = str(path) + str(element)
@@ -28,6 +28,7 @@ def renameHeatmaps(key, input):
             if "potential" in file:
                 name = "potential_" + str(sheer) + ".png"
                 os.system("mv " + p + "/" + file + " " + p + "/" + name)
+            
 
 
 def handleHeatmaps(key, input, destination):
@@ -182,6 +183,6 @@ if nameid is None:
         smin, smax = getSheerRange(dirdict, key)
         changeDF(dirpath + "/_simulation_parameters.txt", len(dirdict[key]))
         changeRange(dirpath + "/_simulation_parameters.txt", smin, smax)
-        renameHeatmaps(key,dirdict)
+        renameFiles(key,dirdict)
         handleHeatmaps(key, dirdict, dirpath)
         writeData(dirpath, data)
