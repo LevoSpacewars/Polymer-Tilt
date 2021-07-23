@@ -602,22 +602,13 @@ bool Compiler::exportProfileDensity(float** xa, float ** ya, int p_n, int p_leng
             {
 
 
-                float calc = ((x[j+offset]) - avg) - i*conv;
-                if (calc > 4 | calc < -5)
-                {
-                    debugFile << "T:" + to_string(k) + " P_n:" + to_string(i) + " " << x[j+offset] << " " + to_string(calc)<<endl;
-                }
-
                 profilexpos[j + offset] = ((x[j+offset]) - avg2);
                 profileypos[j + offset] = y[j + offset];
-                //denFile << ((x[j+offset]) - avg) << "," << y[j+offset]<<endl;
-                writeFile<< ((x[j+offset]) - avg2)<< "," << y[j+offset] <<endl;
             }
 
 
         }
         com = com/p_n;
-        comFile << com <<",";
     }
 
 

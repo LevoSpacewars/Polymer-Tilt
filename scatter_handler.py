@@ -16,7 +16,7 @@ def getDirectoryDict(directories):
     print("/")
     return runidp
 
-def renameHeatmaps(key, input):
+def renameFiles(key, input):
     for element in input[key]:
 
         p = str(path) + str(element)
@@ -28,6 +28,10 @@ def renameHeatmaps(key, input):
             if "potential" in file:
                 name = "potential_" + str(sheer) + ".png"
                 os.system("mv " + p + "/" + file + " " + p + "/" + name)
+            if "ProfileDensity" in file:
+                name = "profiledensity_" + str(sheer) + ".txt"
+                os.system("mv " + p + "/" + file + " " + p + "/" + name)
+            
 
 
 def handleHeatmaps(key, input, destination):
@@ -44,6 +48,8 @@ def handleHeatmaps(key, input, destination):
                 os.system("cp " + p + "/" + file + " " + destination)
             if "disorder_info" in file:
                 os.system("cp " + p + "/" + file + " " + destination)
+            if "ProfileDensity" in file:
+
 
 
 def sortDictArrays(input):
@@ -182,6 +188,6 @@ if nameid is None:
         smin, smax = getSheerRange(dirdict, key)
         changeDF(dirpath + "/_simulation_parameters.txt", len(dirdict[key]))
         changeRange(dirpath + "/_simulation_parameters.txt", smin, smax)
-        renameHeatmaps(key,dirdict)
+        renameFiles(key,dirdict)
         handleHeatmaps(key, dirdict, dirpath)
         writeData(dirpath, data)
