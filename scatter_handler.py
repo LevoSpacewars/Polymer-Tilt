@@ -49,6 +49,7 @@ def handleHeatmaps(key, input, destination):
             if "disorder_info" in file:
                 os.system("cp " + p + "/" + file + " " + destination)
             if "ProfileDensity" in file:
+                os.system("cp " + p + "/" + file + " " + destination)
 
 
 
