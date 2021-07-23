@@ -28,6 +28,9 @@ def renameFiles(key, input):
             if "potential" in file:
                 name = "potential_" + str(sheer) + ".png"
                 os.system("mv " + p + "/" + file + " " + p + "/" + name)
+            if "ProfileDensity" in file:
+                name = "profiledensity_" + str(sheer) + ".txt"
+                os.system("mv " + p + "/" + file + " " + p + "/" + name)
             
 
 
@@ -45,6 +48,8 @@ def handleHeatmaps(key, input, destination):
                 os.system("cp " + p + "/" + file + " " + destination)
             if "disorder_info" in file:
                 os.system("cp " + p + "/" + file + " " + destination)
+            if "ProfileDensity" in file:
+
 
 
 def sortDictArrays(input):
