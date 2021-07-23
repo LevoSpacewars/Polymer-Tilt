@@ -29,7 +29,7 @@ def renameFiles(key, input):
                 name = "potential_" + str(sheer) + ".png"
                 os.system("mv " + p + "/" + file + " " + p + "/" + name)
             if "ProfileDensity" in file:
-                name = "profiledensity_" + str(sheer) + ".txt"
+                name = "ProfileDensity_" + str(sheer) + ".txt"
                 os.system("mv " + p + "/" + file + " " + p + "/" + name)
             
 
