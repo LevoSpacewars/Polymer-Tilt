@@ -503,9 +503,9 @@ class PolymerSimulation():
         self.sheerForce   = hoomd.md.force.constant(group = self.anchor, fvec=(0.0,0.0,0.0))
         periodic = hoomd.md.external.periodic() #External potential defined
         if lines is not 1:
-            periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=lines+added)
-            periodic.force_coeff.set('B', A=amplitude, i=0, w=1, p=lines+added)
-            periodic.force_coeff.set('C', A=amplitude, i=0, w=1, p=lines+added)
+            periodic.force_coeff.set('A', A=amplitude, i=0, w=0, p=lines+added)
+            periodic.force_coeff.set('B', A=amplitude, i=0, w=0, p=lines+added)
+            periodic.force_coeff.set('C', A=amplitude, i=0, w=0, p=lines+added)
             print("multipolymer settings")
         else:
             periodic.force_coeff.set('A', A=amplitude, i=0, w=1, p=width)
@@ -515,7 +515,7 @@ class PolymerSimulation():
             #periodic.force_coeff.set('A', A=-10000000.0, i=0, w=0, p=10)
 
 
-        periodic.force_coeff.set('A', A=10000000.0, i=1, w=0, p=10) #used to keep anchor on y=0
+        periodic.force_coeff.set('A', A=-10000000.0, i=1, w=1, p=10) #used to keep anchor on y=0
 
     def set_disorder(self, random_seed, amplitude_range,nodes, width):
         self.disorder = DisorderParameter(random_seed, amplitude_range,nodes,width)
