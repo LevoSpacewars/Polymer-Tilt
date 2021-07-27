@@ -515,7 +515,7 @@ class PolymerSimulation():
             #periodic.force_coeff.set('A', A=-10000000.0, i=0, w=0, p=10)
 
 
-        periodic.force_coeff.set('A', A=-10000000.0, i=1, w=2, p=10) #used to keep anchor on y=0
+        periodic.force_coeff.set('A', A=-10000000.0, i=1, w=0, p=1000) #used to keep anchor on y=0
 
     def set_disorder(self, random_seed, amplitude_range,nodes, width):
         self.disorder = DisorderParameter(random_seed, amplitude_range,nodes,width)
@@ -656,7 +656,7 @@ class PolymerSimulation():
 
         self.boxdim=[0,0]
         self.boxdim[0] = self.parameter.getNumberChains()
-        self.boxdim[1] = self.parameter.getLength()
+        self.boxdim[1] = 1000
         self.parameter.setBoxDimx(self.boxdim[0])
         self.parameter.setBoxDimy(self.boxdim[1])
 
