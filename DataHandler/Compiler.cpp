@@ -263,7 +263,6 @@ int Compiler::compileData(string *filename, float interval)
                  pos_y[indext + base_offset] = (float) raw_data[v+1];
                  pos_xr[indext + base_offset] = (float) raw_data[v];
                  pos_yr[indext + base_offset] = (float) raw_data[v+1];
-
                  indext++;
             }
 
@@ -303,7 +302,7 @@ int Compiler::compileData(string *filename, float interval)
         float avg_dx2 = calcAverageDxsqr(&pos_x, n_polymers, l_polymer, adj_run);
 
         cout<<"writePorfileoutput"<<endl;
-        writeProfileOutput(&pos_xr, &pos_yr, n_polymers, l_polymer,0,current_path,adj_run);
+        writeProfileOutput(&pos_xr, &pos_yr, n_polymers, l_polymer,i * conv,current_path,100);
 
         cout<<"exportDensityFunction_avg"<<endl;
         exportProfileDensity(&pos_x, &pos_y, n_polymers, l_polymer, adj_run,theta,current_path);
@@ -610,6 +609,7 @@ bool Compiler::exportProfileDensity(float** xa, float ** ya, int p_n, int p_leng
         }
         com = com/p_n;
     }
+    
 
 
     HeatMapParameters param;
@@ -618,6 +618,12 @@ bool Compiler::exportProfileDensity(float** xa, float ** ya, int p_n, int p_leng
     param.height = this->profile.length/5; //this can be ignored if we can implement finding the bounds particle positions
     param.width = this->profile.lines;
     param.x = -this->profile.lines/2;
+    if (this->profile.lines == 1)
+    {
+        param.width = 10;
+        param.x = -10/2;
+    }
+    
     param.y = 0;
     writeHeatMap(&profilexpos,&profileypos, p_n*p_length, time_length, force_value, false, param, "sdf", "ProfileDensity");
 
@@ -633,12 +639,12 @@ bool Compiler::writeProfileOutput(float** xa, float ** ya, int p_n, int p_length
     float* x = *xa;
     float* y = *ya;
     ofstream writeFile;
-    int size = time * p_n*p_length;
+    int size = p_n*p_length;
     writeFile.open(this->current_path + "/profileData_" + to_string(force_value) + ".txt",std::ios_base::trunc);
-
+    int offset = time * size;
     for (int i = 0; i < size; i++)
     {
-        writeFile << x[i] <<","<< y[i]<<endl;
+        writeFile << x[offset + i] <<","<< y[offset + i]<<endl;
     }
 
     writeFile.close();
@@ -698,31 +704,38 @@ bool Compiler::writeHeatMap(float ** xdata, float ** ydata, int time_steps, int 
   }
 
   // populate tables
+  cout <<"X-table:[";
   float convx = param.width / param.rezx;
   for (int index = 0; index < param.rezx; index++)
   {
     tablex[index] = convx * index + param.x;
+    cout <<tablex[index]<<",";
   }
+  cout << "]"<<endl;
+
+  cout<< "Y-table:[";
 
   float convy = param.height / param.rezy;
   for (int index = 0; index < param.rezy; index++)
   {
     tabley[index] = convy * index + param.y;
+    cout <<tabley[index]<<",";
   }
+    cout << "]"<<endl;
 
   std::cout<<"writing HeatMap"<<endl;
 
 
   // sort into heightmap
 
-  for (int i = 0; i < param.rezy; i++)
-  {
-    for (int ii = 0; ii < param.rezx - 1;ii++)
-    {
-      cout << heatmap[i][ii]<<",";
-    }
-    cout << heatmap[i][param.rezx - 1] << endl;
-  }
+//   for (int i = 0; i < param.rezy; i++)
+//   {
+//     for (int ii = 0; ii < param.rezx - 1;ii++)
+//     {
+//       cout << heatmap[i][ii]<<",";
+//     }
+//     cout << heatmap[i][param.rezx - 1] << endl;
+//   }
 
 
   for (int step = 0; step < time_steps; step++)
@@ -737,7 +750,7 @@ bool Compiler::writeHeatMap(float ** xdata, float ** ydata, int time_steps, int 
       int xind = -1;
       int yind = -1;
       // search x
-
+      cout <<"sorting values:" + to_string(px) + "," + to_string(py) << endl;
 
       for (int index = 0; index < param.rezx - 1; index++)
       {
@@ -783,6 +796,7 @@ bool Compiler::writeHeatMap(float ** xdata, float ** ydata, int time_steps, int 
         cout << yind<< "," <<xind<<endl;
         cout << py << "," << px << endl;
       }
+      cout << xind<< "," << yind<< endl;
       //cout << yind<< "," <<xind<<endl;
       heatmap[yind][xind] += 1;
 
