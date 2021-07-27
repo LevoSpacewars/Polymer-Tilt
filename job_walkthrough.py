@@ -10,10 +10,10 @@ sheer_start = 0                     # starting sheerforce value
 sheer_end = 3                       # ending sheerforce value
 DF = 10                             # amount of sheer force steps inbetween sheer_start and sheer_end
 ID = 10000                          # MUST BE UNIQUE:: might be useful to implement something to auto assign id
-disorder_level = 1                  # indepenedent of modal or nonmodal disorder: 0-1 for disorder <= Periodic Amplitude;
+disorder_level = 0                  # indepenedent of modal or nonmodal disorder: 0-1 for disorder <= Periodic Amplitude;
 ModalDisorder = 0                   # this should always either be 0 or 1 (true or false)
 numbersims = 1
-startID = 0000
+startID = ID
 if len(sys.argv) > 1:
     for index in range(len(sys.argv)):
         if index == 1:
@@ -32,4 +32,4 @@ for i in range(numbersims):
     ID = startID + i
     cmd = "python submit_scattered_jobs.py {} {} {} {} {} {} {} {} {} {} {} {} {}".format(length, kbt, amplitude, tension, num_polymers, runtime, sample_freq, sheer_start, sheer_end, DF, ID, disorder_level, ModalDisorder)
     print(cmd)
-    #os.system(cmd)
+    os.system(cmd)
