@@ -687,7 +687,7 @@ bool Compiler::writeHeatMap(float ** xdata, float ** ydata, int time_steps, int 
   float *x = *xdata;
   float *y = *ydata;
 
-
+  
   //initialize spacing arrays
   float * tablex = new float[param.rezx];
   float * tabley = new float[param.rezy];
@@ -750,7 +750,7 @@ bool Compiler::writeHeatMap(float ** xdata, float ** ydata, int time_steps, int 
       int xind = -1;
       int yind = -1;
       // search x
-      cout <<"sorting values:" + to_string(px) + "," + to_string(py) << endl;
+      //cout <<"sorting values:" + to_string(px) + "," + to_string(py) << endl;
 
       for (int index = 0; index < param.rezx - 1; index++)
       {
@@ -796,7 +796,7 @@ bool Compiler::writeHeatMap(float ** xdata, float ** ydata, int time_steps, int 
         cout << yind<< "," <<xind<<endl;
         cout << py << "," << px << endl;
       }
-      cout << xind<< "," << yind<< endl;
+      //cout << xind<< "," << yind<< endl;
       //cout << yind<< "," <<xind<<endl;
       heatmap[yind][xind] += 1;
 
