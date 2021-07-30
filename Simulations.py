@@ -127,6 +127,7 @@ class PolymerSimulationParameters():
         self.boxdimy=boxdimy
         self.integrator="brownian"
         self.direction = direction
+        self.disorder = disorder
 
     def setSheerForceRange(self,x1,x2):
         self.sheerForceRange = [x1,x2]
@@ -166,6 +167,8 @@ class PolymerSimulationParameters():
         self.integrator = x
     def setRunDirection(self,x):
         self.direction  =x
+    def setDisorder(self,x):
+        self.disorder =x
 
     def getSheerForceRange(self):
         return self.sheerForceRange
@@ -205,6 +208,8 @@ class PolymerSimulationParameters():
         return self.integrator
     def getRunDirection(self):
         return self.direction
+    def getDisorder(self):
+        return self.disorder
 
     def writeParameters(self,name="",dir=""):
         text = None
@@ -229,7 +234,9 @@ class PolymerSimulationParameters():
         text.write("BoxDimy="    +      str(self.getBoxDimy())               + "\n")
         text.write("Integrator=" +     str(self.getIntegrator())             + "\n")
         text.write("Direction=" +       str(self.getRunDirection())          + "\n")
+        text.write("Disorder=" +       str(self.getDisorder())               + "\n")
         text.close()
+        
     def loadParameters(self,fileLocation):
         file = open(fileLocation,'r');
         lines = file.readlines()
@@ -271,10 +278,9 @@ class PolymerSimulationParameters():
                 self.setIntegrator(lines[i].split('=')[1])
             elif "Direction=" in obj:
                 self.setRunDirection(lines[i].split('=')[1])
-            elif "DisorderLevel" in obj:
-                self.setDisorderLevel(lines[i].split('=')[1])
-            elif "RandomSeed" in obj:
-                self.setRandomSeed(lines[i].split('=')[1])
+            elif "Disorder" in obj:
+                self.setDisorder(lines[i].split('=')[1])
+            
         file.close()
 
 

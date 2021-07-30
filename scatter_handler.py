@@ -16,6 +16,7 @@ def getDirectoryDict(directories):
     print("/")
     return runidp
 
+
 def renameFiles(key, input):
     for element in input[key]:
 

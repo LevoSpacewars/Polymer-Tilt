@@ -1018,7 +1018,7 @@ float* Compiler::calcAverageLength(float ** avg_unc_x, float ** avg_unc_y, int n
     }
 
     system_length[0] = sum/n_polymer;
-    float unc = square/n_polymer - sum * sum;
+    float unc = square/n_polymer - pow(sum /n_polymer,2);
     unc = pow(unc, 0.5);
     system_length[1] = unc/system_length[0];
 
@@ -1075,7 +1075,7 @@ float* Compiler::calcSystemOutput(float** sysdx, float ** syslength, float sheer
     output[0] = dx[0]/length[0];
 
 
-    output[1] =pow( pow(length[1], 2) + pow(dx[1], 2), 0.5);
+    output[1] = output[0] * (length[1]/length[0] + dx[1]/dx[0]);
 
     return output;
 }

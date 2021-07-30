@@ -26,12 +26,13 @@ id = sys.argv[10]
 random_seed = 0
 disorder_level = 0
 if (len(sys.argv) > 11):
+    disorder_level = float(sys.argv[12])
     random_seed = int(sys.argv[11])
-    if bool(sys.argv[13]):
+    if bool(int(sys.argv[13])):
         amount_nodes = get_amount_nodes (float(sys.argv[12]))
         upperAmplitude = 0.05
     else:
-        upperAmplitude = get_amplitude_mod(float(sys.argv[12],60))
+        upperAmplitude = get_amplitude_mod(float(sys.argv[12]),60)
         amount_nodes = 60
 
 
@@ -61,6 +62,7 @@ parameters.setProbePeriod(vs)
 parameters.setRunLength(runl)
 parameters.setIntegrator("legavin")
 parameters.setRunDirection("forward")
+parameters.setDisorder(disorder_level)
 
 amplitude_range = (0.005* phi0, phi0 * upperAmplitude)
 sim = Simulations.PolymerSimulation()
