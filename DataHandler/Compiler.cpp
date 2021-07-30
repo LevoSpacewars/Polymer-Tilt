@@ -983,7 +983,7 @@ float* Compiler::calcAverageDx(float ** avg_unc_x, int n_polymer, int l_polymer)
     // cout<<sum<<endl;
     float unc = square/n_polymer - pow(system_dx[0],2);
     unc = pow(unc, 0.5);
-    system_dx[1] = unc/system_dx[0];
+    system_dx[1] = unc;
 
 
     return system_dx;
