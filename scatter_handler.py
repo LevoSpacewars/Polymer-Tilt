@@ -70,10 +70,10 @@ def getDirs(path):
 
     for filename in os.listdir(path):
         print(filename)
-        if '_' in filename:
-            print("Name-ID exists")
-            print("adding " + filename + " to list")
-            raw_dirs.append(filename)
+        if '_' in filename and os.path.isfile(filename + '/data.txt'):
+                print("Name-ID exists")
+                print("adding " + filename + " to list")
+                raw_dirs.append(filename)
     return raw_dirs
 
 
