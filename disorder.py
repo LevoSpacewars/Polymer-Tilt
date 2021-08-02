@@ -12,19 +12,22 @@ def get_amount_nodes(disorder_ratio):
 
     return num
 
-def get_amplitude_mod(disorder_ratio,nodes):
-    a = []
-    import random as r
-    hb = 1
-    lower = 0.1
-    upper = 0.2
+def get_amplitude_mod(disorder_ratio,nodes,amplitude):
+    
+    upper = 0.005
+    lower = 0.005
     x = 0
-    while(x < disorder_ratio):
+    a = []
+    hb = 0
+    
+    while(x <= disorder_ratio):
+        x=0
         a=[]
         for i in range(nodes):
-            am = r.random() * (upper - lower * hb) + lower
+            am = (upper * hb - lower) + lower
             a.append(am)
         for element in a:
             x += element * element
-        x = math.sqrt(x)
-        hb += 1
+        x = math.sqrt(x)/amplitude
+        hb += 0.001
+    return hb
