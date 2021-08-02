@@ -14,7 +14,7 @@ def get_amount_nodes(disorder_ratio):
 
 def get_amplitude_mod(disorder_ratio,nodes):
     a = []
-    import math as r
+    import random as r
     hb = 1
     lower = 0.1
     upper = 0.2
