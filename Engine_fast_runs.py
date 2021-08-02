@@ -3,7 +3,7 @@ import Simulations
 import math
 import random as r
 import sys
-from disorder import get_amount_nodes
+from disorder import get_amount_nodes, get_amplitude_mod
 parameters = Simulations.PolymerSimulationParameters()
 
 print("\n\n\n\n\n")
