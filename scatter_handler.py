@@ -32,6 +32,9 @@ def renameFiles(key, input):
             if "profiledensity" in file.lower():
                 name = "ProfileDensity_" + str(sheer) + ".txt"
                 os.system("mv " + p + "/" + file + " " + p + "/" + name)
+            if "profileData" in file.lower():
+                name = "profiledata_" + str(sheer) + ".txt"
+                os.system("mv " + p + "/" + file + " " + p + "/" + name)
             
 
 
@@ -50,6 +53,8 @@ def handleHeatmaps(key, input, destination):
             if "disorder_info" in file:
                 os.system("cp " + p + "/" + file + " " + destination)
             if "ProfileDensity" in file:
+                os.system("cp " + p + "/" + file + " " + destination)
+            if "profiledata" in file:
                 os.system("cp " + p + "/" + file + " " + destination)
 
 
