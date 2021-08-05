@@ -302,7 +302,9 @@ int Compiler::compileData(string *filename, float interval)
         float avg_dx2 = calcAverageDxsqr(&pos_x, n_polymers, l_polymer, adj_run);
 
         cout<<"writePorfileoutput"<<endl;
-        writeProfileOutput(&pos_xr, &pos_yr, n_polymers, l_polymer,i * conv,current_path,100);
+        writeProfileOutput(&pos_xr, &pos_yr, n_polymers, l_polymer,i * conv,current_path,5);
+
+        //writeAnimation(&pos_xr, &pos_yr, n_polymers, l_polymer,adj_run,i * conv,current_path);
 
         cout<<"exportDensityFunction_avg"<<endl;
         exportProfileDensity(&pos_x, &pos_y, n_polymers, l_polymer, adj_run,theta,current_path);
@@ -650,6 +652,33 @@ bool Compiler::writeProfileOutput(float** xa, float ** ya, int p_n, int p_length
     writeFile.close();
 
 
+    return true;
+
+}
+
+bool Compiler::writeAnimation(float** xa, float ** ya, int p_n, int p_length,int simlength, float force_value, string path) //memory safe
+{
+
+    float* x = *xa;
+    float* y = *ya;
+    ofstream writeFile;
+    int size = p_n*p_length;
+    writeFile.open(this->current_path + "/system_posdata" + to_string(force_value) + ".txt",std::ios_base::trunc);
+    writeFile << to_string(p_n) << "," << to_string(p_length)<<endl;
+    for (int time = 0; time < simlength; time++)
+    {
+        int offset = time * size;
+        for (int i = 0; i < size - 1; i++)
+        {
+            writeFile << x[offset + i] <<","<< y[offset + i] << ",";
+        }
+
+        writeFile<< x[offset + size -1] <<","<< y[offset + size -1] << endl;
+
+        
+    }
+
+    writeFile.close();
     return true;
 
 }

@@ -42,7 +42,7 @@ def handleHeatmaps(key, input, destination):
 
     for element in input[key]:
 
-        fn = str(path) + str(element) + "/heatmap.txt"
+        
         p = str(path) + str(element)
         for file in os.listdir(p):
             if "heatmap" in file:
@@ -54,7 +54,7 @@ def handleHeatmaps(key, input, destination):
                 os.system("cp " + p + "/" + file + " " + destination)
             if "ProfileDensity" in file:
                 os.system("cp " + p + "/" + file + " " + destination)
-            if "profileData" in file:
+            if "profiledata" in file:
                 os.system("cp " + p + "/" + file + " " + destination)
 
 

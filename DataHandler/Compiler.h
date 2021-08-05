@@ -71,6 +71,7 @@ private:
     bool exportProfileDensity(float** x, float ** y, int p_n, int p_length,int time_length,float force_value, string path);
     float* calcAverageLength(float ** x, float ** y, int p_n, int p_length);
     bool  writeProfileOutput(float** x, float ** y, int p_n, int p_length,float force_value, string path,int time);
+    bool  writeAnimation(float** x, float ** y, int p_n, int p_length, int simlength, float force_value, string path);
     bool  writeHeatMap(float** x, float ** y, int time_steps, int nParticles,float force_value,bool normalized, HeatMapParameters param, string path, string name);
     float * calcSystemOutput(float ** dx, float ** length, float sheer_tension);
     float * calcSheerTension();
