@@ -28,6 +28,6 @@ def get_amplitude_mod(disorder_ratio,nodes,amplitude):
             a.append(am)
         for element in a:
             x += element * element
-        x = math.sqrt(x)/amplitude
+        x = math.sqrt(x)/abs(amplitude)
         hb += 0.001
     return hb
