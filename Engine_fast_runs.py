@@ -32,7 +32,8 @@ if (len(sys.argv) > 11):
         amount_nodes = get_amount_nodes (float(sys.argv[12]))
         upperAmplitude = 0.05
     else:
-        upperAmplitude = get_amplitude_mod(float(sys.argv[12]),60,abs(phi0))
+        uppermod = get_amplitude_mod(float(sys.argv[12]),60,abs(phi0))
+        upperAmplitude = 0.05 * uppermod
         amount_nodes = 60
 
 
