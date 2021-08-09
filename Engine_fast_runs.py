@@ -39,6 +39,7 @@ if (len(sys.argv) > 11):
 
 
 
+print("here")
 
 dt = 0.001
 runl = time_total
@@ -64,13 +65,14 @@ parameters.setRunLength(runl)
 parameters.setIntegrator("legavin")
 parameters.setRunDirection("forward")
 parameters.setDisorder(disorder_level)
+print("set disorder and parameters")
 
 amplitude_range = (0.005* phi0, phi0 * upperAmplitude)
 sim = Simulations.PolymerSimulation()
 sim.set_disorder(random_seed,amplitude_range,amount_nodes,chainnum,disorder_level,phi0)
 print(amount_nodes)
 sim.init(parameter=parameters,initializer='--mode=gpu')
-
+print("simulations init done")
 
 filelocation = sim.probe(id,sheer,"",server = True)
 print(filelocation)
