@@ -1,10 +1,11 @@
 import Simulations
 import math
 from random import randint
+from disorder import get_amplitude_mod
 parameters = Simulations.PolymerSimulationParameters()
 dt = 0.001
-runl = (1*10**5)
-vs =    1*10**3
+runl = (1*10**2)
+vs =    1*10**0
 A= -0.3/0.1 * 1
 print("\n\n\n\n\n")
 
@@ -26,12 +27,15 @@ parameters.setRunLength(runl)
 parameters.setIntegrator("legavin")
 parameters.setRunDirection("forward")
 parameters.setDisorder(0)
+mod = get_amplitude_mod(0.6,60,abs(-3))
 
-amplitude_range = (0.005* 3, 0.05 * 3)
+amplitude_range = (0.005, 0.005 * mod)
+print(amplitude_range)
+
 sim = Simulations.PolymerSimulation()
-sim.init(parameter=parameters,initializer='--mode=gpu')
-sim.set_disorder(randint(0,199999),amplitude_range,0,10)
-filelocation = sim.probe("multitest",0,"" )
+sim.init(parameter=parameters,initializer='--mode=gpu --notice-level=0')
+sim.set_disorder(randint(0,199999),amplitude_range,60,10,0.6,A)
+filelocation = sim.probe("distest",0,"" )
 print(filelocation)
 
 #renderer = Simulations.DataVisualizer(basedirectory=filelocation,interval=0.75)

@@ -33,7 +33,7 @@ if (len(sys.argv) > 11):
         upperAmplitude = 0.05
     else:
         uppermod = get_amplitude_mod(float(sys.argv[12]),60,abs(phi0))
-        upperAmplitude = 0.05 * uppermod
+        upperAmplitude = 0.005 * uppermod
         amount_nodes = 60
 
 
@@ -67,7 +67,7 @@ parameters.setDisorder(disorder_level)
 
 amplitude_range = (0.005* phi0, phi0 * upperAmplitude)
 sim = Simulations.PolymerSimulation()
-sim.set_disorder(random_seed,amplitude_range,amount_nodes,chainnum)
+sim.set_disorder(random_seed,amplitude_range,amount_nodes,chainnum,disorder_level,phi0)
 print(amount_nodes)
 sim.init(parameter=parameters,initializer='--mode=gpu')
 

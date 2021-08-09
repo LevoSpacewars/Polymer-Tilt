@@ -65,12 +65,14 @@ def particlePotentialHarmonic(r, rmin, rmax,particle_diameter,strength_coef):
     return (potential, force)
 
 class DisorderParameter():
-    def __init__(self, random_seed, amplitude_range,nodes, width) -> None:
+    def __init__(self, random_seed, amplitude_range,nodes, width,disorder_ratio,amplitude) -> None:
         self.bond_radius = 0.05
         self.width = width
         self.seed = random_seed
         self.amplitude_range = amplitude_range
         self.nodes = nodes
+        self.amplitude = amplitude
+        self.disorder_ratio = disorder_ratio
         self.disorder:List[Tuple[float, int, float]]  = self.generate_disorder()
 
     def generate_disorder(self)-> List[Tuple[float, int, float]] :
@@ -81,14 +83,29 @@ class DisorderParameter():
         r.seed(seed)
         inv_lamda = int(1/(self.bond_radius))
         Arange = self.amplitude_range
-
+        print(Arange)
+        print(disorder_level, Arange)
         p:List[Tuple[float, int, float]] = []  # (amplitude, nodes, phase)
-
-        for null in range(disorder_level):
-            A = r.random() * (Arange[1] - Arange[0]) + Arange[0]
-            phase = 2 * r.random() * math.pi
-            nodes = r.randint(1, inv_lamda)
-            p.append((A, nodes, phase))
+        a = 0
+        done = False
+        hb = 1
+        #exit()
+        while not done:
+            p:List[Tuple[float, int, float]] = []
+            a = 0
+            for i in range(disorder_level):
+                A = r.random() * (Arange[1] * hb) + Arange[0]
+                a += A * A
+                phase = 2 * r.random() * math.pi
+                nodes = r.randint(1, inv_lamda)
+                p.append((A, nodes, phase))
+            
+            
+            if math.sqrt(a)/abs(self.amplitude) > self.disorder_ratio and math.sqrt(a)/abs(self.amplitude) < self.disorder_ratio + 0.02:
+                done = True
+            
+        
+        
         return p
 
     def get_disorder(self):
@@ -523,8 +540,8 @@ class PolymerSimulation():
 
         periodic.force_coeff.set('A', A=-1000000.0, i=1, w=0, p=10) #used to keep anchor on y=0
 
-    def set_disorder(self, random_seed, amplitude_range,nodes, width):
-        self.disorder = DisorderParameter(random_seed, amplitude_range,nodes,width)
+    def set_disorder(self, random_seed, amplitude_range,nodes, width, ratio, amplitude):
+        self.disorder = DisorderParameter(random_seed, amplitude_range,nodes,width,ratio, amplitude)
 
     def apply_disorder(self):
         dparam = self.disorder.get_disorder()
