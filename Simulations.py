@@ -93,7 +93,9 @@ class DisorderParameter():
         ind = 0
         while not done:
             ind += 1
-            if ind > 10:
+            if ind > 10 and a > self.disorder_ratio:
+                hb -= 0.001
+            elif ind > 10 and a < self.disorder_ratio:
                 hb += 0.001
             p:List[Tuple[float, int, float]] = []
             a = 0
