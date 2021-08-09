@@ -90,7 +90,11 @@ class DisorderParameter():
         done = False
         hb = 1
         #exit()
+        ind = 0
         while not done:
+            ind += 1
+            if ind > 10:
+                hb += 0.001
             p:List[Tuple[float, int, float]] = []
             a = 0
             for i in range(disorder_level):
@@ -100,7 +104,7 @@ class DisorderParameter():
                 nodes = r.randint(1, inv_lamda)
                 p.append((A, nodes, phase))
             
-            
+            print(math.sqrt(a)/abs(self.amplitude))
             if math.sqrt(a)/abs(self.amplitude) > self.disorder_ratio and math.sqrt(a)/abs(self.amplitude) < self.disorder_ratio + 0.02:
                 done = True
             
