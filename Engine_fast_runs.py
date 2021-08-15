@@ -7,7 +7,7 @@ from disorder import get_amount_nodes, get_amplitude_mod
 parameters = Simulations.PolymerSimulationParameters()
 
 print("\n\n\n\n\n")
-inputs = {"length": None, "kbt": None, "amplitude": None, "tension": None, "npolymers": None, "runtime": None, "samplerate": None, "sheer": None, "endsheer": None, "random_seed": None, "disorder_ratio": None, "ModalDisorder":None, "ID": None}
+inputs = {"length": None, "kbt": None, "amplitude": None, "tension": None, "npolymers": None, "runtime": None, "samplerate": None, "sheer": None, "endsheer": None, "random_seed": None, "disorder_ratio": None, "ModalDisorder":None, "ID": None, "ncomm": None}
 
 # TODO: need to implement the disorder level to set the contraints along the min and max amplitude
 
@@ -23,6 +23,7 @@ sample_rate = int(sys.argv[7])
 sheer = float(sys.argv[8])
 endsheer = float(sys.argv[9])
 id = sys.argv[10]
+
 random_seed = 0
 disorder_level = 0
 if (len(sys.argv) > 11):
@@ -35,7 +36,8 @@ if (len(sys.argv) > 11):
         uppermod = get_amplitude_mod(float(sys.argv[12]),60,abs(phi0))
         upperAmplitude = 0.005 * uppermod
         amount_nodes = 60
-
+        
+ncomm = bool(sys.argv[14])
 
 
 

@@ -27,14 +27,15 @@ parameters.setRunLength(runl)
 parameters.setIntegrator("legavin")
 parameters.setRunDirection("forward")
 parameters.setDisorder(0)
+parameters.setCommensurate(False)
 mod = get_amplitude_mod(0.6,60,abs(-3))
 
 amplitude_range = (0.005, 0.005 * mod)
 print(amplitude_range)
 
 sim = Simulations.PolymerSimulation()
-sim.init(parameter=parameters,initializer='--mode=gpu --notice-level=0')
-sim.set_disorder(randint(0,199999),amplitude_range,60,10,0.6,A)
+sim.init(parameter=parameters,initializer='--mode=cpu --notice-level=0')
+sim.set_disorder(randint(0,199999),amplitude_range,60,10,0,A)
 filelocation = sim.probe("distest",0,"" )
 print(filelocation)
 

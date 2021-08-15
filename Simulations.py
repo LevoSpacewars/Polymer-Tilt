@@ -98,20 +98,22 @@ class DisorderParameter():
             elif ind > 10 and a < self.disorder_ratio:
                 hb += 0.001
             p:List[Tuple[float, int, float]] = []
+            
             a = 0
+
             for i in range(disorder_level):
                 A = r.random() * (Arange[1] * hb) + Arange[0]
                 a += A * A
                 phase = 2 * r.random() * math.pi
                 nodes = r.randint(1, inv_lamda)
                 p.append((A, nodes, phase))
-            
-            print(math.sqrt(a)/abs(self.amplitude))
+
+            #print(math.sqrt(a)/abs(self.amplitude))
             if math.sqrt(a)/abs(self.amplitude) > self.disorder_ratio and math.sqrt(a)/abs(self.amplitude) < self.disorder_ratio + 0.02:
                 done = True
-            
-        
-        
+
+
+
         return p
 
     def get_disorder(self):
@@ -130,7 +132,7 @@ class DisorderParameter():
         return array
 
 class PolymerSimulationParameters():
-    def __init__(self,sheerforcerange=[0,0],df=0,length=0,lines=0,rez=0,K=0,l_0=0,l_max=0,pull=0,amplitude=0,gamma=0,kbT=0,dt=0,probePeriod=0,runLength=0,boxdimx=0,boxdimy=0,integraor = "brownian", direction = "forward", disorder = None):
+    def __init__(self,commensurate=True, sheerforcerange=[0,0],df=0,length=0,lines=0,rez=0,K=0,l_0=0,l_max=0,pull=0,amplitude=0,gamma=0,kbT=0,dt=0,probePeriod=0,runLength=0,boxdimx=0,boxdimy=0,integraor = "brownian", direction = "forward", disorder = None):
         self.sheerForceRange=sheerforcerange
         self.df=df
         self.length=int(length)
@@ -151,7 +153,10 @@ class PolymerSimulationParameters():
         self.integrator="brownian"
         self.direction = direction
         self.disorder = disorder
+        self.commensurate = commensurate
 
+    def setCommensurate(self,x):
+        self.commensurate=bool(x)
     def setSheerForceRange(self,x1,x2):
         self.sheerForceRange = [x1,x2]
     def setDf(self,x):
@@ -193,6 +198,8 @@ class PolymerSimulationParameters():
     def setDisorder(self,x):
         self.disorder =x
 
+    def getCommensurate(self,):
+        return self.commensurate
     def getSheerForceRange(self):
         return self.sheerForceRange
     def getDf(self):
@@ -258,8 +265,9 @@ class PolymerSimulationParameters():
         text.write("Integrator=" +     str(self.getIntegrator())             + "\n")
         text.write("Direction=" +       str(self.getRunDirection())          + "\n")
         text.write("Disorder=" +       str(self.getDisorder())               + "\n")
+        text.write("Commensurate="+   str(self.getCommensurate())           + "\n")
         text.close()
-        
+
     def loadParameters(self,fileLocation):
         file = open(fileLocation,'r');
         lines = file.readlines()
@@ -303,7 +311,9 @@ class PolymerSimulationParameters():
                 self.setRunDirection(lines[i].split('=')[1])
             elif "Disorder" in obj:
                 self.setDisorder(lines[i].split('=')[1])
-            
+            elif "Commensurate" in obj:
+                self.setCommensurate(lines[i].split('=')[1])
+
         file.close()
 
 
@@ -311,11 +321,14 @@ class PolymerSimulationParameters():
 class PolymerSimulation():
     def __init__(self):
         self.parameter = None
+        self.commensurate_filling = False
         random.seed()
-
+    def set_commensuratefillineg(self, value):
+        self.commensurate_filling = value
     def init(self, parameter: PolymerSimulationParameters =None,initializer='--mode=gpu',loadSave=None,dirName=None,probe = False):
         hoomd.context.initialize(initializer)
         self.parameter = parameter
+        self.set_commensuratefillineg(self.parameter.getCommensurate())
         if loadSave is None:
             random.seed()
 
@@ -493,7 +506,7 @@ class PolymerSimulation():
 
 
     def initializeForces(self): #where particle-particle and bond interactions are defined
-        added = 0
+        added = int(not self.commensurate_filling)
         lines       = self.parameter.getNumberChains()
         length      = self.parameter.getLength()
         bond_length = self.parameter.getPairRadiusEqualibrium()*2
@@ -684,7 +697,7 @@ class PolymerSimulation():
         types = ['A','B','C']
 
         self.boxdim=[0,0]
-        self.boxdim[0] = self.parameter.getNumberChains()
+        self.boxdim[0] = self.parameter.getNumberChains() + int(not not self.commensurate_filling)
         self.boxdim[1] = 1000
         self.parameter.setBoxDimx(self.boxdim[0])
         self.parameter.setBoxDimy(self.boxdim[1])

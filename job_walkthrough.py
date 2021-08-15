@@ -12,7 +12,8 @@ DF = 10                             # amount of sheer force steps inbetween shee
 ID = 10000                          # MUST BE UNIQUE:: might be useful to implement something to auto assign id
 disorder_level = 0                  # indepenedent of modal or nonmodal disorder: 0-1 for disorder <= Periodic Amplitude;
 ModalDisorder = 0                   # this should always either be 0 or 1 (true or false)
-numbersims = 1
+numbersims = 1                      # number of simualation to run under the same parameters
+ncomm = 1                           # if the simulation is commensurate_filled (by defualt should be 1)
 startID = ID
 if len(sys.argv) > 1:
     for index in range(len(sys.argv)):
@@ -30,6 +31,6 @@ import os
 s = " "
 for i in range(numbersims):
     ID = startID + i
-    cmd = "python submit_scattered_jobs.py {} {} {} {} {} {} {} {} {} {} {} {} {}".format(length, kbt, amplitude, tension, num_polymers, runtime, sample_freq, sheer_start, sheer_end, DF, ID, disorder_level, ModalDisorder)
+    cmd = "python submit_scattered_jobs.py {} {} {} {} {} {} {} {} {} {} {} {} {} {}".format(length, kbt, amplitude, tension, num_polymers, runtime, sample_freq, sheer_start, sheer_end, DF, ID, disorder_level, ModalDisorder, ncomm)
     print(cmd)
     os.system(cmd)

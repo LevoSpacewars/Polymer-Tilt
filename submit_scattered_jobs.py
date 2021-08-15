@@ -3,7 +3,7 @@
 #then assign sysargs to a dictionary
 
 
-args = ["length", "kbt", "amplitude", "tension", "npolymers", "runtime", "samplerate", "sheer_start","sheer_end","DF","ID","disorder_level","ModalDisorder"]
+args = ["length", "kbt", "amplitude", "tension", "npolymers", "runtime", "samplerate", "sheer_start","sheer_end","DF","ID","disorder_level","ModalDisorder","ncomm"]
 dic = {}
 import sys
 import os
@@ -30,14 +30,14 @@ for j in range(int(dic["DF"])):
     sargs = ""
     for i in range(7):
         sargs += " " + dic[i]
-    sargs += " " + str(sheers[j]) + " " + str(tend) + " " + dic["ID"] + " " + str(rseed) + " " + str(dic['disorder_level'] + " " + str(dic['ModalDisorder']))
+    sargs += " " + str(sheers[j]) + " " + str(tend) + " " + dic["ID"] + " " + str(rseed) + " " + str(dic['disorder_level'] + " " + str(dic['ModalDisorder'])) + " " + str(dic['ncomm'])
 
     argsouput.append(sargs)
 print(argsouput)
 #here we need to create the individual batch files that are going to call the Engine_fast_runs.py [args]
-
+filen = "Engine_fast_runs.py"
 settings = "#!/bin/bash \n#SBATCH --job-name=Poltmer_Run_scattered     ### Job Name \n#SBATCH --partition=gpu	  ### Quality of Service (like a queue in PBS) \n#SBATCH --time=0-10:00:00     ### Wall clock time limit in Days-HH:MM:SS \n#SBATCH --nodes=1             ### Node count required for the job \n#SBATCH --ntasks-per-node=1   ### Nuber of tasks to be launched per Node \n#SBATCH --gres=gpu:1          ### General REServation of gpu:number of gpus \n#SBATCH --account=softmatter    ### Account used for job submission \n"
-cmd = "python3 /home/apatapof/softmatter/Polymer-Tilt/Engine_fast_runs.py "
+cmd = "python3 /home/apatapof/softmatter/Polymer-Tilt/" + filen
 for i in range(int(dic["DF"])):
     filename = dic["ID"] + "_" + str(sheers[i]) + ".batch"
     print("creating: " + filename)
