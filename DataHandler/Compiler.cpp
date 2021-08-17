@@ -281,7 +281,8 @@ int Compiler::compileData(string *filename, float interval)
         int adj_run = (int)((1-interval) * runLength);
         //this->writeData("position_uw:" + to_string(theta),&pos_x,&pos_y,memblock,l_polymer*n_polymers);//debug only
         //this->writeData("position_nw:" + to_string(theta),&pos_xr,&pos_yr,memblock,l_polymer*n_polymers);
-
+        float forceangle = i*conv;
+        cout <<"FORCE ANGLE:"<< forceangle<<endl;
 
         HeatMapParameters param;
         param.rezx = 100;
@@ -293,11 +294,14 @@ int Compiler::compileData(string *filename, float interval)
         writeHeatMap(&pos_xr,&pos_yr, n_polymers*l_polymer,adj_run,i*conv,false,param,"sdf","heatmap");
 
         cout<<"calculatig average position x"<<endl;
+        cout<<"TILT OF FORCE: "<< theta<<endl;
         float * avg_x = calcAveragePosition(&pos_x, n_polymers, l_polymer, adj_run);
 
         cout<<"calculating avg pos y"<<endl;
         float * avg_y = calcAveragePosition(&pos_y, n_polymers, l_polymer, adj_run);
 
+        float out = (avg_x[l_polymer-1] - avg_x[0])/(avg_y[l_polymer-1] - avg_y[0]);
+        cout <<"SLOPE OF THE POLYMER: " <<out<<endl;
         cout<<"calculating the avg_dx^2 " <<endl;
         float avg_dx2 = calcAverageDxsqr(&pos_x, n_polymers, l_polymer, adj_run);
 
@@ -311,6 +315,7 @@ int Compiler::compileData(string *filename, float interval)
 
         cout<<"calcAverageDx"<<endl;
         float * dx = calcAverageDx(&avg_x,n_polymers,l_polymer);
+        cout <<"average_dx:" <<dx[0]<<endl;
 
         cout<<"calcAverageLength"<<endl;
         float * length = calcAverageLength(&avg_x,&avg_y,n_polymers,l_polymer);
@@ -1039,6 +1044,8 @@ float* Compiler::calcAverageLength(float ** avg_unc_x, float ** avg_unc_y, int n
         float dy = y[b] - y[a];
         cout << a << " " << b << " " << n_polymer * l_polymer << endl;
         float l  = pow(dx*dx+ dy*dy, 0.5);
+        cout<<"dx:"<<dx<<endl;
+        cout<<"length:"<<l<<endl;
 
         sum += l;
         square += l*l;
@@ -1100,7 +1107,7 @@ float* Compiler::calcSystemOutput(float** sysdx, float ** syslength, float sheer
     float * length = *syslength;
 
     float * output = new float[2];
-
+    cout <<"output"<< dx[0]<<"/"<<length[0]<<endl;
     output[0] = dx[0]/length[0];
 
 

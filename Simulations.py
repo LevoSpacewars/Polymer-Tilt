@@ -265,7 +265,7 @@ class PolymerSimulationParameters():
         text.write("Integrator=" +     str(self.getIntegrator())             + "\n")
         text.write("Direction=" +       str(self.getRunDirection())          + "\n")
         text.write("Disorder=" +       str(self.getDisorder())               + "\n")
-        text.write("Commensurate="+   str(self.getCommensurate())           + "\n")
+        text.write("Commensurate="+   str(self.getCommensurate())            + "\n")
         text.close()
 
     def loadParameters(self,fileLocation):
@@ -371,9 +371,11 @@ class PolymerSimulation():
         return path
 
 
-    def run(self, server = False): #main run function
-
-        self.setupFileSystem()
+    def run(self, server = False,name = None): #main run function
+        if name is not None:
+            self.setupFileSystem(name)
+        else:
+            self.setupFileSystem()
         print(self.DirectoryName)
 
         #self.view_potential(self.parameter.getNumberChains())
