@@ -155,12 +155,39 @@ class PolymerSimulationParameters():
         self.disorder = disorder
         self.commensurate = commensurate
 
+        
+        self.datadic = {}
+        self.datadic["sheerforcerange"] = self.getSheerForceRange
+        self.datadic["df"] = self.getDf
+        self.datadic["length"] = self.getLength
+        self.datadic["numberchains"]=self.getNumberChains
+        self.datadic["pairradius"]=self.getPairRadius
+        self.datadic["pullforce"]=self.getPullForce
+        self.datadic["periodicamplitude"]=self.getPeriodicAmplitude
+        self.datadic["gamma"]=self.getGamma
+        self.datadic["timestep"]=self.getTimeStep
+        self.datadic["probeperiod"]=self.getProbePeriod
+        self.datadic["runlength"]=self.getRunLength
+        self.datadic["boxdimx"]=self.getBoxDimx
+        self.datadic["boxdimy"]=self.getBoxDimy
+        self.datadic["disorder"]=self.getDisorder
+        self.datadic["commensurate"]=self.getCommensurate
+    
+    def __getitem__(self,key: str):
+        try:
+            value = self.datadic[key]()
+            return value 
+        except:
+            print(f"key not found, use one from this list:\n {self.datadic.keys()}")
+            exit()
+    def keys(self):
+        return self.datadic.keys()
     def setCommensurate(self,x):
         self.commensurate=bool(x)
     def setSheerForceRange(self,x1,x2):
-        self.sheerForceRange = [x1,x2]
+        self.sheerForceRange = [float(x1),float(x2)]
     def setDf(self,x):
-        self.df = x
+        self.df = int(x)
     def setLength(self,x):
         self.length = int(x)
     def setNumberChains(self,x):
@@ -196,7 +223,7 @@ class PolymerSimulationParameters():
     def setRunDirection(self,x):
         self.direction  =x
     def setDisorder(self,x):
-        self.disorder =x
+        self.disorder = float(x)
 
     def getCommensurate(self,):
         return self.commensurate
@@ -272,6 +299,7 @@ class PolymerSimulationParameters():
         file = open(fileLocation,'r');
         lines = file.readlines()
         for i in range(len(lines)):
+            lines[i] = lines[i].strip()
             obj = lines[i]
             if "sheerForceRange=" in obj:
                 self.setSheerForceRange(float(lines[i].split('=')[1].split(',')[0]),float(lines[i].split('=')[1].split(',')[1]))
@@ -699,7 +727,7 @@ class PolymerSimulation():
         types = ['A','B','C']
 
         self.boxdim=[0,0]
-        self.boxdim[0] = self.parameter.getNumberChains() + int(not not self.commensurate_filling)
+        self.boxdim[0] = self.parameter.getNumberChains() + int(not self.commensurate_filling)
         self.boxdim[1] = 1000
         self.parameter.setBoxDimx(self.boxdim[0])
         self.parameter.setBoxDimy(self.boxdim[1])

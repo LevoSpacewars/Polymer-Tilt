@@ -36,7 +36,7 @@ print(amplitude_range)
 sim = Simulations.PolymerSimulation()
 sim.init(parameter=parameters,initializer='--mode=cpu')
 sim.set_disorder(randint(0,199999),amplitude_range,60,10,0,3)
-filelocation = sim.run(name="singlePolymer")
+filelocation = sim.run(name="singlePolymert")
 print(filelocation)
 
 #renderer = Simulations.DataVisualizer(basedirectory=filelocation,interval=0.75)
