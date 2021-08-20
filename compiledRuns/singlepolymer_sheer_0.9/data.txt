@@ -1,0 +1,7 @@
+dx,0.449407
+udx,-nan
+length,10.7085
+ulength,0
+output,0.0419673
+uoutput,-nan
+dx2,0.0414529
