@@ -16,14 +16,14 @@ numbersims = 1                      # number of simualation to run under the sam
 ncomm = 1                           # if the simulation is commensurate_filled (by defualt should be 1)
 startID = ID
 if len(sys.argv) > 1:
-    for index in range(len(sys.argv)):
-        if index == 1:
+    for index in range(len(sys.argv)): 			# arg1: number of simulations to run at parameter values
+        if index == 1:	
             numbersims = int(sys.argv[index])
-        elif index == 2:
+        elif index == 2:				# arg2: disroder level (D/A) value that you want to target
             disorder_level = float(sys.argv[index])
-        elif index == 3:
+        elif index == 3:				# arg3: if the disorder generated is by modifying amplitude or the number of modes
             ModalDisorder = int(sys.argv[index])
-        elif index == 4:
+        elif index == 4:				# arg4: the starting folder number to increment from
             startID = int(sys.argv[index])
 
 
