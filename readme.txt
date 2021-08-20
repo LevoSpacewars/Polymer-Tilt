@@ -3,7 +3,7 @@ This readme is seperated into 3 parts
 	1. folder layout with desc
 	2. introduction to files for making figures
 	3. sending jobs for making data points
-
+	4. adding functionality to DataHanlder
 --------------- 1 ---------------------
 
 Polymer-Tilt: Main-Directory
@@ -14,7 +14,7 @@ DataHandler: C++ code and excecutable for analysing trajectory files
 singlePolymer: Frozen out single polymer system (it's not important but could be useful for debugging)
 
 
----------------
+--------------- 2 ---------------------
 
 The notebooks figure2, DisorderGraph, and HeatmapGeneraion are examples for generating particular figures
 
@@ -42,3 +42,10 @@ NOTE: you must now be in the "/home/apatapof/softmatter/runs" directory
 
 this will take a while but it will merge all the analyzed data into a single directory.
 
+--------------- 4 ----------------------
+
+Data analysis happens in the compiler class.
+add a function in the compiler.h and define it in compiler.cpp.
+then run the linker_script.py, which will rebuild the binaries.
+
+---------------END----------------------
