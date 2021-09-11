@@ -3,7 +3,7 @@ import os
 import sys
 SIMPATH = "/home/apatapof/softmatter/runs/"
 path = SIMPATH
-settings = "#!/bin/bash\n#SBATCH --partition=short        ### Partition (like a queue in PBS)\n#SBATCH --job-name=CompileData      ### Job Name\n#SBATCH --output=Hi.out         ### File in which to store job output\n#SBATCH --error=Hi.err          ### File in which to store job error messages\n#SBATCH --time=0-01:00:00	### Wall clock time limit in Days-HH:MM:SS\n#SBATCH --nodes=1               ### Number of nodes needed for the job\n#SBATCH --ntasks-per-node=1     ### Number of tasks to be launched per Node\n#SBATCH --mem=40000M              ### memory limit per node, in MB\n#SBATCH --account=softmatter	  ### Account used for job submission \n"
+settings = "#!/bin/bash\n#SBATCH --no-requeue   ### Partition (like a queue in PBS)\n#SBATCH --job-name=CompileData      ### Job Name\n#SBATCH --output=Hi.out         ### File in which to store job output\n#SBATCH --error=Hi.err          ### File in which to store job error messages\n#SBATCH --time=0-01:00:00	### Wall clock time limit in Days-HH:MM:SS\n#SBATCH --nodes=1               ### Number of nodes needed for the job\n#SBATCH --ntasks-per-node=1     ### Number of tasks to be launched per Node\n#SBATCH --mem=40000M              ### memory limit per node, in MB\n#SBATCH --account=softmatter	  ### Account used for job submission \n"
 command = "/home/apatapof/softmatter/Polymer-Tilt/DataHandler/Executable /home/apatapof/softmatter/runs/"
 
 dirs =[]
