@@ -587,7 +587,7 @@ class PolymerSimulation():
             #periodic.force_coeff.set('A', A=-10000000.0, i=0, w=0, p=10)
 
 
-        periodic.force_coeff.set('A', A=-1000000.0, i=1, w=0, p=10) #used to keep anchor on y=0
+        periodic.force_coeff.set('A', A=-1000000.0, i=1, w=1, p=10) #used to keep anchor on y=0
 
     def set_disorder(self, random_seed, amplitude_range,nodes, width, ratio, amplitude):
         self.disorder = DisorderParameter(random_seed, amplitude_range,nodes,width,ratio, amplitude)
