@@ -1,4 +1,4 @@
-sheerForceRange=0.0,2.7
+sheerForceRange=0.0,2.6999999999999997
 df=10
 length=200
 lines=1
@@ -17,3 +17,5 @@ BoxDimx=10
 BoxDimy=1000
 Integrator=legavin
 Direction=forward
+Disorder=0.0
+Commensurate=True
