@@ -32,9 +32,9 @@ def renameFiles(key, input):
             if "profiledensity" in file.lower():
                 name = "ProfileDensity_" + str(sheer) + ".txt"
                 os.system("mv " + p + "/" + file + " " + p + "/" + name)
-            if "profiledata" in file.lower():
+            if "profileData" in file:
                 name = "profiledata_" + str(sheer) + ".txt"
-                os.system("mv " + p + "/" + file + " " + p + "/" + name)
+                os.system("cp " + p + "/" + file + " " + p + "/" + name)
             
 
 
