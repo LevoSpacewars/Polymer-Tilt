@@ -172,6 +172,7 @@ class PolymerSimulationParameters():
         self.datadic["boxdimy"]=self.getBoxDimy
         self.datadic["disorder"]=self.getDisorder
         self.datadic["commensurate"]=self.getCommensurate
+        self.datadic["kbt"]=self.getKBT
     
     def __getitem__(self,key: str):
         try:

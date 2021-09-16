@@ -149,3 +149,29 @@ def getforceangles(path):
     b = ab[1]
     fr = []
     return np.linspace(a,b,df)/t
+
+def getparameter(path,key):
+    """
+    return specific parameter value
+    """
+    path = path.strip()
+    if path[-1] == "/":
+        path = path[:-1]
+    path += "/_simulation_parameters.txt"
+    params = PSP()
+    params.loadParameters(path)
+    
+    return params[key]
+
+def getparameters(path,keys):
+    """
+    return specific parameter value
+    """
+    path = path.strip()
+    if path[-1] == "/":
+        path = path[:-1]
+    path += "/_simulation_parameters.txt"
+    params = PSP()
+    params.loadParameters(path)
+    
+    return [params[key] for key in keys]

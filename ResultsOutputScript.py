@@ -36,8 +36,9 @@ def Y (a,kbt,T,theta,utheta):
 
 
 class RunDataHandler(object):
-    def __init__(self, fileName = "",allData=None,parameters = None):
+    def __init__(self, fileName = "",allData=None,parameters = None,quiet=False):
         self.parameters = parameters
+        self.quiet = quiet
         if fileName is "":
             self.dx         = allData[0]
             self.udx        = allData[1]
@@ -49,9 +50,16 @@ class RunDataHandler(object):
             self.forceRange = self.calcForceRange()
         else:
             self.readDataFile(fileName)
+            
+            datadir = '/'.join(fileName.split('/')[:-1])
+            if not self.quiet: print(datadir)
+            self.parameters = Simulations.PolymerSimulationParameters()
+            self.parameters.loadParameters(datadir + "/_simulation_parameters.txt")
+            
             self.forceRange = self.calcForceRange()
             self.base = False
-            if parameters.getNumberChains() == 1:
+            
+            if self.parameters.getNumberChains() == 1:
                 self.base = True
 
 
@@ -69,16 +77,16 @@ class RunDataHandler(object):
     def readDataFile(self,fileName):
         self.fileName = fileName
         file = open(fileName, 'r')
-        print(file)
+        if not self.quiet: print(file)
         lines = file.readlines()
-        print(fileName)
+        if not self.quiet: print(fileName)
         temp = []
         for i in range(len(lines)):
             temp.append([])
             obj = lines[i].rstrip("\n").split(',')
-            print(obj[0])
+            if not self.quiet: print(obj[0])
             for i in range(1,len(obj)):
-                print(obj[i])
+                if not self.quiet: print(obj[i])
                 temp[-1].append(float(obj[i]))
         self.dx         = temp[0]
         self.udx        = temp[1]
@@ -478,6 +486,7 @@ class GlobalDataPlotter(object):
 
 
 
-plotter = GlobalDataPlotter()
+if __name__ == "__main__":
+    plotter = GlobalDataPlotter()
 
-plotter.PlotResults()
+    plotter.PlotResults()
