@@ -17,3 +17,4 @@ BoxDimx=10
 BoxDimy=3200
 Integrator=legavin
 Direction=forward
+Disorder=0.0
