@@ -1,3 +1,4 @@
+
 import glob
 import Simulations
 import time
@@ -53,7 +54,9 @@ class RunDataHandler(object):
             self.base = False
             if parameters.getNumberChains() == 1:
                 self.base = True
-
+        self.fileName = fileName
+        self.disorder = parameters.getDisorder()
+        print(self.disorder)
 
     def isChainLength(self, length: int) -> bool:
         return (self.parameters.getLength() == length)
@@ -86,7 +89,10 @@ class RunDataHandler(object):
         self.ulength    = temp[3]
         self.output     = temp[4]
         self.uoutput    = temp[5]
-        self.dx2        = temp[6]
+        try:
+            self.dx2        = temp[6]
+        except:
+            self.dx2=[0.1] * len(temp[0])
     def getChainLength(self):
         return self.parameters.getLength()
     def getDx(self):
@@ -733,11 +739,13 @@ class GlobalDataPlotter(object):
 
 
 
-
         sloperangedict = {} #contains for sloperange[i] slopeinfo[i] = (theta, tilt), (...), (....)
 
         for i in self.dataHandlers:
-
+            if not i.disorder is None:
+                if i.disorder > 1:
+                    continue
+            
             fig, axs= plt.subplots(2,3)
             fig.set_figheight(10)
             fig.set_figwidth(20)
@@ -782,7 +790,13 @@ class GlobalDataPlotter(object):
                 kbt = i.getTemp()
                 A = i.getPeriodicAmplitude()
                 T = i.getTension()
-                utheta = i.getForceRange()[1] - i.getForceRange()[0]
+                cont = True
+                try:
+                    utheta = i.getForceRange()[1] - i.getForceRange()[0]
+                except:
+                    cont = False
+                if cont == False:
+                    continue
 
                 print(len(thetas),len(tilt))
 
@@ -791,10 +805,14 @@ class GlobalDataPlotter(object):
                     sloperangedict[slope] = []
                 if linetilt[-1] is not None:
                     tiltc = linetilt[-1][1]
+                    print(kbt, i.fileName)
                     x = X(a, kbt, A, T, tiltc)
+                    
                     y= Y(a, kbt, T, tiltc, utheta)[0]
                     uy = Y(a, kbt, T, tiltc, utheta)[1]
-                    sloperangedict[slope].append((abs(x),y,uy))
+                    if abs(x) > 12 or y > 3:
+                        continue
+                    sloperangedict[slope].append((abs(x),y,uy,i.fileName))
 
                 linedx.append(self.getIntersection(thetas,dx2,slope))
 
@@ -815,15 +833,15 @@ class GlobalDataPlotter(object):
 
             plt.cla()
 
-            #plt.title(i.fileName)
-            axs[0][0].plot(thetas,dx2,'o')
-            axs[0][0].title.set_text(filename)
-            axs[0][0].plot(dx ,dy ,'.')
-            axs[0][0].legend(["com^2"])
-            print(linetilt)
-            for i in linedx:
-                axs[1][0].plot(i[1],i[2], '.', label=f"slope: {i[0]}")
-                print(i[0],i[1],i[2])
+            # #plt.title(i.fileName)
+            # axs[0][0].plot(thetas,dx2,'o')
+            # axs[0][0].title.set_text(filename)
+            # axs[0][0].plot(dx ,dy ,'.')
+            # axs[0][0].legend(["com^2"])
+            # print(linetilt)
+            # for i in linedx:
+            #     axs[1][0].plot(i[1],i[2], '.', label=f"slope: {i[0]}")
+            #     print(i[0],i[1],i[2])
             #axs[1][0].plot(tx,ty,'.',label=f"Threshold critical point")
             #print(len(thetas),len(tilt))
             axs[0][1].errorbar(thetas, tilt, yerr= utilt,fmt='.')
@@ -861,14 +879,16 @@ class GlobalDataPlotter(object):
 
         keys = sloperangedict.keys()
 
+        output = open('graphout.txt','w')
 
         for key in keys:
             figure = plt.figure(figsize=(10,10))
             plt.title(f"slope of intersection: {key} ")
             plt.plot(rowx,rowy)
             for point in sloperangedict[key]:
-                plt.errorbar(point[0],point[1], yerr=point[2])
-
+                plt.errorbar(point[0],point[1], yerr=point[2],label=point[3])
+                output.write(f"{point[0]},{point[1]},{key}\n")
+            plt.legend()
             pdf.savefig(figure)
             plt.close(figure)
 
@@ -879,32 +899,21 @@ class GlobalDataPlotter(object):
         figure = plt.figure(figsize=(10,10))
         plt.plot(rowx,rowy)
         index = 0
+        
         for key in keys:
             for point in sloperangedict[key]:
                 plt.errorbar(abs(point[0]),point[1],fmt='.' ,yerr=point[2],color=colors[index])
+                
             index +=1
-
+        output.close()
         pdf.savefig(figure)
         plt.close(figure)
 
-        for i in self.dataHandlers:
-            fig, axs= plt.subplots(2)
-            u = i.udx.copy()
-            u2 = i.udx.copy()
-            for j in range(len(u2)):
-                u2[j] *= i.getOutput()[0][j] * 100
-            x = i.getForceRange()
 
-            axs[0].bar(x,u,width=0.002)
-            axs[0].legend([i.fileName + " fractional, sttdev/measurment"])
-            axs[1].bar(x,u2,width=0.002)
-            axs[1].legend([i.fileName + " percent"])
-            pdf.savefig(fig)
-            plt.close()
 
 
         pdf.close()
-        self.writeIntersectionData()
+        #self.writeIntersectionData()
 
 
     def writeIntersectionData(self):

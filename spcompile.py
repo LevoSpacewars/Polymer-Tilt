@@ -11,7 +11,7 @@ print("starting")
 dir_content = os.listdir(path)
 if len(sys.argv) > 1:
     for item in dir_content:
-        if os.path.isdir(path + item) and os.path.exists(path + item + "/trajectory.gsd") and sys.argv[1] in item:
+        if os.path.isdir(path + item) and os.path.exists(path + item + "/trajectory.gsd") and str(sys.argv[1]) + "_" in item:
             dirs.append(item)
         print(path  + item + "/trajectory.gsd")
 else:
@@ -22,10 +22,11 @@ else:
 print(dirs)
 for items in dirs:
     name = "compile_" + str(items) + ".batch"
-    f = open("compile_" + str(items) + ".batch",'a')
+    f = open("compile_" + str(items) + ".batch",'w')
     f.write(settings)
     cmd = command + str(items)
     print(cmd)
+
     f.write(cmd)
     f.close()
     os.system("sbatch " + name)
